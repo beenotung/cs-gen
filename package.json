@@ -1,0 +1,37 @@
+{
+  "name": "m2jit-server",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "author": {
+    "name": "Beeno Tung",
+    "email": "aabbcc1241@yahoo.com.hk",
+    "url": "https://beeno-tung.surge.sh"
+  },
+  "license": "BSD-2-Clause",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "npm run rawtest",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "postformat": "tslint -p . --fix",
+    "build": "tsc",
+    "pretest": "npm run format",
+    "rawtest": "ts-node test/index.ts",
+    "prepublishOnly": "npm run rawtest && npm run build"
+  },
+  "husky": {
+    "hook": {
+      "pre-commit": "npm run format"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^8.10.38",
+    "husky": "^1.2.0",
+    "prettier": "^1.15.3",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "typescript": "^3.2.2"
+  }
+}
