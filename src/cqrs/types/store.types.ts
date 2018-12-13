@@ -13,7 +13,7 @@ export interface EventStore<T> {
    * */
   getAfter(types: ConcreteTypeSelector, height: number): Promise<Array<Event<T>>>
 
-  listen(types: ConcreteTypeSelector, consumer: Consumer<T>)
+  listen(types: ConcreteTypeSelector, consumer: Consumer<Event<T>>)
 }
 
 export interface StateStore<T> {

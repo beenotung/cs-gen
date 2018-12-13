@@ -1,0 +1,1 @@
+/* use typegoose to persist and query data */

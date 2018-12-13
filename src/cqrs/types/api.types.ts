@@ -48,6 +48,18 @@ export interface Model<State, E> {
   eventTypes: GeneralTypeSelector
   objectTypes: string[]
 
+  /**
+   * resolve when finished initial sync
+   * will keep auto-update in the background
+   *
+   * */
+  startSync(): Promise<void>
+
+  /**
+   * check the events' heights to determine diff
+   * */
+  isSynced(): Promise<boolean>
+
   getStatus(): Promise<ModelStatus<State>>
 
   setStatus(status: ModelStatus<State>): Promise<void>
