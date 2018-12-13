@@ -1,4 +1,5 @@
-import { AggregateObject, Command, ConcreteTypeSelector, Event, GeneralTypeSelector, id, Query } from './data.types';
+import { Command, Event, GeneralTypeSelector, Query } from './data.types';
+import { EventStore, StateStore } from './store.types';
 
 export type Consumer<T> = (t: T) => void;
 
@@ -44,7 +45,7 @@ export interface ModelStatus<State> {
  * maintain the state automatically, persist state if needed
  * */
 export interface Model<State, E> {
-  eventTypes: string[]
+  eventTypes: GeneralTypeSelector
   objectTypes: string[]
 
   getStatus(): Promise<ModelStatus<State>>
@@ -54,6 +55,12 @@ export interface Model<State, E> {
   reduceOne(event: Event<E>): Promise<State>
 
   reduceAll(events: Array<Event<E>>): Promise<State>
+
+  registerEventHandler(eventHandler: EventHandler<State, E>): this
+
+  getEventStore<T extends E>(eventType: GeneralTypeSelector): Promise<EventStore<T>>
+
+  getStateStore<T extends State>(stateType: GeneralTypeSelector): Promise<StateStore<T>>
 }
 
 export interface CqrsEngine {
@@ -66,30 +73,10 @@ export interface CqrsEngine {
 
   registerModel<State, E>(model: Model<State, E>)
 
-  getEventStore()
+  getModel<State, E>(objectType: string): Model<State, E>
 
-  getStateStore()
-}
+  getEventStore<T>(eventType: GeneralTypeSelector): Promise<EventStore<T>>
 
-export interface EventStore<T> {
-  store(event: Event<T>): Promise<void>
+  getStateStore<T>(stateType: GeneralTypeSelector): Promise<StateStore<T>>
 
-  get(id: id): Promise<Event<T>>
-
-  getHeight(): Promise<number>
-
-  /**
-   * inclusive
-   * */
-  getAfter(types: ConcreteTypeSelector, height: number): Promise<Array<Event<T>>>
-
-  listen(types: ConcreteTypeSelector, consumer: Consumer<T>)
-}
-
-export interface StateStore<T> {
-  store(stateObject: AggregateObject<T>): Promise<void>
-
-  get(id: id): Promise<AggregateObject<T>>
-
-  find(types: TypeSelector, filter: (s: AggregateObject<T>) => boolean): Promise<Array<AggregateObject<T>>>
 }
