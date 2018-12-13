@@ -1,4 +1,4 @@
-import { GeneralTypeSelector } from '../cqrs/types/data.types';
+import { GeneralTypeSelector } from '../lib/cqrs/types/data.types';
 
 export function isTypeMatch(type: string, typeSelector: GeneralTypeSelector) {
   if (typeSelector === 'all') {
