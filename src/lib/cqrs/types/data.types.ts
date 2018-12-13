@@ -1,29 +1,29 @@
-export type id = number | string;
+export type id = number | string | { toString: () => string };
 
 export type ConcreteTypeSelector = string[] | 'all';
 export type GeneralTypeSelector = ConcreteTypeSelector | 'else';
 
 export interface Command<T> {
-  type: string
-  session: id
-  seq: number
-  payload: T
+  type: string;
+  session: id;
+  seq: number;
+  payload: T;
 }
 
 /**
  * triggered by commands
  * */
 export interface Event<T> {
-  type: string
-  id: id
-  payload: T
+  type: string;
+  id: id;
+  payload?: T;
 }
 
 export interface Query<T, R> {
-  type: string
-  session: id
-  seq: number
-  payload: T
+  type: string;
+  session: id;
+  seq: number;
+  payload: T;
 }
 
 /**
@@ -35,12 +35,12 @@ export interface Query<T, R> {
  * instance of Model object
  * */
 export interface AggregateObject<T> {
-  type: string
-  id: id
-  payload: T
+  type: string;
+  id: id;
+  payload?: T;
 }
 
 export interface ValueObject<T> {
-  type: string
-  payload: T
+  type: string;
+  payload: T;
 }

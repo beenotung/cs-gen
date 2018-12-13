@@ -4,14 +4,14 @@ import { EventStore, StateStore } from './store.types';
 export type Consumer<T> = (t: T) => void;
 
 /**
- * get data from AggregateObject
+ * get data from AggregateDBObject
  * */
 export interface QueryHandler<T, R> {
   queryTypes: GeneralTypeSelector;
 
-  handleOne(query: Query<T, R>): Promise<R>
+  handleOne(query: Query<T, R>): Promise<R>;
 
-  handleAll(queries: Array<Query<T, R>>): Promise<R[]>
+  handleAll(queries: Array<Query<T, R>>): Promise<R[]>;
 }
 
 /**
@@ -19,24 +19,24 @@ export interface QueryHandler<T, R> {
  * to be subscribed by state reducer (view model)
  * */
 export interface CommandHandler<T> {
-  commandTypes: GeneralTypeSelector
+  commandTypes: GeneralTypeSelector;
 
-  handleOne(command: Command<T>): Promise<Array<Event<any>>>
+  handleOne(command: Command<T>): Promise<Array<Event<any>>>;
 
-  handleAll(commands: Array<Command<T>>): Promise<Array<Event<any>>>
+  handleAll(commands: Array<Command<T>>): Promise<Array<Event<any>>>;
 }
 
 export interface EventHandler<State, E> {
   eventTypes: GeneralTypeSelector;
 
-  handleOne(state: State, event: Event<E>): Promise<State>
+  handleOne(state: State, event: Event<E>): Promise<State>;
 
-  handleAll(state: State, events: Array<Event<E>>): Promise<State>
+  handleAll(state: State, events: Array<Event<E>>): Promise<State>;
 }
 
 export interface ModelStatus<State> {
-  state: State
-  version: number
+  state: State;
+  version: number;
 }
 
 /**
@@ -45,50 +45,52 @@ export interface ModelStatus<State> {
  * maintain the state automatically, persist state if needed
  * */
 export interface Model<State, E> {
-  eventTypes: GeneralTypeSelector
-  objectTypes: string[]
+  eventTypes: GeneralTypeSelector;
+  objectTypes: string[];
 
   /**
    * resolve when finished initial sync
    * will keep auto-update in the background
    *
    * */
-  startSync(): Promise<void>
+  startSync(): Promise<void>;
 
   /**
    * check the events' heights to determine diff
    * */
-  isSynced(): Promise<boolean>
+  isSynced(): Promise<boolean>;
 
-  getStatus(): Promise<ModelStatus<State>>
+  getStatus(): Promise<ModelStatus<State>>;
 
-  setStatus(status: ModelStatus<State>): Promise<void>
+  setStatus(status: ModelStatus<State>): Promise<void>;
 
-  reduceOne(event: Event<E>): Promise<State>
+  reduceOne(event: Event<E>): Promise<State>;
 
-  reduceAll(events: Array<Event<E>>): Promise<State>
+  reduceAll(events: Array<Event<E>>): Promise<State>;
 
-  registerEventHandler(eventHandler: EventHandler<State, E>): this
+  registerEventHandler(eventHandler: EventHandler<State, E>): this;
 
-  getEventStore<T extends E>(eventType: GeneralTypeSelector): Promise<EventStore<T>>
+  getEventStore<T extends E>(
+    eventType: GeneralTypeSelector,
+  ): Promise<EventStore<T>>;
 
-  getStateStore<T extends State>(stateType: GeneralTypeSelector): Promise<StateStore<T>>
+  getStateStore<T extends State>(
+    stateType: GeneralTypeSelector,
+  ): Promise<StateStore<T>>;
 }
 
 export interface CqrsEngine {
-
   /* write side */
-  registerCommandHandler<T, R>(commandHandler: CommandHandler<T>)
+  registerCommandHandler<T, R>(commandHandler: CommandHandler<T>);
 
   /* read side */
-  registerQueryHandler<T, R>(queryHandler: QueryHandler<T, R>)
+  registerQueryHandler<T, R>(queryHandler: QueryHandler<T, R>);
 
-  registerModel<State, E>(model: Model<State, E>)
+  registerModel<State, E>(model: Model<State, E>);
 
-  getModel<State, E>(objectType: string): Model<State, E>
+  getModel<State, E>(objectType: string): Model<State, E>;
 
-  getEventStore<T>(eventType: GeneralTypeSelector): Promise<EventStore<T>>
+  getEventStore<T>(eventType: GeneralTypeSelector): Promise<EventStore<T>>;
 
-  getStateStore<T>(stateType: GeneralTypeSelector): Promise<StateStore<T>>
-
+  getStateStore<T>(stateType: GeneralTypeSelector): Promise<StateStore<T>>;
 }
