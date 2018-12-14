@@ -17,7 +17,7 @@ export interface Event<E>extends DataObject<E> {
   seq: number
 }
 
-export interface Query<Q> extends DataValue<Q> {
+export interface Query<Q, R> extends DataValue<Q> {
   session?
 }
 
