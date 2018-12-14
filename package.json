@@ -40,6 +40,7 @@
     "@beenotung/tslib": "^12.4.0",
     "@nestjs/common": "^5.1.0",
     "@nestjs/core": "^5.1.0",
+    "mongoose": "^5.3.16",
     "nestjs-typegoose": "^5.1.2",
     "nestlib": "^0.3.0",
     "reflect-metadata": "^0.1.12",

@@ -1,108 +1,48 @@
-import { Consumer } from './types/api.types';
-import {
-  ConcreteTypeSelector,
-  GeneralTypeSelector,
-  id,
-} from './types/data.types';
+import { getObjectType } from '@beenotung/tslib';
+import { id } from './types';
+
+export type Consumer<A> = (a: A) => void;
+export type Mapper<A, B> = (a: A) => B;
 
 export function idToString(id: id): string {
-  switch (typeof id) {
-    case 'string':
-      return id;
-    case 'number':
-    default:
-      return id.toString();
-  }
+  return id.toString();
 }
 
-export function mkId(type: string, versionOrId: id): string {
-  return type + '_v' + versionOrId.toString;
+function as<T>(x): T {
+  return x;
 }
 
-export function map_push<K, V>(map: Map<K, V[]>, k: K, v: V) {
-  if (map.has(k)) {
-    map.get(k).push(v);
-  } else {
-    map.set(k, [v]);
-  }
-}
-
-export function map_getAll<K, V>(map: Map<K, V[]>, k: K): V[] {
-  if (map.has(k)) {
-    return map.get(k);
-  } else {
-    return [];
-  }
-}
-
-export function foreachType(types: GeneralTypeSelector, f: Consumer<string>) {
-  if (Array.isArray(types)) {
-    types.forEach(f);
-  } else {
-    f(types);
-  }
-}
-
-export function toConcreteTypeSelector(type: string): ConcreteTypeSelector {
-  switch (type) {
-    case 'all':
-      return type;
-    case 'else':
-      throw new TypeError("expect concrete type selector, got 'else' selector");
-    default:
-      return [type];
-  }
-}
-
-export function mkMap<K, V>(k: K, v: V): Map<K, V> {
-  const res = new Map();
-  res.set(k, v);
-  return res;
-}
-
-export function mapTypes<A>(
-  types: GeneralTypeSelector,
-  f: (type: string) => A,
-): A[] {
-  if (Array.isArray(types)) {
-    return types.map(f);
-  } else {
-    return [f(types)];
-  }
-}
-
-/**
- * only for serializable objects
- * */
-export function json_object_equal(a, b): boolean {
-  if (a === b) {
-    return true;
-  }
-  if (Array.isArray(a)) {
-    if (!Array.isArray(b)) {
-      return false;
-    }
-    if (a.length !== b.length) {
-      return false;
-    }
-    for (const i in a) {
-      if (!json_object_equal(a[i], b[i])) {
-        return false;
-      }
-    }
-    /* all elements in two arrays are the same */
-    return true;
-  }
-  /* json object */
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  if (aKeys.length !== bKeys.length) {
+export function partialMatch<T>(query: Partial<T>, target: T): boolean {
+  const queryType = getObjectType(query);
+  const targetType = getObjectType(target);
+  if (queryType !== targetType) {
     return false;
   }
-  for (const k of aKeys) {
-    if (!json_object_equal(a[k], b[k])) {
-      return false;
+  switch (queryType) {
+    case 'AsyncFunction':
+    case 'Function':
+      throw new Error('unsupported partial match on type: ' + queryType);
+    case 'Number':
+    case 'Null':
+    case 'Undefined':
+    case 'String':
+      return query === target;
+    case 'Array':
+      return as<any[]>(target).some(t => as<any[]>(query).indexOf(t) !== -1);
+    case 'Set':
+      return partialMatch(
+        Array.from(as<Set<any>>(query)),
+        Array.from(as<Set<any>>(target)),
+      );
+    case 'Map': {
+      let matched = false;
+      const targetMap = as<Map<any, any>>(target);
+      as<Map<any, any>>(query).forEach((v, k) => {
+        matched = matched || partialMatch(v, targetMap.get(k));
+      });
+      return matched;
     }
+    case 'Object':
+      return Object.keys(query).some(key => partialMatch(query[key], target[key]));
   }
-  return true;
 }

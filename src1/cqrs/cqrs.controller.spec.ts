@@ -9,7 +9,9 @@ describe('Cqrs Controller', () => {
     }).compile();
   });
   it('should be defined', () => {
-    const controller: CqrsController = module.get<CqrsController>(CqrsController);
+    const controller: CqrsController = module.get<CqrsController>(
+      CqrsController,
+    );
     expect(controller).toBeDefined();
   });
 });
