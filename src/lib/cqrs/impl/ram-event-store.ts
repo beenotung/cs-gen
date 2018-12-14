@@ -10,7 +10,9 @@ export class RamEventStoreImpl<T> implements EventStore<T> {
   listeners = new Map<string, Array<Consumer<Array<Event<T>>>>>();
 
   async get(id: id): Promise<Event<T>> {
-    return this.events.get(idToString(id)) || throwError(new Error('not found'));
+    return (
+      this.events.get(idToString(id)) || throwError(new Error('not found'))
+    );
   }
 
   async getAfter(

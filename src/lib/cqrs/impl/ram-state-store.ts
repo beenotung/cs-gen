@@ -21,7 +21,9 @@ export class RamStateStore<T> implements StateStore<T> {
   }
 
   async get(id: id): Promise<AggregateObject<T>> {
-    return this.states.get(idToString(id)) || throwError(new Error('not found'));
+    return (
+      this.states.get(idToString(id)) || throwError(new Error('not found'))
+    );
   }
 
   async store(stateObject: AggregateObject<T>): Promise<void> {

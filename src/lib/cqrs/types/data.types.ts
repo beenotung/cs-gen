@@ -19,6 +19,9 @@ export interface Event<T> {
   payload?: T;
 }
 
+/**
+ * type to be AggregatedObject or ValueObject type
+ * */
 export interface Query<T, R> {
   type: string;
   session: id;
@@ -37,6 +40,7 @@ export interface Query<T, R> {
 export interface AggregateObject<T> {
   type: string;
   id: id;
+  version: number;
   payload?: T;
 }
 

@@ -13,10 +13,13 @@ export class EventDBObject<T> extends Typegoose implements Event<T> {
   payload?: T;
 }
 
-export const EventObjectModel = new EventDBObject().getModelForClass(EventDBObject);
-export const EventObjectSchema = EventObjectModel.schema;
+export const EventDBObjectModel = new EventDBObject().getModelForClass(
+  EventDBObject,
+);
+export const EventObjectSchema = EventDBObjectModel.schema;
 
-export class AggregateDBObject<T> extends Typegoose implements AggregateDBObject<T> {
+export class AggregateDBObject<T> extends Typegoose
+  implements AggregateDBObject<T> {
   @prop({ required: true })
   type: string;
 
@@ -26,3 +29,8 @@ export class AggregateDBObject<T> extends Typegoose implements AggregateDBObject
   @prop()
   payload?: T;
 }
+
+export const AggregateDBObjectModel = new AggregateDBObject().getModelForClass(
+  AggregateDBObject,
+);
+export const AggregateDBObjectSchema = AggregateDBObjectModel.schema;

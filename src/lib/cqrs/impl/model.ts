@@ -1,119 +1,98 @@
-import { Lock } from '@beenotung/tslib/lock';
 import { EventHandler, Model, ModelStatus } from '../types/api.types';
-import { AggregateObject, ConcreteTypeSelector, Event, GeneralTypeSelector } from '../types/data.types';
+import { ConcreteTypeSelector, Event } from '../types/data.types';
 import { EventStore, StateStore } from '../types/store.types';
-import { RamEventStoreImpl } from './ram-event-store';
-import { RamStateStore } from './ram-state-store';
+import { foreachType, map_push, mapTypes } from '../utils';
 
-function toMap<K, V>(k: K, v: V): Map<K, V> {
-  const res = new Map();
-  res.set(k, v);
-  return res;
-}
+export abstract class GeneralModel<State, E> implements Model<State, E> {
+  abstract eventTypes: ConcreteTypeSelector;
+  abstract objectType: string;
 
-export abstract class SingleModelImpl<State, E> implements Model<State, E> {
-  abstract eventTypes: GeneralTypeSelector;
-  objectTypes: string[];
+  eventHandlers = new Map<string, Array<EventHandler<State, E>>>();
 
-  version = 0;
-  writeLock = new Lock();
-  localEventHeight = 0;
-  eventHandlers: Array<EventHandler<State, E>> = [];
+  abstract getEventStore(eventType: string): Promise<EventStore<E>>;
 
-  constructor(
-    public objectType = 'model',
-    public eventStores: Map<GeneralTypeSelector, EventStore<E>> = toMap('all' as GeneralTypeSelector, new RamEventStoreImpl()),
-    public stateStore: StateStore<State> = new RamStateStore()) {
-    this.objectTypes = [this.objectType];
-  }
+  abstract getStateStore(stateType: string): Promise<StateStore<State>>;
 
-  async getEventStore<T extends E>(eventType: GeneralTypeSelector): Promise<EventStore<T>> {
-    return this.eventStores.get(eventType) as EventStore<T>;
-  }
+  abstract getStatus(): Promise<ModelStatus<State>>;
 
-  async getStateStore<T extends State>(stateType: GeneralTypeSelector): Promise<StateStore<T>> {
-    return this.stateStore as StateStore<T>;
-  }
-
-  async getStatus(): Promise<ModelStatus<State>> {
-    if (this.version === 0) {
-      return {
-        version: 0,
-        state: {} as State,
-      };
-    }
-    const aggregateObject = await this.stateStore.get(this.version);
-    return {
-      state: aggregateObject.payload,
-      version: this.version,
-    };
-  }
+  abstract getLocalEventHeight(eventType: string): Promise<number>;
 
   async isSynced(): Promise<boolean> {
-    const remoteEventHeight = (await this.mapEventStores(e => e.getHeight()))
-      .reduce((acc, c) => acc + c);
-    return this.localEventHeight === remoteEventHeight;
+    const [remoteHeights, localHeights] = await Promise.all([
+      this.mapEventStores(e => e.getHeight()),
+      Promise.all(
+        mapTypes(this.eventTypes, type => this.getLocalEventHeight(type)),
+      ),
+    ]);
+    if (remoteHeights.length !== localHeights.length) {
+      throw new Error('inconsistent event store amount');
+    }
+    for (const i in remoteHeights) {
+      if (remoteHeights[i] !== localHeights[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  abstract reduceAll(events: Array<Event<E>>): Promise<State>;
-
-  reduceOne(event: Event<E>): Promise<State> {
-    return this.reduceAll([event]);
+  handleEvent(events: Event<E>): Promise<void> {
+    return this.handleEvents([events]);
   }
+
+  abstract async handleEvents(events: Array<Event<E>>): Promise<void>;
 
   registerEventHandler(eventHandler: EventHandler<State, E>): this {
-    this.eventHandlers.push(eventHandler);
+    foreachType(eventHandler.eventTypes, type =>
+      map_push(this.eventHandlers, type, eventHandler),
+    );
     return this;
   }
 
-  async setStatus(status: ModelStatus<State>): Promise<void> {
-    await this.writeLock.acquire();
-    try {
-      if (status.version !== this.version + 1) {
-        throw new Error(`Version conflict, expect ${this.version + 1}, got ${status.version}`);
-      }
-      const aggregateObject: AggregateObject<State> = {
-        id: status.version,
-        type: 'model',
-        payload: status.state,
-      };
-      await this.stateStore.store(aggregateObject);
-      this.version = status.version;
-    } catch (e) {
-      throw e;
-    } finally {
-      this.writeLock.release();
-    }
-  }
+  abstract setStatus(status: ModelStatus<State>): Promise<void>;
 
   async startSync(): Promise<void> {
-    await this.mapEventStores((eventStore, eventType) => eventStore.listen(eventType === 'else' ? 'all' : eventType, async events => {
-      await this.writeLock.acquire();
-      try {
-        const newState = await this.reduceAll(events);
-        const newVersion = this.version + 1;
-        await this.setStatus({ version: newVersion, state: newState });
-      } catch (e) {
-        throw  e;
-      } finally {
-        this.writeLock.release();
-      }
-    }));
+    return new Promise<void>(async (resolve, reject) => {
+      const checkSynced = (): Promise<void> =>
+        this.isSynced()
+          .then(b => (b ? resolve() : void 0))
+          .catch(reject);
+      let write = Promise.resolve();
+      this.mapEventStores((eventStore, eventType) =>
+        eventStore.listen(this.eventTypes, events => {
+          write = write.then(() => this.handleEvents(events));
+          write.then(checkSynced).catch(reject);
+        }),
+      ).catch(reject);
+    });
   }
 
-  getEventStores(): Promise<Array<EventStore<E>>> {
-    return this.mapEventStores(e => e);
+  async syncOnce(): Promise<void> {
+    let write = Promise.resolve();
+    await this.mapEventStores(async (eventStore, eventType) =>
+      eventStore
+        .getAfter(this.eventTypes, await this.getLocalEventHeight(eventType))
+        .then(events => {
+          write = write.then(() => this.handleEvents(events));
+        }),
+    );
+    await write;
   }
 
-  mapEventStores<A>(f: (eventStore: EventStore<E>, eventType: GeneralTypeSelector) => A | Promise<A>): Promise<A[]> {
+  mapEventStores<A>(
+    f: (eventStore: EventStore<any>, eventType: string) => A | Promise<A>,
+  ): Promise<A[]> {
     if (Array.isArray(this.eventTypes)) {
       return Promise.all(
-        this.eventTypes
-          .map(et =>
-            this.getEventStore(et as ConcreteTypeSelector)
-              .then(e => f(e, et as ConcreteTypeSelector))));
+        this.eventTypes.map(eventType =>
+          this.getEventStore(eventType).then(eventStore =>
+            f(eventStore, eventType),
+          ),
+        ),
+      );
     } else {
-      return this.getEventStore(this.eventTypes).then(e => f(e, this.eventTypes)).then(x => [x]);
+      return this.getEventStore(this.eventTypes)
+        .then(eventStore => f(eventStore, this.eventTypes as string))
+        .then(x => [x]);
     }
   }
 }

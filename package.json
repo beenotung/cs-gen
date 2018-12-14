@@ -37,10 +37,11 @@
     }
   },
   "dependencies": {
-    "@beenotung/tslib": "^12.3.0",
+    "@beenotung/tslib": "^12.4.0",
     "@nestjs/common": "^5.1.0",
     "@nestjs/core": "^5.1.0",
     "nestjs-typegoose": "^5.1.2",
+    "nestlib": "^0.3.0",
     "reflect-metadata": "^0.1.12",
     "rxjs": "^6.2.2",
     "typegoose": "^5.4.1",
