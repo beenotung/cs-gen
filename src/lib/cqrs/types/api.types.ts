@@ -1,4 +1,6 @@
+import { Obj } from '@beenotung/tslib/lang';
 import {
+  AggregateObject,
   Command,
   ConcreteTypeSelector,
   Event,
@@ -37,9 +39,10 @@ export interface EventHandler<State, E> {
   ): Promise<ModelStatus<State>>;
 }
 
-export interface ModelStatus<State> {
-  state: State;
+export interface ModelStatus<T> {
+  state: Array<AggregateObject<T>>;
   version: number;
+  eventHeights: Obj<number>;
 }
 
 /**
@@ -99,32 +102,36 @@ export interface Model<State, E> {
   /**
    * injected by cqrs engine
    * */
-  getStateStore(stateType: string): Promise<StateStore<State>>;
+  getStateStore(): Promise<StateStore<State>>;
 }
 
-export interface CqrsEngine {
+export abstract class CqrsEngine {
   /* write side */
-  registerCommandHandler<T, R>(commandHandler: CommandHandler<T>): this;
+  abstract registerCommandHandler<T, R>(
+    commandHandler: CommandHandler<T>,
+  ): this;
 
-  fireCommand<T>(cmd: Command<T>): Promise<void>;
+  abstract fireCommand<T>(cmd: Command<T>): Promise<void>;
 
   /* read side */
-  registerQueryHandler<T, R>(queryHandler: QueryHandler<T, R>): this;
+  abstract registerQueryHandler<T, R>(queryHandler: QueryHandler<T, R>): this;
 
-  query<T, R>(query: Query<T, R>): Promise<R>;
+  abstract query<T, R>(query: Query<T, R>): Promise<R>;
 
   /* object holding */
-  registerModel<State, E>(model: Model<State, E>): this;
+  abstract registerModel<State, E>(model: Model<State, E>): this;
 
-  getModel<State, E>(objectType: string): Model<State, E>;
+  abstract getModel<State, E>(objectType: string): Model<State, E>;
 
   // genModel<State, E>(objectType: string): Model<State, E>
 
-  getEventStore<T>(eventType: string): Promise<EventStore<T>>;
+  abstract getEventStore<T>(eventType: string): Promise<EventStore<T>>;
 
-  getStateStore<T>(stateType: string): Promise<StateStore<T>>;
+  abstract getStateStore<T>(stateType: string): Promise<StateStore<T>>;
 
-  syncOnce(model: Model<any, any>): Promise<void>;
+  abstract syncOnce(model: Model<any, any>): Promise<void>;
 
-  startSync(model: Model<any, any>): Promise<void>;
+  abstract startSync(model: Model<any, any>): Promise<void>;
+
+  abstract startSyncAll(): Promise<void>;
 }

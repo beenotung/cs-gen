@@ -1,21 +1,75 @@
+import { Obj } from '@beenotung/tslib/lang';
 import { EventHandler, Model, ModelStatus } from '../types/api.types';
-import { ConcreteTypeSelector, Event } from '../types/data.types';
+import {
+  AggregateObject,
+  ConcreteTypeSelector,
+  Event,
+} from '../types/data.types';
 import { EventStore, StateStore } from '../types/store.types';
 import { foreachType, map_push, mapTypes } from '../utils';
+import { EventHeight, EventHeightType, toEventHeightId } from './common';
 
-export abstract class GeneralModel<State, E> implements Model<State, E> {
+export abstract class GeneralModel<State, E>
+  implements Model<State | EventHeight, E> {
   abstract eventTypes: ConcreteTypeSelector;
   abstract objectType: string;
 
   eventHandlers = new Map<string, Array<EventHandler<State, E>>>();
 
+  private _write = Promise.resolve();
+
   abstract getEventStore(eventType: string): Promise<EventStore<E>>;
 
-  abstract getStateStore(stateType: string): Promise<StateStore<State>>;
+  abstract getStateStore(): Promise<StateStore<State | EventHeight>>;
 
-  abstract getStatus(): Promise<ModelStatus<State>>;
+  getStatus(): Promise<ModelStatus<State | EventHeight>> {
+    return this.write(async () => {
+      const [stateStore, version] = await Promise.all([
+        this.getStateStore(),
+        this.getVersion(),
+      ]);
+      const eventHeights: Obj<number> = {};
+      const [state] = await Promise.all([
+        stateStore.getAll(),
+        mapTypes(this.eventTypes, type =>
+          this.getLocalEventHeight(type).then(
+            height => (eventHeights[type] = height),
+          ),
+        ),
+      ]);
+      return { state, version, eventHeights };
+    });
+  }
 
-  abstract getLocalEventHeight(eventType: string): Promise<number>;
+  async setLocalEventHeight(eventType: string, height: number): Promise<void> {
+    const store = await this.getStateStore();
+    const id = toEventHeightId(eventType);
+    const oldState = await store.get(id);
+    const newState: AggregateObject<EventHeight> = {
+      id,
+      version: oldState ? oldState.version : 1,
+      type: EventHeightType,
+      payload: height,
+    };
+    await store.store(newState);
+  }
+
+  getLocalEventHeight(eventType: string): Promise<number> {
+    return this.getStateStore()
+      .then(store => store.get(toEventHeightId(eventType)))
+      .then(x => {
+        if (x === undefined || x === null) {
+          return 0;
+        }
+        if (x.payload === undefined || x.payload === null) {
+          return 0;
+        }
+        if (typeof x.payload === 'number') {
+          return x.payload;
+        }
+        throw new TypeError('expected number, got: ' + typeof x.payload);
+      });
+  }
 
   async isSynced(): Promise<boolean> {
     const [remoteHeights, localHeights] = await Promise.all([
@@ -48,34 +102,64 @@ export abstract class GeneralModel<State, E> implements Model<State, E> {
     return this;
   }
 
-  abstract setStatus(status: ModelStatus<State>): Promise<void>;
-
-  async startSync(): Promise<void> {
-    return new Promise<void>(async (resolve, reject) => {
-      const checkSynced = (): Promise<void> =>
-        this.isSynced()
-          .then(b => (b ? resolve() : void 0))
-          .catch(reject);
-      let write = Promise.resolve();
-      this.mapEventStores((eventStore, eventType) =>
-        eventStore.listen(this.eventTypes, events => {
-          write = write.then(() => this.handleEvents(events));
-          write.then(checkSynced).catch(reject);
-        }),
-      ).catch(reject);
+  setStatus(status: ModelStatus<State>): Promise<void> {
+    return this.write(async () => {
+      await Promise.all([
+        this.getStateStore().then(store => store.storeAll(status.state)),
+        Promise.all(
+          Object.keys(status).map(type =>
+            this.setLocalEventHeight(type, status.eventHeights[type]),
+          ),
+        ),
+      ]);
     });
   }
 
-  async syncOnce(): Promise<void> {
-    let write = Promise.resolve();
-    await this.mapEventStores(async (eventStore, eventType) =>
-      eventStore
-        .getAfter(this.eventTypes, await this.getLocalEventHeight(eventType))
-        .then(events => {
-          write = write.then(() => this.handleEvents(events));
+  startSync(): Promise<void> {
+    return this.write(
+      () =>
+        new Promise((resolve, reject) => {
+          const checkSynced = () =>
+            this.isSynced().then(b => {
+              if (b) {
+                resolve();
+              }
+            });
+          checkSynced();
+          let write = Promise.resolve();
+          this.mapEventStores(eventStore =>
+            eventStore.listen(this.eventTypes, events => {
+              write = write.then(() => this.handleEvents(events));
+              write.then(checkSynced).catch(reject);
+            }),
+          ).catch(reject);
+          write.catch(reject);
         }),
     );
-    await write;
+  }
+
+  async syncOnce(): Promise<void> {
+    return this.write(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const checkSynced = () =>
+            this.isSynced().then(b => {
+              if (b) {
+                resolve();
+              }
+            });
+          let write = Promise.resolve();
+          this.mapEventStores(async (eventStore, eventType) => {
+            const events = await eventStore.getAfter(
+              this.eventTypes,
+              await this.getLocalEventHeight(eventType),
+            );
+            write = write.then(() => this.handleEvents(events));
+            write.then(checkSynced).catch(reject);
+          }).catch(reject);
+          write.catch(reject);
+        }),
+    );
   }
 
   mapEventStores<A>(
@@ -94,5 +178,30 @@ export abstract class GeneralModel<State, E> implements Model<State, E> {
         .then(eventStore => f(eventStore, this.eventTypes as string))
         .then(x => [x]);
     }
+  }
+
+  async getVersion(): Promise<number> {
+    return (await this.mapEventStores(e => e.getHeight())).reduce(
+      (acc, c) => acc + c,
+    );
+  }
+
+  write<A>(f: () => A | Promise<A>): Promise<A> {
+    return new Promise<A>((resolve, reject) => {
+      this._write = this._write.then(
+        () =>
+          new Promise<void>(resolveWrite => {
+            try {
+              Promise.resolve(f())
+                .then(resolve)
+                .catch(reject)
+                .then(resolveWrite);
+            } catch (e) {
+              reject(e);
+              resolveWrite();
+            }
+          }),
+      );
+    });
   }
 }

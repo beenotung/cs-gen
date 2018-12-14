@@ -1,3 +1,4 @@
+import { groupBy, mapToArray } from '@beenotung/tslib';
 import { HashedArray } from '@beenotung/tslib/hashed-array';
 import { throwError } from '../../../utils/error';
 import { Consumer } from '../types/api.types';
@@ -6,7 +7,7 @@ import { EventStore } from '../types/store.types';
 import { idToString } from '../utils';
 
 export class RamEventStoreImpl<T> implements EventStore<T> {
-  events = new HashedArray<Event<T>>();
+  events = new HashedArray<Event<T>>(x => idToString(x.id));
   listeners = new Map<string, Array<Consumer<Array<Event<T>>>>>();
 
   async get(id: id): Promise<Event<T>> {
@@ -37,6 +38,10 @@ export class RamEventStoreImpl<T> implements EventStore<T> {
     cs.push(consumer);
   }
 
+  getListener(type: string): Array<Consumer<Array<Event<T>>>> {
+    return this.listeners.get(type);
+  }
+
   listen(types: ConcreteTypeSelector, consumer: Consumer<Array<Event<T>>>) {
     if (typeof types === 'string') {
       this.addListener(types, consumer);
@@ -48,10 +53,18 @@ export class RamEventStoreImpl<T> implements EventStore<T> {
   }
 
   async storeAll(events: Array<Event<T>>): Promise<void> {
-    events.forEach(event => this.events.insert(event));
+    events.forEach(event => this.events.upsert(event));
+    mapToArray(groupBy(e => e.type, events), v => v).forEach(events =>
+      this.getListener(events[0].type).forEach(f => f(events)),
+    );
   }
 
   async storeOne(event: Event<T>): Promise<void> {
-    this.events.insert(event);
+    this.events.upsert(event);
+    this.getListener(event.type).forEach(f => f([event]));
+  }
+
+  async getAll(): Promise<Array<Event<T>>> {
+    return this.events.array;
   }
 }

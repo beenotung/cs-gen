@@ -15,6 +15,10 @@ export function idToString(id: id): string {
   }
 }
 
+export function mkId(type: string, versionOrId: id): string {
+  return type + '_v' + versionOrId.toString;
+}
+
 export function map_push<K, V>(map: Map<K, V[]>, k: K, v: V) {
   if (map.has(k)) {
     map.get(k).push(v);

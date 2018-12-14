@@ -7,9 +7,14 @@ import {
   Model,
   QueryHandler,
 } from '../types/api.types';
-import { Command, Event, Query } from '../types/data.types';
+import {
+  Command,
+  Event,
+  GeneralTypeSelector,
+  Query,
+} from '../types/data.types';
 import { EventStore, StateStore } from '../types/store.types';
-import { foreachType, map_getAll, map_push } from '../utils';
+import { foreachType, map_getAll, map_push, mapTypes } from '../utils';
 
 const mapEventType = (e: Event<any>) => e.type;
 
@@ -38,6 +43,10 @@ export class CqrsEngineImpl implements CqrsEngine {
           ),
       ),
     );
+  }
+
+  setEventStore<T>(eventTypes: GeneralTypeSelector, eventStore: EventStore<T>) {
+    foreachType(eventTypes, type => this.eventStores.set(type, eventStore));
   }
 
   async getEventStore<T>(eventType: string): Promise<EventStore<T>> {
@@ -104,11 +113,24 @@ export class CqrsEngineImpl implements CqrsEngine {
     return this;
   }
 
-  startSync(model: Model<any, any>) {
-    return model.startSync();
+  async startSync(model: Model<any, any>) {
+    await model.startSync();
+    await Promise.all(
+      mapTypes(model.eventTypes, type =>
+        this.getEventStore(type).then(store =>
+          store.listen(model.eventTypes, events => {
+            return model.handleEvents(events);
+          }),
+        ),
+      ),
+    );
   }
 
   syncOnce(model: Model<any, any>) {
     return model.syncOnce();
+  }
+
+  async startSyncAll(): Promise<void> {
+    await Promise.all(mapToArray(this.models, model => this.startSync(model)));
   }
 }

@@ -33,4 +33,12 @@ export class MongooStateStoreImpl<T> implements StateStore<T> {
     Object.assign(data, stateObject);
     await data.save();
   }
+
+  getAll(): Promise<Array<AggregateObject<T>>> {
+    return undefined;
+  }
+
+  storeAll(stateObjects: Array<AggregateObject<T>>): Promise<void> {
+    return Promise.all(stateObjects.map(x => this.store(x))).then(() => void 0);
+  }
 }

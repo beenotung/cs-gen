@@ -4,7 +4,11 @@ import { EventEmitter } from 'events';
 import { InjectModel } from 'nestjs-typegoose';
 import { ModelType } from 'typegoose';
 import { Consumer } from '../../lib/cqrs/types/api.types';
-import { ConcreteTypeSelector, id } from '../../lib/cqrs/types/data.types';
+import {
+  ConcreteTypeSelector,
+  Event,
+  id,
+} from '../../lib/cqrs/types/data.types';
 import { EventStore } from '../../lib/cqrs/types/store.types';
 import { EventDBObject } from './store.model';
 
@@ -52,5 +56,9 @@ export class MongooEventStoreImpl<T> implements EventStore<T> {
 
   storeOne(event: EventDBObject<T>): Promise<void> {
     return this.storeAll([event]);
+  }
+
+  async getAll(): Promise<Array<Event<T>>> {
+    return this.model.find({});
   }
 }
