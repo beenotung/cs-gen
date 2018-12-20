@@ -1,4 +1,4 @@
-# m2jit-server
+# cqrs-exp
 
 experimental repo using cqrs with nestjs
 

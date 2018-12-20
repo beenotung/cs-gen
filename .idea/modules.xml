@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/m2jit-server.iml" filepath="$PROJECT_DIR$/.idea/m2jit-server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/cqrs-exp.iml" filepath="$PROJECT_DIR$/.idea/cqrs-exp.iml" />
     </modules>
   </component>
 </project>
