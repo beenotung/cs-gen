@@ -5,10 +5,7 @@ import { CqrsController } from './cqrs/cqrs.controller';
 
 @Module({
   imports: [],
-  providers: [
-    AppService,
-  ],
+  providers: [AppService],
   controllers: [AppController, CqrsController],
 })
-export class AppModule {
-}
+export class AppModule {}

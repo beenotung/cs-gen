@@ -1,14 +1,14 @@
 export enum UserEvents {
   UserCreated = 'UserCreated',
-  UserPhoneUpdated = 'UserPhoneUpdated'
+  UserPhoneUpdated = 'UserPhoneUpdated',
 }
 
 export interface UserCreated {
-  user_id: string
-  username: string
+  user_id: string;
+  username: string;
 }
 
 export interface UserPhoneUpdated {
-  user_id: string
-  phone: string
+  user_id: string;
+  phone: string;
 }

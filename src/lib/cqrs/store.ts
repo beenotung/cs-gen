@@ -1,32 +1,34 @@
 import { DataObject, Event, id } from './types';
 import { Consumer, Mapper } from './utils';
 
-export interface Store {
-  newId(): Promise<id>
+export interface Store<T> {
+  newId(): Promise<id>;
 
-  store<T>(data: DataObject<T>): Promise<void>
+  store(data: DataObject<T>): Promise<void>;
 
-  get<T>(id: id): Promise<DataObject<T>>
+  get(id: id): Promise<DataObject<T>>;
 
-  find<T>(qs: Array<Partial<DataObject<T>>>): Promise<Array<DataObject<T>>>
+  find(...qs: Array<Partial<DataObject<T>>>): Promise<Array<DataObject<T>>>;
 
-  match<T>(pred: Mapper<DataObject<T>, boolean>): Promise<Array<DataObject<T>>>
+  match(pred: Mapper<DataObject<T>, boolean>): Promise<Array<DataObject<T>>>;
 }
 
-export interface EventStore {
-  newId(): Promise<id>
+export interface EventStore<E> {
+  newId(): Promise<id>;
 
-  store<T>(event: Event<T>): Promise<void>
+  store(event: Event<E>): Promise<void>;
 
-  get<T>(id: id): Promise<Event<T>>
+  get(id: id): Promise<Event<E>>;
 
-  find<T>(qs: Array<Partial<Event<T>>>): Promise<Array<Event<T>>>
+  find(...qs: Array<Partial<Event<E>>>): Promise<Array<Event<E>>>;
 
-  getHeight(): Promise<number>
+  match(pred: Mapper<DataObject<E>, boolean>): Promise<Array<DataObject<E>>>;
 
-  getByHeight<E>(since: number, count: number): Promise<Array<Event<E>>>
+  getHeight(): Promise<number>;
 
-  subscribe<E>(type: string, listener: Consumer<Event<E>>)
+  getByHeight(since: number, count: number): Promise<Array<Event<E>>>;
 
-  subscribeAll<E>(listener: Consumer<Event<E>>)
+  subscribe(type: string, listener: Consumer<Event<E>>);
+
+  subscribeAll(listener: Consumer<Event<E>>);
 }

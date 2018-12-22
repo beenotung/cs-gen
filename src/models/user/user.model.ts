@@ -17,14 +17,20 @@ export class User extends Typegoose {
 
 export const UserModel = new User().getModelForClass(User);
 
-eventStore.subscribe(UserEvents.UserCreated, async (event: Event<UserCreated>) => {
-  const d = new UserModel();
-  d.id = event.payload.user_id;
-  d.username = event.payload.username;
-  await d.save();
-});
-eventStore.subscribe(UserEvents.UserPhoneUpdated, async (event: Event<UserPhoneUpdated>) => {
-  const $set = {} as User;
-  $set.mobile_tel = event.payload.phone;
-  return UserModel.findByIdAndUpdate(event.payload.user_id, { $set });
-});
+eventStore.subscribe(
+  UserEvents.UserCreated,
+  async (event: Event<UserCreated>) => {
+    const d = new UserModel();
+    d.id = event.payload.user_id;
+    d.username = event.payload.username;
+    await d.save();
+  },
+);
+eventStore.subscribe(
+  UserEvents.UserPhoneUpdated,
+  async (event: Event<UserPhoneUpdated>) => {
+    const $set = {} as User;
+    $set.mobile_tel = event.payload.phone;
+    return UserModel.findByIdAndUpdate(event.payload.user_id, { $set });
+  },
+);
