@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+set -o pipefail
+find src -type f -name '*.ts' | xargs tsc --noEmit --lib es2015,dom
+find src -type f -name '*.ts' | xargs tslint --fix

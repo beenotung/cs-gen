@@ -1,11 +1,12 @@
-import { CqrsEngine } from '../api';
+import { CommandHandler, CqrsEngine, QueryHandler } from '../cqrs-engine';
 import { EventStore } from '../store';
-import { Command, Event, Query } from '../types';
+import { Command, Event, Query as _Query } from '../types';
 import { Mapper } from '../utils';
 
-export class CqrsEngineImpl<C, E, Q, R> implements CqrsEngine<C, E, Q, R> {
-  commandHandlers = new Map<string, Mapper<Command<C>, Array<Event<E>>>>();
-  queryHandlers = new Map<string, Mapper<Query<Q, R>, R | Promise<R>>>();
+export class CqrsEngineImpl<C, E, Q, R, Query extends _Query<Q, R>>
+  implements CqrsEngine<C, E, Q, R, Query> {
+  commandHandlers = new Map<string, CommandHandler<C, E>>();
+  queryHandlers = new Map<string, QueryHandler<Q, R, Query>>();
 
   constructor(
     private _eventStores:
@@ -44,7 +45,7 @@ export class CqrsEngineImpl<C, E, Q, R> implements CqrsEngine<C, E, Q, R> {
 
   registerQueryHandler(
     queryType: string,
-    f: Mapper<Query<Q, R>, R | Promise<R>>,
+    f: QueryHandler<Q, R, Query>,
     force = false,
   ) {
     if (!force && this.queryHandlers.has(queryType)) {
@@ -63,10 +64,14 @@ export class CqrsEngineImpl<C, E, Q, R> implements CqrsEngine<C, E, Q, R> {
     );
   }
 
-  async query(query: Query<Q, R>): Promise<R> {
+  query<iQ extends Q, iR extends R, iQuery extends Query & _Query<iQ, iR>>(
+    query: iQuery,
+  ): iR | Promise<iR> {
     if (!this.queryHandlers.has(query.type)) {
       throw new Error('no query handler for type: ' + query.type);
     }
-    return this.queryHandlers.get(query.type)(query);
+    return this.queryHandlers.get(query.type)(query as Query) as
+      | iR
+      | Promise<iR>;
   }
 }

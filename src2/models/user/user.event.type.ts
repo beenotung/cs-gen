@@ -1,4 +1,4 @@
-export enum UserEvents {
+export enum UserEventType {
   UserCreated = 'UserCreated',
   UserPhoneUpdated = 'UserPhoneUpdated',
 }
