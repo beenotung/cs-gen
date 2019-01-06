@@ -1,9 +1,7 @@
+import { Consumer } from '@beenotung/tslib/functional/types';
+import { mapGetOrSetDefault } from '@beenotung/tslib/map';
 import { IModel } from '../model';
 import { command as c, command_handler as ch, event as e, query as q, query_handler as qh } from '../types';
-
-export interface BaseModelOptions {
-  eventTypes: string[]
-}
 
 export class BaseModel<command extends c,
   event extends e,
@@ -12,16 +10,16 @@ export class BaseModel<command extends c,
   command_handler extends ch<command, event>,
   query_handler extends qh<query, response>> implements IModel<command, event, query, response, command_handler, query_handler> {
 
-  eventTypes: string[];
+  modelName?: string;
 
   commandHandlers: Map<string, command_handler>;
   queryHandlers: Map<string, query_handler>;
+  eventHandlers: Map<string, Array<Consumer<event>>>;
 
-  constructor(options: BaseModelOptions) {
-    this.eventTypes = options.eventTypes;
-
+  constructor() {
     this.commandHandlers = new Map();
     this.queryHandlers = new Map();
+    this.eventHandlers = new Map();
   }
 
   addCommandHandler(commandType: string, commandHandler: command_handler) {
@@ -29,6 +27,10 @@ export class BaseModel<command extends c,
       console.warn('overriding command handler of type: ' + commandType);
     }
     this.commandHandlers.set(commandType, commandHandler);
+  }
+
+  addEventHandler(eventType: string, eventHandler: Consumer<event>) {
+    mapGetOrSetDefault(this.eventHandlers, eventType, () => []).push(eventHandler);
   }
 
   addQueryHandler(queryType: string, queryHandler: query_handler) {

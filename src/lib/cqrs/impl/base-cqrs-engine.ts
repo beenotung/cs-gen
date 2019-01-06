@@ -16,15 +16,18 @@ export abstract class BaseCqrsEngine<command extends c,
 
   constructor() {
     this.defaultModel = {
+      modelName: 'DefaultModel',
       queryHandlers: new Map(),
       commandHandlers: new Map(),
-      eventTypes: [],
+      eventHandlers: new Map(),
     };
     this.models = [this.defaultModel];
   }
 
   async fireCommand(cmd: command): Promise<void> {
     const errors: string[] = [];
+    let nDone = 0;
+    let nError = 0;
     await Promise.all(
       this.models
         .map(m => m.commandHandlers.get(cmd.type))
@@ -32,14 +35,19 @@ export abstract class BaseCqrsEngine<command extends c,
         .map(f => f(cmd))
         .map(eventsOrReason => {
           if (Array.isArray(eventsOrReason)) {
+            nDone++;
             return this.storeEvents(eventsOrReason);
           } else {
             errors.push(eventsOrReason);
+            nError++;
             return;
           }
         })
         .filter(p => p),
     );
+    if (nDone === 0 && nError === 0) {
+      throw Error('no command handler of type: ' + cmd.type);
+    }
     return errors.length === 0
       ? Promise.resolve()
       : Promise.reject(errors)
@@ -90,4 +98,10 @@ export abstract class BaseCqrsEngine<command extends c,
     this.getEventStore(eventType).subscribe(eventType, onEvent);
   }
 
+  start() {
+    this.models.forEach(model =>
+      model.eventHandlers.forEach((eventHandlers, eventType) =>
+        this.subscribeEvent(eventType,
+          event => eventHandlers.forEach(eventHandler => eventHandler(event)))));
+  }
 }

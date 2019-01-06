@@ -9,7 +9,7 @@ export class AppStore implements Store<typed_data> {
   listeners: Map<string, Array<Consumer<typed_data>>> = new Map();
 
   constructor() {
-    setStoreName('AppStore');
+    setStoreName('data');
   }
 
   async store(t: typed_data): Promise<void> {

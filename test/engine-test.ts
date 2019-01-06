@@ -1,11 +1,18 @@
 import { cqrsEngine } from '../src/config/values';
-import { CreateUser, UserCommandType } from '../src/models/user/user.command.type';
 
-cqrsEngine.fireCommand({
-  id: 'c1',
-  type: UserCommandType.CreateUser,
-  payload: {
-    user_id: 'u1',
-    username: 'beeno',
-  } as CreateUser,
-});
+async function test() {
+  await cqrsEngine.fireCommand({
+    type: 'CreateUser',
+    data: {
+      id: 'u1',
+      username: 'beeno',
+    },
+  });
+  const user = cqrsEngine.query({
+    type: 'FindUserById',
+    data: { id: 'u1' },
+  });
+  console.log('res:', user);
+}
+
+test();

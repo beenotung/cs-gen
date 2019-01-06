@@ -1,10 +1,10 @@
 import { BaseModel } from '../../lib/cqrs/impl/base-model';
 import { command_handler } from '../../lib/cqrs/types';
-import { UserCommand } from './user-command';
-import { UserEvent } from './user-event';
-import { UserQuery, UserQueryHandler, UserResponse } from './user-query';
+import { injectCommandHandler, UserCommand } from './user-command';
+import { injectEventHandler, UserEvent } from './user-event';
+import { injectQueryHandler, UserQuery, UserQueryHandler, UserResponse } from './user-query';
 
-export interface UserModel {
+export interface User {
   id: string
   username: string
 }
@@ -15,4 +15,16 @@ export class UserModel extends BaseModel<UserCommand,
   UserResponse,
   command_handler<UserCommand, UserEvent>,
   UserQueryHandler> {
+  users: User[];
+
+  constructor() {
+    super();
+    this.modelName = 'UserModel';
+    this.users = [];
+    injectCommandHandler(this);
+    injectEventHandler(this);
+    injectQueryHandler(this);
+  }
 }
+
+export let userModel = new UserModel();

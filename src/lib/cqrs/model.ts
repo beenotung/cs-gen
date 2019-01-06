@@ -1,3 +1,4 @@
+import { Consumer } from '@beenotung/tslib/functional/types';
 import { command as c, command_handler as ch, event as e, query as q, query_handler as qh } from './types';
 
 export interface IModel<command extends c,
@@ -7,8 +8,9 @@ export interface IModel<command extends c,
   command_handler extends ch<command, event>,
   query_handler extends qh<query, response>> {
 
-  eventTypes: string[]
+  modelName?: string
 
   commandHandlers: Map<string, command_handler>
   queryHandlers: Map<string, query_handler>
+  eventHandlers: Map<string, Array<Consumer<event>>>
 }
