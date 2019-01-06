@@ -16,6 +16,6 @@ export function genId(): id {
   return [
     session,
     Date.now(),
-    counter,
+    counter.next(),
   ].join('-');
 }

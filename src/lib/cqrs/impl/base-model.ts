@@ -16,7 +16,7 @@ export class BaseModel<command extends c,
   queryHandlers: Map<string, query_handler>;
   eventHandlers: Map<string, Array<Consumer<event>>>;
 
-  constructor() {
+  constructor(public readonly ready: Promise<void>) {
     this.commandHandlers = new Map();
     this.queryHandlers = new Map();
     this.eventHandlers = new Map();

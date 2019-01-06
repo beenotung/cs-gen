@@ -1,3 +1,4 @@
+import { appStore } from '../../config/values';
 import { BaseModel } from '../../lib/cqrs/impl/base-model';
 import { command_handler } from '../../lib/cqrs/types';
 import { injectCommandHandler, UserCommand } from './user-command';
@@ -9,6 +10,13 @@ export interface User {
   username: string
 }
 
+export const UserType = 'User';
+
+export interface UserData {
+  type: 'User',
+  data: User
+}
+
 export class UserModel extends BaseModel<UserCommand,
   UserEvent,
   UserQuery,
@@ -18,12 +26,28 @@ export class UserModel extends BaseModel<UserCommand,
   users: User[];
 
   constructor() {
-    super();
+    super(new Promise((resolve, reject) => {
+      setTimeout(() => {
+        appStore.getByType(UserType)
+          .then(xs => {
+            console.log('restored users:', xs.length);
+            this.users = xs;
+          })
+          .catch(() => {
+            console.log('failed to restore user');
+          })
+          .then(() => resolve());
+      });
+    }));
     this.modelName = 'UserModel';
-    this.users = [];
     injectCommandHandler(this);
     injectEventHandler(this);
     injectQueryHandler(this);
+  }
+
+  addUser(user: User) {
+    this.users.push(user);
+    return appStore.store({ id: user.id, type: UserType, data: user });
   }
 }
 

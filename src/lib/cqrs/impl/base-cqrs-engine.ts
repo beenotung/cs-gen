@@ -20,6 +20,7 @@ export abstract class BaseCqrsEngine<command extends c,
       queryHandlers: new Map(),
       commandHandlers: new Map(),
       eventHandlers: new Map(),
+      ready: Promise.resolve(),
     };
     this.models = [this.defaultModel];
   }
@@ -103,5 +104,9 @@ export abstract class BaseCqrsEngine<command extends c,
       model.eventHandlers.forEach((eventHandlers, eventType) =>
         this.subscribeEvent(eventType,
           event => eventHandlers.forEach(eventHandler => eventHandler(event)))));
+  }
+
+  ready() {
+    return Promise.all(this.models.map(m => m.ready));
   }
 }

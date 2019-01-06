@@ -37,7 +37,7 @@
     }
   },
   "dependencies": {
-    "@beenotung/tslib": "^12.8.0",
+    "@beenotung/tslib": "^12.11.0",
     "@nestjs/common": "^5.1.0",
     "@nestjs/core": "^5.1.0",
     "mongoose": "^5.3.16",

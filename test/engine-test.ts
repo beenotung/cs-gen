@@ -1,6 +1,7 @@
 import { cqrsEngine } from '../src/config/values';
 
 async function test() {
+  await cqrsEngine.ready();
   await cqrsEngine.fireCommand({
     type: 'CreateUser',
     data: {

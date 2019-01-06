@@ -24,13 +24,18 @@ export function injectEventHandler(model: UserModel) {
   [
     'UserCreated',
     'UserUpdated',
-  ].forEach(type => model.addEventHandler(type, event => {
+  ].forEach(type => model.addEventHandler(type, async event => {
     switch (event.type) {
       case 'UserCreated':
-        model.users.push({
+        if (model.users.find(u => u.id === event.data.id)) {
+          console.log('skip conflicting user creation');
+          return;
+        }
+        await model.addUser({
           id: event.data.id,
           username: event.data.username,
         });
+        console.log('now have ' + model.users.length + ' users');
         break;
       case 'UserUpdated':
         model.users.find(u => u.id === event.data.id).username = event.data.username;

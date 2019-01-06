@@ -13,4 +13,6 @@ export interface IModel<command extends c,
   commandHandlers: Map<string, command_handler>
   queryHandlers: Map<string, query_handler>
   eventHandlers: Map<string, Array<Consumer<event>>>
+
+  ready: Promise<void>
 }
