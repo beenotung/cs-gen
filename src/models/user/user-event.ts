@@ -28,7 +28,6 @@ export function injectEventHandler(model: UserModel) {
     switch (event.type) {
       case 'UserCreated':
         if (model.users.find(u => u.id === event.data.id)) {
-          console.log('skip conflicting user creation');
           return;
         }
         await model.addUser({

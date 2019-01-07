@@ -1,7 +1,8 @@
 import { cqrsEngine } from '../src/config/values';
+import { later } from '@beenotung/tslib/async/wait';
 
 async function test() {
-  await cqrsEngine.ready();
+  await later(5000);
   await cqrsEngine.fireCommand({
     type: 'CreateUser',
     data: {

@@ -1,5 +1,6 @@
 import { Store } from './store';
 import { command as c, command_handler as ch, event as e, query as q, query_handler as qh } from './types';
+import { Callback } from './model';
 
 export interface CqrsEngine<command extends c,
   event extends e,
@@ -20,5 +21,5 @@ export interface CqrsEngine<command extends c,
 
   registerQueryHandler(queryType: string, query_handler: query_handler)
 
-  subscribeEvent<e extends event>(eventType: string, onEvent: (event: e) => void)
+  subscribeEvent<e extends event>(eventTypes: string[], onEvent: Callback<e>)
 }

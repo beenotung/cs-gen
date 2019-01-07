@@ -37,13 +37,14 @@
     }
   },
   "dependencies": {
-    "@beenotung/tslib": "^12.11.0",
+    "@beenotung/tslib": "^12.12.0",
     "@nestjs/common": "^5.1.0",
     "@nestjs/core": "^5.1.0",
     "mongoose": "^5.3.16",
     "nestjs-typegoose": "^5.1.2",
     "nestlib": "^0.3.0",
     "reflect-metadata": "^0.1.12",
+    "rethinkdb-ts": "^2.4.0-rc.11",
     "rxjs": "^6.2.2",
     "typegoose": "^5.4.1",
     "typescript": "^3.0.1"

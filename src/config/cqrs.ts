@@ -4,7 +4,7 @@ import { command_handler } from '../lib/cqrs/types';
 import { UserCommand } from '../models/user/user-command';
 import { UserEvent } from '../models/user/user-event';
 import { UserQuery, UserQueryHandler, UserResponse } from '../models/user/user-query';
-import { appStore } from './values';
+import { store } from './values';
 
 export type Command = UserCommand;
 export type Event = UserEvent;
@@ -15,6 +15,6 @@ export type QueryHandler = UserQueryHandler;
 
 export class AppCqrsEngine extends BaseCqrsEngine<Command, Event, Query, Response, CommandHandler, QueryHandler> {
   getEventStore(eventType: string): Store<any> {
-    return appStore;
+    return store;
   }
 }

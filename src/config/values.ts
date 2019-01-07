@@ -1,10 +1,12 @@
-import { userModel } from '../models/user/user-model';
+import { LocalStore } from '../lib/cqrs/impl/local-store';
+import { UserModel } from '../models/user/user-model';
 import { AppCqrsEngine } from './cqrs';
-import { AppStore } from './store';
 
-export let appStore = new AppStore();
+export let store = new LocalStore();
+// export let store = new RethinkdbStore({ table: 'data' });
 
 export let cqrsEngine = new AppCqrsEngine();
 
+export let userModel = new UserModel(cqrsEngine);
 cqrsEngine.models.push(userModel);
-cqrsEngine.start();
+export let engineReady = cqrsEngine.start();

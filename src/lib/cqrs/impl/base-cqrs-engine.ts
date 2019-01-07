@@ -1,7 +1,7 @@
 import { CqrsEngine } from '../cqrs-engine';
-import { IModel } from '../model';
 import { Store } from '../store';
 import { command as c, command_handler as ch, event as e, query as q, query_handler as qh } from '../types';
+import { BaseModel } from './base-model';
 
 export abstract class BaseCqrsEngine<command extends c,
   event extends e,
@@ -11,17 +11,17 @@ export abstract class BaseCqrsEngine<command extends c,
   query_handler extends qh<query, response>>
   implements CqrsEngine<command, event, query, response, command_handler, query_handler> {
 
-  defaultModel: IModel<command, event, query, response, command_handler, query_handler>;
-  models: Array<IModel<command, event, query, response, command_handler, query_handler>>;
+  defaultModel: BaseModel<command, event, query, response, command_handler, query_handler>;
+  models: Array<BaseModel<command, event, query, response, command_handler, query_handler>>;
 
   constructor() {
-    this.defaultModel = {
-      modelName: 'DefaultModel',
-      queryHandlers: new Map(),
-      commandHandlers: new Map(),
-      eventHandlers: new Map(),
-      ready: Promise.resolve(),
-    };
+    this.defaultModel = new BaseModel('DefaultModel', this);
+    // this.defaultModel = {
+    //   modelName: 'DefaultModel',
+    //   queryHandlers: new Map(),
+    //   commandHandlers: new Map(),
+    //   eventHandlers: new Map(),
+    // };
     this.models = [this.defaultModel];
   }
 
@@ -92,21 +92,14 @@ export abstract class BaseCqrsEngine<command extends c,
     this.defaultModel.queryHandlers.set(queryType, query_handler);
   }
 
-  subscribeEvent<e extends event>(eventType: string, onEvent: (event: e) => void) {
+  subscribeEvent<e extends event>(eventTypes: string[], onEvent: (err?, event?: e) => void) {
     // if (this.defaultModel.eventTypes.indexOf(eventType) === -1) {
     //   this.defaultModel.eventTypes.push(eventType);
     // }
-    this.getEventStore(eventType).subscribe(eventType, onEvent);
+    eventTypes.forEach(event => this.getEventStore(event).subscribe(eventTypes, onEvent));
   }
 
   start() {
-    this.models.forEach(model =>
-      model.eventHandlers.forEach((eventHandlers, eventType) =>
-        this.subscribeEvent(eventType,
-          event => eventHandlers.forEach(eventHandler => eventHandler(event)))));
-  }
-
-  ready() {
-    return Promise.all(this.models.map(m => m.ready));
+    this.models.forEach(model => model.start());
   }
 }

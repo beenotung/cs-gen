@@ -1,5 +1,7 @@
-import { Consumer } from '@beenotung/tslib/functional/types';
 import { command as c, command_handler as ch, event as e, query as q, query_handler as qh } from './types';
+
+export type Callback<T> = (err?, event?: T) => void;
+
 
 export interface IModel<command extends c,
   event extends e,
@@ -12,7 +14,5 @@ export interface IModel<command extends c,
 
   commandHandlers: Map<string, command_handler>
   queryHandlers: Map<string, query_handler>
-  eventHandlers: Map<string, Array<Consumer<event>>>
-
-  ready: Promise<void>
+  eventHandlers: Map<string, Array<Callback<event>>>
 }
