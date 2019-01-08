@@ -16,6 +16,8 @@ export type aggregate_object = {
 } & any;
 
 export interface command<C, T = string> {
+  aggregate_id: id
+  expected_version: seq
   type: T
   data: C
 }
@@ -30,6 +32,10 @@ export type response<R, T = string> = string | {
   type: T,
   data: R,
 };
+
+/* if failed, return string of error message */
+export type event_handler<E, ET> =
+  (event: event<E, ET>) => void | Promise<void> | string | Promise<string>;
 
 export type command_handler<C, E, CT, ET> =
   (command: command<C, CT>) => Array<event<E, ET>> | string;

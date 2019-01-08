@@ -1,5 +1,5 @@
 import { compare_number } from '@beenotung/tslib/number';
-import { Connection, r, RConnectionOptions } from 'rethinkdb-ts';
+import { Connection, r } from 'rethinkdb-ts';
 import { fromPromise } from 'rxjs/internal-compatibility';
 import { Observable } from 'rxjs/internal/Observable';
 import { mergeAll, mergeMap } from 'rxjs/operators';
@@ -7,19 +7,21 @@ import { castTable } from '../../rethinkdb';
 import { create } from '../../rxjs/create';
 import { Changes, event_filter, event_store } from '../models';
 import { event, id, seq } from '../types';
+import { version_mismatch } from '../values';
 
-export type RethinkdbEventstoreOptions = RConnectionOptions & {
+export interface RethinkdbEventstoreOptions {
   /**@deprecated*/
   aggregateTable: string,
   eventTable: string,
-};
-export const version_mismatch = 'version_mismatch';
+  connection: Promise<Connection>,
+}
+
 
 export class RethinkdbEventstore<E, ET> implements event_store<E, ET> {
   conn: Promise<Connection>;
 
   constructor(public options: RethinkdbEventstoreOptions) {
-    this.conn = r.connect(options);
+    this.conn = options.connection;
   }
 
   /* custom methods */
@@ -102,7 +104,7 @@ export class RethinkdbEventstore<E, ET> implements event_store<E, ET> {
     this.run(
       r.branch(
         this.lastVersion(events[0].aggregate_id).eq(expected_version),
-        this.table().insert([events]),
+        this.table().insert(events),
         r.expr(version_mismatch),
       ),
     ).then(res => {

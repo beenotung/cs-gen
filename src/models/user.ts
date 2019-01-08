@@ -37,17 +37,16 @@ export type user_response = response<never, never> & {
   type: user_response_type.UserProfile,
   data: { id: string, username: string },
 };
-
+export let user_event_handler = (event: user_event) => 'not impl';
 export let user_command_handler = (command: user_command) => 'not impl';
-
 export let user_query_handler = (query: user_query) => 'not impl';
 
 export let userDomain: domain<user_event, user_command, user_query, user_response,
-  user_event_type, user_command_type, user_query_type, user_response_type,
-  typeof user_command_handler, typeof user_query_handler> = {
+  user_event_type, user_command_type, user_query_type, user_response_type, typeof user_query_handler> = {
   name: 'UserDomain',
   event_types: enum_values(user_event_type),
   command_types: enum_values(user_command_type),
+  event_handler: user_event_handler,
   command_handler: user_command_handler,
   query_handler: user_query_handler,
 };

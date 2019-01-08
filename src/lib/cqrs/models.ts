@@ -1,18 +1,24 @@
 import { Changes as _Changes } from 'rethinkdb-ts';
 import { Observable } from 'rxjs/internal/Observable';
-import { command_handler, event, id, query_handler, seq } from './types';
+import { command, command_handler, event, event_handler, id, query_handler, seq } from './types';
 
 export interface domain<E, C, Q, R, ET, CT, QT, RT,
-  ch extends command_handler<C, E, CT, ET>,
   qh extends query_handler<Q, R, QT, RT>> {
   name: string
   event_types: ET[]
   command_types: CT[]
-  command_handler: ch
+  event_handler: event_handler<E, ET>
+  command_handler: command_handler<C, E, CT, ET>
   query_handler: qh
 }
 
 export interface event_filter<T> {
+  aggregate_id?: id
+  type?: T
+  since?: seq
+}
+
+export interface command_filter<T> {
   aggregate_id?: id
   type?: T
   since?: seq
@@ -39,13 +45,16 @@ export interface event_store<E, ET> {
   subscribeEvents(filter: event_filter<ET>): Observable<Changes<event<E, ET>>>
 }
 
-export type command_bus<C, CT> = event_store<C, CT>;
+export interface command_bus<C, CT> {
+  sendCommand(command: command<C, CT>): Promise<void>
+
+  subscribeCommand(filter: command_filter<CT>): Observable<Changes<command<C, CT>>>
+}
 
 export interface cqrs_engine<E, C, Q, R, ET, CT, QT, RT,
-  ch extends command_handler<C, E, CT, ET>,
   qh extends query_handler<Q, R, QT, RT>> {
   eventStore: event_store<E, ET>
   commandBus: command_bus<C, CT>
 
-  addDomain(domain: domain<E, C, Q, R, ET, CT, QT, RT, ch, qh>)
+  addDomain(domain: domain<E, C, Q, R, ET, CT, QT, RT, qh>)
 }
