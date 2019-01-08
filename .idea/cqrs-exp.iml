@@ -9,6 +9,7 @@
       <excludeFolder url="file://$MODULE_DIR$/lib" />
       <excludeFolder url="file://$MODULE_DIR$/src1" />
       <excludeFolder url="file://$MODULE_DIR$/src2" />
+      <excludeFolder url="file://$MODULE_DIR$/src3" />
       <excludeFolder url="file://$MODULE_DIR$/test1" />
     </content>
     <orderEntry type="inheritedJdk" />

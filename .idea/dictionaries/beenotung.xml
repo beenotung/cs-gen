@@ -2,6 +2,7 @@
   <dictionary name="beenotung">
     <words>
       <w>cqrs</w>
+      <w>rethinkdb</w>
     </words>
   </dictionary>
 </component>
