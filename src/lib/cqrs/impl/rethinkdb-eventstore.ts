@@ -1,16 +1,19 @@
+import { compare_number } from '@beenotung/tslib/number';
 import { Connection, r, RConnectionOptions } from 'rethinkdb-ts';
 import { fromPromise } from 'rxjs/internal-compatibility';
 import { Observable } from 'rxjs/internal/Observable';
 import { mergeAll, mergeMap } from 'rxjs/operators';
-import { event_filter, event_store } from '../models';
+import { castTable } from '../../rethinkdb';
+import { create } from '../../rxjs/create';
+import { Changes, event_filter, event_store } from '../models';
 import { event, id, seq } from '../types';
-import { compare_number } from '@beenotung/tslib/number';
 
 export type RethinkdbEventstoreOptions = RConnectionOptions & {
   /**@deprecated*/
   aggregateTable: string,
   eventTable: string,
 };
+export const version_mismatch = 'version_mismatch';
 
 export class RethinkdbEventstore<E, ET> implements event_store<E, ET> {
   conn: Promise<Connection>;
@@ -26,7 +29,7 @@ export class RethinkdbEventstore<E, ET> implements event_store<E, ET> {
   }
 
   table() {
-    return r.table<event<E, ET>>(this.options.eventTable);
+    return castTable(r.table<event<E, ET>>(this.options.eventTable));
   }
 
   filter(filter: event_filter<ET>) {
@@ -96,14 +99,36 @@ export class RethinkdbEventstore<E, ET> implements event_store<E, ET> {
         throw new Error('events not in order');
       }
     }
-    r.branch(
-      this.lastVersion(events[0].aggregate_id).eq(expected_version),
-      this.table().insert(...events),
-      r.expr('failed'),
-    );
+    this.run(
+      r.branch(
+        this.lastVersion(events[0].aggregate_id).eq(expected_version),
+        this.table().insert([events]),
+        r.expr(version_mismatch),
+      ),
+    ).then(res => {
+      if (res === version_mismatch) {
+        return Promise.reject(res);
+      } else {
+        return res;
+      }
+    });
   }
 
-  subscribeEvents(filter: event_filter<ET>): Observable<event<E, ET>> {
-    return undefined;
+  subscribeEvents(filter: event_filter<ET>): Observable<Changes<event<E, ET>>> {
+    return fromPromise(this.conn)
+      .pipe(mergeMap(conn => create<Changes<event<E, ET>>>(observer => {
+        this.filter(filter)
+          .changes()
+          .run(conn)
+          .then(cursor => {
+            cursor.each((error, result) => {
+              if (error) {
+                observer.error(error);
+              } else {
+                observer.next(result);
+              }
+            });
+          });
+      })));
   }
 }

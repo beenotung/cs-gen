@@ -4,8 +4,8 @@ export type seq = number;
 export interface event<E, T = string> {
   aggregate_id: id
   version: seq
-  data: E
   type: T
+  data: E
 }
 
 /**@deprecated*/
@@ -25,13 +25,14 @@ export interface query<Q, T = string> {
   data: Q
 }
 
-export interface response<R, T = string> {
-  type: T
-  data: R
-}
-
-export type query_handler<Q, R, QT, RT> =
-  (query: query<Q, QT>) => response<R, RT>;
+/* if failed, return string of error message */
+export type response<R, T = string> = string | {
+  type: T,
+  data: R,
+};
 
 export type command_handler<C, E, CT, ET> =
   (command: command<C, CT>) => Array<event<E, ET>> | string;
+
+export type query_handler<Q, R, QT, RT> =
+  (query: query<Q, QT>) => response<R, RT>;

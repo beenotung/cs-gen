@@ -1,12 +1,15 @@
+import { Changes as _Changes } from 'rethinkdb-ts';
 import { Observable } from 'rxjs/internal/Observable';
 import { command_handler, event, id, query_handler, seq } from './types';
 
-export interface domain<E, C, Q, R, ET, CT, QT, RT> {
+export interface domain<E, C, Q, R, ET, CT, QT, RT,
+  ch extends command_handler<C, E, CT, ET>,
+  qh extends query_handler<Q, R, QT, RT>> {
   name: string
   event_types: ET[]
   command_types: CT[]
-  command_handler: command_handler<C, E, CT, ET>
-  query_handler: query_handler<Q, R, QT, RT>
+  command_handler: ch
+  query_handler: qh
 }
 
 export interface event_filter<T> {
@@ -14,6 +17,8 @@ export interface event_filter<T> {
   type?: T
   since?: seq
 }
+
+export type Changes<T> = _Changes<T>;
 
 export interface event_store<E, ET> {
   /* list of id so far */
@@ -31,14 +36,16 @@ export interface event_store<E, ET> {
   scanEvents(filter: event_filter<ET>): Observable<event<E, ET>>
 
   /* will never stop, will get future events as well */
-  subscribeEvents(filter: event_filter<ET>): Observable<event<E, ET>>
+  subscribeEvents(filter: event_filter<ET>): Observable<Changes<event<E, ET>>>
 }
 
 export type command_bus<C, CT> = event_store<C, CT>;
 
-export interface cqrs_engine<E, C, Q, R, ET, CT, QT, RT> {
+export interface cqrs_engine<E, C, Q, R, ET, CT, QT, RT,
+  ch extends command_handler<C, E, CT, ET>,
+  qh extends query_handler<Q, R, QT, RT>> {
   eventStore: event_store<E, ET>
   commandBus: command_bus<C, CT>
 
-  addDomain(domain: domain<E, C, Q, R, ET, CT, QT, RT>)
+  addDomain(domain: domain<E, C, Q, R, ET, CT, QT, RT, ch, qh>)
 }
