@@ -1,9 +1,9 @@
 import { cqrsEngine } from '../src/config/values';
-import { user_command, user_event_type } from '../src/models/user';
+import { user_command, user_command_type } from '../src/models/user';
 
-cqrsEngine.commandBus.sendCommand({
+cqrsEngine.sendCommand({
   aggregate_id: 'beeno-101',
+  type: user_command_type.CreateUser,
   expected_version: 0,
-  type: user_event_type.CreatedUser,
   data: { username: 'beeno' },
 } as user_command);

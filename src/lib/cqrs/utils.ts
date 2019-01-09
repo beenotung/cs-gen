@@ -1,10 +1,36 @@
+export interface RunnerOptions {
+  continueWhenError?: boolean
+}
 
-export function isString(e: void | string | Promise<void> | Promise<string>): Promise<boolean> {
-  if (typeof e === 'string') {
-    return Promise.resolve(true);
+/**
+ * like single thread scheduler/executor for async tasks
+ * */
+export class Runner {
+  last = Promise.resolve();
+
+  constructor(public options: RunnerOptions = {}) {
   }
-  if (typeof e === 'undefined') {
-    return Promise.resolve(false);
+
+  queue<T>(f: () => T | Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) =>
+      this.last = this.last.then(() =>
+        Runner.run(f)
+          .then(resolve)
+          .catch(err => {
+            reject(err);
+            if (this.options.continueWhenError) {
+              return void 0;
+            } else {
+              return Promise.reject(err);
+            }
+          })));
   }
-  return (e as Promise<void | string>).then(isString);
+
+  static run<T>(f: () => T | Promise<T>): Promise<T> {
+    try {
+      return Promise.resolve(f());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
 }

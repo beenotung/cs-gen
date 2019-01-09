@@ -1,7 +1,5 @@
-import { r } from 'rethinkdb-ts';
-import { RethinkdbCommandbus } from '../lib/cqrs/impl/rethinkdb-commandbus';
-import { RethinkdbEventstore } from '../lib/cqrs/impl/rethinkdb-eventstore';
-import { SinglestoreCqrsengine } from '../lib/cqrs/impl/singlestore-cqrsengine';
+import { Rethinkdb } from '../lib/cqrs/impl/rethinkdb';
+import { RethinkdbCqrsEngine } from '../lib/cqrs/impl/rethinkdb-cqrs-engine';
 import {
   user_command,
   user_command_type,
@@ -12,7 +10,7 @@ import {
   user_query_type,
   user_response,
   user_response_type,
-  userDomain,
+  UserDomain,
 } from '../models/user';
 
 export type e = user_event;
@@ -23,20 +21,12 @@ export type q = user_query;
 export type qt = user_query_type;
 export type r = user_response;
 export type rt = user_response_type;
-// export type ch = command_handler<c, e, ct, et>;
-export type qh = typeof user_query_handler;
+export type qh = user_query_handler;
 
-export const conn = r.connect({ db: 'test' });
-export let eventStore = new RethinkdbEventstore<e, et>({
-  eventTable: 'events',
-  aggregateTable: 'aggregates',
-  connection: conn,
-});
-export let commandBus = new RethinkdbCommandbus<c, ct>({
-  commandTable: 'commands',
-  connection: conn,
-});
+export let rethinkdb = new Rethinkdb({ db: 'test' });
+export let cqrsEngine = new RethinkdbCqrsEngine<e, c, q, r, et, ct, qt, rt, qh>(rethinkdb);
+export let userDomain = new UserDomain(rethinkdb);
 
-export let cqrsEngine = new SinglestoreCqrsengine<e, c, q, r, et, ct, qt, rt, qh>(eventStore, commandBus);
-
-cqrsEngine.addDomain(userDomain);
+export let allDomainReady = Promise.all([
+  userDomain,
+].map(domain => domain.start()));

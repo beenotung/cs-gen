@@ -1,6 +1,8 @@
-import { domain } from '../lib/cqrs/models';
-import { command, event, query, response } from '../lib/cqrs/types';
 import { enum_values } from '@beenotung/tslib/enum';
+import { Rethinkdb } from '../lib/cqrs/impl/rethinkdb';
+import { RethinkdbDomain } from '../lib/cqrs/impl/rethinkdb-domain';
+import { command, command_handler, event, event_handler, query, response } from '../lib/cqrs/types';
+import { not_impl } from '@beenotung/tslib/error';
 
 export enum user_event_type {
   'CreatedUser' = 'CreatedUser',
@@ -37,16 +39,40 @@ export type user_response = response<never, never> & {
   type: user_response_type.UserProfile,
   data: { id: string, username: string },
 };
-export let user_event_handler = (event: user_event) => 'not impl';
-export let user_command_handler = (command: user_command) => 'not impl';
-export let user_query_handler = (query: user_query) => 'not impl';
 
-export let userDomain: domain<user_event, user_command, user_query, user_response,
-  user_event_type, user_command_type, user_query_type, user_response_type, typeof user_query_handler> = {
-  name: 'UserDomain',
-  event_types: enum_values(user_event_type),
-  command_types: enum_values(user_command_type),
-  event_handler: user_event_handler,
-  command_handler: user_command_handler,
-  query_handler: user_query_handler,
-};
+export type user_query_handler =
+  (query: query<{ username: string }, user_query_type.FindUserByUsername>) =>
+    Promise<response<{ id: string, username: string }, user_response_type.UserProfile>>;
+
+export class UserDomain extends RethinkdbDomain<user_event, user_command, user_query, user_response,
+  user_event_type, user_command_type, user_query_type, user_response_type,
+  user_query_handler> {
+  name: string;
+
+  event_types: user_event_type[];
+  command_types: user_command_type[];
+  query_types: user_query_type[];
+
+  event_handler: event_handler<user_event, user_event_type>;
+  command_handler: command_handler<user_command, user_event, user_command_type, user_event_type>;
+  query_handler: user_query_handler;
+
+  constructor(rethinkdb: Rethinkdb) {
+    super(rethinkdb);
+    this.name = 'UserModel';
+
+    this.event_types = enum_values(user_event_type);
+    this.command_types = enum_values(user_command_type);
+    this.query_types = enum_values(user_query_type);
+
+    this.event_handler = async event => {
+      return not_impl();
+    };
+    this.command_handler = command => {
+      return 'not_impl';
+    };
+    this.query_handler = async query => {
+      return 'not_impl';
+    };
+  }
+}
