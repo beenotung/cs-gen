@@ -2,10 +2,13 @@
   "name": "cqrs-exp",
   "version": "0.0.0",
   "description": "cqrs experimental demo",
-  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
   "scripts": {
     "format": "tslint -p . --fix",
+    "prebuild": "rm -rf dist && gen-index",
     "build": "tsc",
+    "postbuild": "rm -rf src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,6 +26,7 @@
     "rethinkdb-ts": "^2.4.0-rc.12"
   },
   "devDependencies": {
+    "@beenotung/gen-index": "^1.0.7",
     "tslint": "^5.12.1",
     "tslint-eslint-rules": "^5.4.0",
     "typescript": "^3.3.3"
