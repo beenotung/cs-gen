@@ -1,0 +1,20 @@
+{
+  "name": "cqrs-exp",
+  "version": "0.0.0",
+  "description": "cqrs experimental demo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/beenotung/cqrs-exp.git"
+  },
+  "keywords": [],
+  "author": "Beeno Tung",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://gitlab.com/beenotung/cqrs-exp/issues"
+  },
+  "homepage": "https://gitlab.com/beenotung/cqrs-exp#readme"
+}
