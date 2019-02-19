@@ -4,6 +4,8 @@
   "description": "cqrs experimental demo",
   "main": "index.js",
   "scripts": {
+    "format": "tslint -p . --fix",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,5 +18,13 @@
   "bugs": {
     "url": "https://gitlab.com/beenotung/cqrs-exp/issues"
   },
-  "homepage": "https://gitlab.com/beenotung/cqrs-exp#readme"
+  "homepage": "https://gitlab.com/beenotung/cqrs-exp#readme",
+  "dependencies": {
+    "rethinkdb-ts": "^2.4.0-rc.12"
+  },
+  "devDependencies": {
+    "tslint": "^5.12.1",
+    "tslint-eslint-rules": "^5.4.0",
+    "typescript": "^3.3.3"
+  }
 }
