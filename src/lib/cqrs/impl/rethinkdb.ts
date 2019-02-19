@@ -1,5 +1,12 @@
 import { remove } from '@beenotung/tslib/array';
-import { Changes, ChangesOptions, Connection, r, RConnectionOptions, RFeed } from 'rethinkdb-ts';
+import {
+  Changes,
+  ChangesOptions,
+  Connection,
+  r,
+  RConnectionOptions,
+  RFeed,
+} from 'rethinkdb-ts';
 import { Observable } from 'rxjs/internal/Observable';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { castTable } from '../../rethinkdb';
@@ -16,7 +23,7 @@ export function table<T>(tableName: string) {
 }
 
 export type RethinkdbOptions = RConnectionOptions & {
-  db: string,
+  db: string;
 };
 
 export class Rethinkdb {
@@ -24,29 +31,33 @@ export class Rethinkdb {
   subs: Subscription[] = [];
 
   constructor(public options: RethinkdbOptions) {
-    this.conn = r.connect(options)
-      .then(conn =>
-        this.populateDatabase(conn)
-          .then(() => conn));
+    this.conn = r
+      .connect(options)
+      .then(conn => this.populateDatabase(conn).then(() => conn));
   }
 
   run<T>(q: { run: (conn: Connection) => T | Promise<T> }): Promise<T> {
     return this.conn.then(conn => q.run(conn));
   }
 
-  watch<T>(q: { changes: (options?: ChangesOptions) => RFeed<Changes<T>> },
-           f: (observable: Observable<Changes<T>>) => Subscription) {
-    return this.conn.then(conn => q.changes(defaultChangeOptions).run(conn))
-      .then(cursor => create<Changes<T>>(observer => {
-        cursor.each((err, row) => {
-          if (err) {
-            observer.error(err);
-          } else {
-            observer.next(row);
-          }
-        });
-        return () => cursor.close();
-      }))
+  watch<T>(
+    q: { changes: (options?: ChangesOptions) => RFeed<Changes<T>> },
+    f: (observable: Observable<Changes<T>>) => Subscription,
+  ) {
+    return this.conn
+      .then(conn => q.changes(defaultChangeOptions).run(conn))
+      .then(cursor =>
+        create<Changes<T>>(observer => {
+          cursor.each((err, row) => {
+            if (err) {
+              observer.error(err);
+            } else {
+              observer.next(row);
+            }
+          });
+          return () => cursor.close();
+        }),
+      )
       .then(observable => {
         const sub = f(observable);
         this.subs.push(sub);
@@ -60,14 +71,19 @@ export class Rethinkdb {
   }
 
   async populateDatabase(conn: Connection) {
-    await r.dbCreate(this.options.db).run(conn)
+    await r
+      .dbCreate(this.options.db)
+      .run(conn)
       .catch(() => 0);
     await Promise.all(
       Object.keys(tables)
         .map(table => tables[table])
         .map(tableName =>
-          r.tableCreate(tableName).run(conn)
-            .catch(() => 0)),
+          r
+            .tableCreate(tableName)
+            .run(conn)
+            .catch(() => 0),
+        ),
     );
   }
 

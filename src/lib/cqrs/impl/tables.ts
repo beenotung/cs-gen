@@ -11,12 +11,12 @@ export let tables = {
  * if handled, either error or ok will be set
  * */
 export interface command_response<C, CT> {
-  command: command<C, CT>
-  error?: string
-  ok?: boolean
+  command: command<C, CT>;
+  error?: string;
+  ok?: boolean;
 }
 
 export interface query_response<Q, R, QT, RT> {
-  query: query<Q, QT>
-  response?: response<R, RT>
+  query: query<Q, QT>;
+  response?: response<R, RT>;
 }

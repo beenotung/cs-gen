@@ -24,9 +24,11 @@ export type rt = user_response_type;
 export type qh = user_query_handler;
 
 export let rethinkdb = new Rethinkdb({ db: 'test' });
-export let cqrsEngine = new RethinkdbCqrsEngine<e, c, q, r, et, ct, qt, rt, qh>(rethinkdb);
+export let cqrsEngine = new RethinkdbCqrsEngine<e, c, q, r, et, ct, qt, rt, qh>(
+  rethinkdb,
+);
 export let userDomain = new UserDomain(rethinkdb);
 
-export let allDomainReady = Promise.all([
-  userDomain,
-].map(domain => domain.start()));
+export let allDomainReady = Promise.all(
+  [userDomain].map(domain => domain.start()),
+);

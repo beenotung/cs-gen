@@ -34,4 +34,5 @@ subscribe()
   //   .then(subscribe)
   .then(publish)
   .then(update)
+  .then(() => rethinkdb.close())
 ;
