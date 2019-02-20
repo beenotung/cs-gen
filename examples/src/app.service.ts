@@ -1,17 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { NestCqrsService } from 'cqrs-exp';
+import {
+  CommonCommandResult,
+  ICommand,
+  ICommandResultWithEvents,
+  IEvent,
+  IEventStore,
+  IQuery,
+  ISince,
+  NestCqrsService,
+} from 'cqrs-exp';
 import { config } from './config/values';
 
 @Injectable()
 export class AppService implements NestCqrsService {
   eventStore: IEventStore;
-  constructor(){
-    this.eventStore=config.eve
+
+  constructor() {
+    this.eventStore = config.eventStore;
   }
+
   root(): string {
     return 'Hello World! cqrs demo';
   }
-
 
   handleCommand<C, T, R = CommonCommandResult>(command: ICommand<C, T>): Promise<R> {
     return undefined;
