@@ -5,7 +5,7 @@ import { getLocalStorage, Store } from '@beenotung/tslib/store';
 import { IEventStore } from '../core/cqrs.types';
 import { IEvent, INewEvent } from '../core/data';
 import { SaveEventResult } from '../core/helper.types';
-import { pos_int } from '../core/type';
+import { ID, JsonValue, pos_int } from '../core/type';
 import { IEventMeta } from './data';
 
 const KEY_EVENT_LIST = '_event-list';
@@ -50,7 +50,7 @@ export class LocalstorageEventStore implements IEventStore {
     };
   }
 
-  saveEvents<E, T>(newEvents: Array<INewEvent<E, T>>): Promise<SaveEventResult> {
+  saveEvents<E extends JsonValue, T extends ID>(newEvents: Array<INewEvent<E, T>>): Promise<SaveEventResult> {
     const eventsToSave: Array<IEvent<E, T>> = [];
     const metas = new Map<string, IEventMeta>();
     for (const newEvent of newEvents) {
@@ -81,7 +81,7 @@ export class LocalstorageEventStore implements IEventStore {
     return Promise.resolve('ok' as 'ok');
   }
 
-  getEventsFor<E, T>(aggregate_id: string): Promise<Array<IEvent<E, T>>> {
+  getEventsFor<E extends JsonValue, T extends ID>(aggregate_id: string): Promise<Array<IEvent<E, T>>> {
     const meta = this.getEventMeta(aggregate_id);
     const events: Array<IEvent<E, T>> = new Array(meta.last_version);
     for (let version = 1; version <= meta.last_version; version++) {
@@ -90,7 +90,7 @@ export class LocalstorageEventStore implements IEventStore {
     return Promise.resolve(events);
   }
 
-  getEventsForSince<E, T>(aggregate_id: string, sinceVersion: pos_int): Promise<Array<IEvent<E, T>>> {
+  getEventsForSince<E extends JsonValue, T extends ID>(aggregate_id: string, sinceVersion: pos_int): Promise<Array<IEvent<E, T>>> {
     const meta = this.getEventMeta(aggregate_id);
     const events: Array<IEvent<E, T>> = new Array(meta.last_version);
     for (let version = sinceVersion; version <= meta.last_version; version++) {
@@ -99,12 +99,14 @@ export class LocalstorageEventStore implements IEventStore {
     return Promise.resolve(events);
   }
 
-  subscribeEventsFor<E, T>(aggregate_id: string, cb: (events: Array<IEvent<E, T>>) => void) {
+
+  subscribeEventsFor<E extends JsonValue, T extends ID>(aggregate_id: string, cb: (events: Array<IEvent<E, T>>) => void) {
     mapGetOrSetDefault(this._eventListeners, aggregate_id, () => [])
       .push(cb);
   }
 
-  subscribeEventsForSince<E, T>(aggregate_id: string, sinceVersion: pos_int, cb: (events: Array<IEvent<E, T>>) => void) {
+  subscribeEventsForSince<E extends JsonValue, T extends ID>
+  (aggregate_id: string, sinceVersion: pos_int, cb: (events: Array<IEvent<E, T>>) => void) {
     mapGetOrSetDefault(this._eventListeners, aggregate_id, () => [])
       .push(events => cb(events.filter(event => event.version >= sinceVersion)));
   }

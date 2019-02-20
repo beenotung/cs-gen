@@ -2,6 +2,7 @@ import { injectNestClient, Post } from 'nest-client';
 import { ICqrsClient, ISince } from '../core/cqrs.types';
 import { ICommand, ICommandResultWithEvents, IQuery } from '../core/data';
 import { CommonCommandResult } from '../core/helper.types';
+import { ID, JsonValue } from '..';
 
 export class NestCqrsClientStub implements ICqrsClient {
   constructor(baseUrl: string) {
@@ -12,22 +13,24 @@ export class NestCqrsClientStub implements ICqrsClient {
   }
 
   @Post('command/send')
-  sendCommand<C, T, R = CommonCommandResult>(command: ICommand<C, T>): Promise<R> {
+  sendCommand<C extends JsonValue, T extends ID, R extends JsonValue = CommonCommandResult>(command: ICommand<C, T>): Promise<R> {
     return undefined;
   }
 
   @Post('command/send_and_get')
-  sendCommandAndGetEvents<C, CT, E, ET, R = CommonCommandResult>(command: ICommand<C, CT>): Promise<ICommandResultWithEvents<R, E, ET>> {
+  sendCommandAndGetEvents<C extends JsonValue, CT extends ID, E extends JsonValue, ET extends ID, R extends JsonValue = CommonCommandResult>
+  (command: ICommand<C, CT>): Promise<ICommandResultWithEvents<R, E, ET>> {
     return undefined;
   }
 
   @Post('query')
-  query<Q, R, T>(query: IQuery<Q, R, T>): Promise<R> {
+  query<Q extends JsonValue, R extends JsonValue, T extends ID>(query: IQuery<Q, R, T>): Promise<R> {
     return undefined;
   }
 
   @Post('query/since/:since')
-  querySince<Q, R, T>(query: IQuery<Q, R, T>, since: ISince): Promise<R> {
+  querySince<Q extends JsonValue, R extends JsonValue, T extends ID>(query: IQuery<Q, R, T>, since: ISince): Promise<R> {
     return undefined;
   }
+
 }
