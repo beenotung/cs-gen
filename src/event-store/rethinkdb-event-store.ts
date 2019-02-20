@@ -8,21 +8,21 @@ export class RethinkdbEventStore implements IEventStore {
   constructor(public conn: Connection) {
   }
 
-  saveEvents<E>(events: Array<IEvent<E>>): Promise<SaveEventResult> {
+  saveEvents<E, T>(events: Array<IEvent<E, T>>): Promise<SaveEventResult> {
     return undefined;
   }
 
-  getEventsFor<E>(aggregate_id: string): Promise<Array<IEvent<E>>> {
+  getEventsFor<E, T>(aggregate_id: string): Promise<Array<IEvent<E, T>>> {
     return undefined;
   }
 
-  getEventsForSince<E>(aggregate_id: string, version: pos_int): Promise<Array<IEvent<E>>> {
+  getEventsForSince<E, T>(aggregate_id: string, version: pos_int): Promise<Array<IEvent<E, T>>> {
     return undefined;
   }
 
-  subscribeEventsFor<E>(aggregate_id: string, cb: (events: Array<IEvent<E>>) => void) {
+  subscribeEventsFor<E, T>(aggregate_id: string, cb: (events: Array<IEvent<E, T>>) => void) {
   }
 
-  subscribeEventsForSince<E>(aggregate_id: string, version: pos_int, cb: (events: Array<IEvent<E>>) => void) {
+  subscribeEventsForSince<E, T>(aggregate_id: string, version: pos_int, cb: (events: Array<IEvent<E, T>>) => void) {
   }
 }

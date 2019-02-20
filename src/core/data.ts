@@ -1,33 +1,39 @@
 import { Drop } from '@beenotung/tslib/type';
-import { pos_int, timestamp } from './type';
+import { ID, JsonValue, pos_int, timestamp } from './type';
 
-export interface IAggregate<T = string> {
+export interface IAggregate<T extends ID = string> {
   aggregate_id: string
   type: T
   version: pos_int
 }
 
-export interface IEvent<E> {
+export interface IEvent<E extends JsonValue, T extends ID = string> {
   aggregate_id: string
+  type: T
   version: pos_int
   timestamp: timestamp
   data: E
 }
 
-export type INewEvent<E> = Drop<IEvent<E>, 'version'> & Partial<IEvent<E>>;
+export type INewEvent<E extends JsonValue, T extends ID = string> = Drop<IEvent<E, T>, 'version'> & Partial<IEvent<E, T>>;
 
-export interface ISnapshot<A> {
+export interface ISnapshot<A extends JsonValue> {
   aggregate_id: string
   version: pos_int
   data: A
 }
 
-export interface ICommand<C, T = string> {
+export interface ICommand<C extends JsonValue, T extends ID = string> {
   type: T
   data: C
 }
 
-export interface IQuery<Q, R, T = string> {
+export interface ICommandResultWithEvents<R extends JsonValue, E extends JsonValue, T extends ID = string> {
+  result: R
+  events: Array<IEvent<E, T>>
+}
+
+export interface IQuery<Q extends JsonValue, R extends JsonValue, T extends ID = string> {
   type: T
   session_id: string
   seq: pos_int

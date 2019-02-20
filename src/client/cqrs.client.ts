@@ -1,6 +1,6 @@
 import { injectNestClient, Post } from 'nest-client';
-import { ICommandResultWithEvents, ICqrsClient, ISince } from '../core/cqrs.types';
-import { ICommand, IQuery } from '../core/data';
+import { ICqrsClient, ISince } from '../core/cqrs.types';
+import { ICommand, ICommandResultWithEvents, IQuery } from '../core/data';
 import { CommonCommandResult } from '../core/helper.types';
 
 export class NestCqrsClientStub implements ICqrsClient {
@@ -17,7 +17,7 @@ export class NestCqrsClientStub implements ICqrsClient {
   }
 
   @Post('command/send_and_get')
-  sendCommandAndGetEvents<C, T, E, R = CommonCommandResult>(command: ICommand<C, T>): Promise<ICommandResultWithEvents<R, E>> {
+  sendCommandAndGetEvents<C, CT, E, ET, R = CommonCommandResult>(command: ICommand<C, CT>): Promise<ICommandResultWithEvents<R, E, ET>> {
     return undefined;
   }
 

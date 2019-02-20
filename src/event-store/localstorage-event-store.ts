@@ -23,7 +23,7 @@ export class LocalstorageEventStore implements IEventStore {
   _store: Store;
   _eventIds: string[];
 
-  _eventListeners = new Map<string, Array<Consumer<Array<IEvent<any>>>>>();
+  _eventListeners = new Map<string, Array<Consumer<Array<IEvent<any, any>>>>>();
 
   constructor(public dirpath: string) {
     // this._store = CachedObjectStore.create(dirpath);
@@ -50,8 +50,8 @@ export class LocalstorageEventStore implements IEventStore {
     };
   }
 
-  saveEvents<E>(newEvents: Array<INewEvent<E>>): Promise<SaveEventResult> {
-    const eventsToSave: Array<IEvent<E>> = [];
+  saveEvents<E, T>(newEvents: Array<INewEvent<E, T>>): Promise<SaveEventResult> {
+    const eventsToSave: Array<IEvent<E, T>> = [];
     const metas = new Map<string, IEventMeta>();
     for (const newEvent of newEvents) {
       const metaKey = eventMetaKey(newEvent.aggregate_id);
@@ -60,7 +60,7 @@ export class LocalstorageEventStore implements IEventStore {
         return Promise.resolve('version_conflict' as 'version_conflict');
       }
       eventMeta.last_version++;
-      const event: IEvent<E> = Object.assign({
+      const event: IEvent<E, T> = Object.assign({
         version: eventMeta.last_version,
       }, newEvent);
       eventsToSave.push(event);
@@ -81,30 +81,30 @@ export class LocalstorageEventStore implements IEventStore {
     return Promise.resolve('ok' as 'ok');
   }
 
-  getEventsFor<E>(aggregate_id: string): Promise<Array<IEvent<E>>> {
+  getEventsFor<E, T>(aggregate_id: string): Promise<Array<IEvent<E, T>>> {
     const meta = this.getEventMeta(aggregate_id);
-    const events: Array<IEvent<E>> = new Array(meta.last_version);
+    const events: Array<IEvent<E, T>> = new Array(meta.last_version);
     for (let version = 1; version <= meta.last_version; version++) {
       events.push(this.getObject(eventKey({ aggregate_id, version })));
     }
     return Promise.resolve(events);
   }
 
-  getEventsForSince<E>(aggregate_id: string, sinceVersion: pos_int): Promise<Array<IEvent<E>>> {
+  getEventsForSince<E, T>(aggregate_id: string, sinceVersion: pos_int): Promise<Array<IEvent<E, T>>> {
     const meta = this.getEventMeta(aggregate_id);
-    const events: Array<IEvent<E>> = new Array(meta.last_version);
+    const events: Array<IEvent<E, T>> = new Array(meta.last_version);
     for (let version = sinceVersion; version <= meta.last_version; version++) {
       events.push(this.getObject(eventKey({ aggregate_id, version })));
     }
     return Promise.resolve(events);
   }
 
-  subscribeEventsFor<E>(aggregate_id: string, cb: (events: Array<IEvent<E>>) => void) {
+  subscribeEventsFor<E, T>(aggregate_id: string, cb: (events: Array<IEvent<E, T>>) => void) {
     mapGetOrSetDefault(this._eventListeners, aggregate_id, () => [])
       .push(cb);
   }
 
-  subscribeEventsForSince<E>(aggregate_id: string, sinceVersion: pos_int, cb: (events: Array<IEvent<E>>) => void) {
+  subscribeEventsForSince<E, T>(aggregate_id: string, sinceVersion: pos_int, cb: (events: Array<IEvent<E, T>>) => void) {
     mapGetOrSetDefault(this._eventListeners, aggregate_id, () => [])
       .push(events => cb(events.filter(event => event.version >= sinceVersion)));
   }
