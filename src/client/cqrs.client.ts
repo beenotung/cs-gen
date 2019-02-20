@@ -2,7 +2,7 @@ import { injectNestClient, Post } from 'nest-client';
 import { ICqrsClient, ISince } from '../core/cqrs.types';
 import { ICommand, ICommandResultWithEvents, IQuery } from '../core/data';
 import { CommonCommandResult } from '../core/helper.types';
-import { ID, JsonValue } from '..';
+import { ID, JsonValue } from '../core/type';
 
 export class NestCqrsClientStub implements ICqrsClient {
   constructor(baseUrl: string) {

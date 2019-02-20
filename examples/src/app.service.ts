@@ -3,13 +3,15 @@ import {
   CommonCommandResult,
   ICommand,
   ICommandResultWithEvents,
+  ID,
   IEvent,
   IEventStore,
   IQuery,
   ISince,
+  JsonValue,
   NestCqrsService,
 } from 'cqrs-exp';
-import { config } from './config/values';
+import { AppCommand, config } from './config/values';
 
 @Injectable()
 export class AppService implements NestCqrsService {
@@ -23,23 +25,23 @@ export class AppService implements NestCqrsService {
     return 'Hello World! cqrs demo';
   }
 
-  handleCommand<C, T, R = CommonCommandResult>(command: ICommand<C, T>): Promise<R> {
+  handleCommand(command: AppCommand): Promise<CommonCommandResult> {
     return undefined;
   }
 
-  handleCommandAndGetEvents<C, T, E, R = CommonCommandResult>(command: ICommand<C, T>): Promise<ICommandResultWithEvents<R, E>> {
+  handleCommandAndGetEvents<C extends JsonValue, CT extends ID, E extends JsonValue, ET extends ID, R extends JsonValue = CommonCommandResult>(command: ICommand<C, CT>): Promise<ICommandResultWithEvents<R, E, ET>> {
     return undefined;
   }
 
-  handleEvents<E>(events: Array<IEvent<E>>): Promise<void> {
+  handleEvents<E extends JsonValue, T extends ID>(events: Array<IEvent<E, T>>): Promise<void> {
     return undefined;
   }
 
-  handleQuery<Q, R, T>(query: IQuery<Q, R, T>): Promise<R> {
+  handleQuery<Q extends JsonValue, R extends JsonValue, T extends ID>(query: IQuery<Q, R, T>): Promise<R> {
     return undefined;
   }
 
-  handleQuerySince<Q, R, T>(query: IQuery<Q, R, T>, since: ISince): Promise<R> {
+  handleQuerySince<Q extends JsonValue, R extends JsonValue, T extends ID>(query: IQuery<Q, R, T>, since: ISince): Promise<R> {
     return undefined;
   }
 }

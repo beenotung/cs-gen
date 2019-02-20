@@ -99,7 +99,6 @@ export class LocalstorageEventStore implements IEventStore {
     return Promise.resolve(events);
   }
 
-
   subscribeEventsFor<E extends JsonValue, T extends ID>(aggregate_id: string, cb: (events: Array<IEvent<E, T>>) => void) {
     mapGetOrSetDefault(this._eventListeners, aggregate_id, () => [])
       .push(cb);

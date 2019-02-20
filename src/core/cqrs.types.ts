@@ -29,13 +29,15 @@ export interface ISince {
   since: pos_int
 }
 
-export interface ICqrsClient {
-  sendCommand<C extends JsonValue, T extends ID, R extends JsonValue = CommonCommandResult>(command: ICommand<C, T>): Promise<R>
+export interface ICqrsClient<C extends JsonValue, CT extends ID,
+  E extends JsonValue, ET extends ID,
+  Q extends JsonValue, QT extends ID,
+  R extends JsonValue = CommonCommandResult> {
+  sendCommand(command: ICommand<C, CT>): Promise<R>
 
-  sendCommandAndGetEvents<C extends JsonValue, CT extends ID, E extends JsonValue, ET extends ID, R extends JsonValue = CommonCommandResult>
-  (command: ICommand<C, CT>): Promise<ICommandResultWithEvents<R, E, ET>>
+  sendCommandAndGetEvents(command: ICommand<C, CT>): Promise<ICommandResultWithEvents<R, E, ET>>
 
-  query<Q extends JsonValue, R extends JsonValue, T extends ID>(query: IQuery<Q, R, T>): Promise<R>
+  query(query: IQuery<Q, R, QT>): Promise<R>
 
   /**
    * @param query
@@ -70,8 +72,11 @@ export interface ICqrsReadServer {
  * a.k.a. snapshot maker
  * a.k.a. aggregate maintainer
  * */
-export interface IModel<A, E extends JsonValue, T extends ID = string> {
-  aggregate_type: T
+export interface IModel<A, E extends JsonValue, ET extends ID = string, AT extends ID = string> {
+  aggregate_type: AT
+  eventTypes: ET[]
 
-  reduce(events: Array<IEvent<E, T>>, init: A): A
+  init(): A
+
+  reduce(events: Array<IEvent<E, ET>>, init: A): A
 }

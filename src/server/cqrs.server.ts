@@ -1,8 +1,8 @@
 import { Post } from 'nest-client';
+import { ID, JsonValue } from '..';
 import { ICqrsClient, ICqrsReadServer, ICqrsWriteServer, ISince } from '../core/cqrs.types';
 import { ICommand, ICommandResultWithEvents, IQuery } from '../core/data';
 import { CommonCommandResult } from '../core/helper.types';
-import { ID, JsonValue } from '..';
 
 export interface NestCqrsService extends ICqrsReadServer, ICqrsWriteServer {
 

@@ -1,15 +1,12 @@
-import { HashedArray } from '@beenotung/tslib/hashed-array';
 import { ensureQueryType, IEvent, IModel, pos_int } from 'cqrs-exp';
 import { UserEvent } from './user.event.type';
+import * as util from 'util';
 
 export interface User {
   user_id: string
   username: string
 }
 
-export interface UserAggregates {
-  users: HashedArray<User>
-}
 
 export type UserQuery = ({
   type: 'FindUserByUsername',
@@ -22,15 +19,33 @@ export type UserQuery = ({
 ensureQueryType<UserQuery>();
 
 
-export class UserModel implements IModel<UserAggregates, UserEvent['data'], 'user'> {
+export class UserModel implements IModel<User, UserEvent['data'], UserEvent['type'], 'user'> {
   aggregate_type: 'user';
+  eventTypes: UserEvent['type'][] = [
+    'UserCreated',
+    'UsernameChanged',
+  ];
 
-  reduce(events: Array<IEvent<UserEvent['data']>>, init: UserAggregates): UserAggregates {
+  init(): User {
+    return undefined as any;
+  }
+
+  reduce(events: Array<IEvent<UserEvent['data'], UserEvent['type']>>, init: User): User {
     return events.reduce((acc, c) => {
-      switch (c.type) {
-
+      switch (c.type as UserEvent['type']) {
+        case 'UserCreated':
+          return {
+            user_id: c.data.user_id,
+            username: c.data.username,
+          };
+        case 'UsernameChanged':
+          return {
+            ...init,
+            username: c.data.username,
+          };
+        default:
+          throw new Error('unknown event:' + util.format(c));
       }
-      return acc;
     }, init);
   }
 }
