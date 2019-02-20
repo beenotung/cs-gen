@@ -1,6 +1,6 @@
-import { ICommand, ICommandResultWithEvents, IEvent, INewEvent, IQuery } from './data';
-import { CommonCommandResult, SaveEventResult } from './helper.types';
-import { ID, JsonValue, pos_int } from './type';
+import {ICommand, ICommandResultWithEvents, IEvent, INewEvent, IQuery} from './data';
+import {CommonCommandResult, SaveEventResult} from './helper.types';
+import {ID, JsonValue, pos_int} from './type';
 
 export interface IEventStore {
   saveEvents<E extends JsonValue, T extends ID>(newEvents: Array<INewEvent<E, T>>): Promise<SaveEventResult>
@@ -29,13 +29,11 @@ export interface ISince {
   since: pos_int
 }
 
-export interface ICqrsClient<C extends JsonValue, CT extends ID,
-  E extends JsonValue, ET extends ID,
-  Q extends JsonValue, QT extends ID,
-  R extends JsonValue = CommonCommandResult> {
-  sendCommand(command: ICommand<C, CT>): Promise<R>
+export interface ICqrsClient {
+  sendCommand<Command extends ICommand<C, R, CT>, C extends JsonValue, R extends JsonValue, CT extends ID>(command: Command): Promise<R>
 
-  sendCommandAndGetEvents(command: ICommand<C, CT>): Promise<ICommandResultWithEvents<R, E, ET>>
+  sendCommandAndGetEvents<Command extends ICommand<C, R, CT>, C extends JsonValue, R extends JsonValue, CT extends ID,
+    E extends JsonValue, ET extends ID>(command: Command): Promise<ICommandResultWithEvents<R, E, ET>>
 
   query(query: IQuery<Q, R, QT>): Promise<R>
 
