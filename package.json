@@ -5,6 +5,7 @@
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
   "scripts": {
+    "postinstall": "rm -rf node_modules/@beenotung/tslib/index.*",
     "format": "tslint -p . --fix",
     "prebuild": "rm -rf dist && gen-index",
     "build": "tsc",
@@ -23,10 +24,14 @@
   },
   "homepage": "https://gitlab.com/beenotung/cqrs-exp#readme",
   "dependencies": {
+    "@beenotung/tslib": "^13.8.1",
+    "@nestjs/core": "^5.7.2",
+    "nest-client": "^0.4.1",
     "rethinkdb-ts": "^2.4.0-rc.12"
   },
   "devDependencies": {
     "@beenotung/gen-index": "^1.0.7",
+    "@types/node": "^8.10.40",
     "tslint": "^5.12.1",
     "tslint-eslint-rules": "^5.4.0",
     "typescript": "^3.3.3"
