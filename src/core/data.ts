@@ -1,3 +1,4 @@
+import { Drop } from '@beenotung/tslib/type';
 import { pos_int, timestamp } from './type';
 
 export interface IAggregate<T = string> {
@@ -12,6 +13,8 @@ export interface IEvent<E> {
   timestamp: timestamp
   data: E
 }
+
+export type INewEvent<E> = Drop<IEvent<E>, 'version'> & Partial<IEvent<E>>;
 
 export interface ISnapshot<A> {
   aggregate_id: string
