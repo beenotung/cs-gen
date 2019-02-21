@@ -28,7 +28,9 @@
     "@nestjs/common": "^5.7.3",
     "@nestjs/core": "^5.7.2",
     "nest-client": "^0.4.1",
-    "rethinkdb-ts": "^2.4.0-rc.12"
+    "reflect-metadata": "^0.1.12",
+    "rethinkdb-ts": "^2.4.0-rc.12",
+    "rxjs": "^6.0.0"
   },
   "devDependencies": {
     "@beenotung/gen-index": "^1.0.7",
