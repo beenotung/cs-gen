@@ -5,8 +5,10 @@ import { ID, JsonValue, pos_int } from '../core/type';
 
 @Injectable()
 export class QueryRouterService<Model extends IReadModel<any, any, any, any, any>> implements ICqrsReadServer {
+  /**@deprecated*/
+  eventStore: IEventStore;
+
   constructor(
-    public eventStore: IEventStore,
     public models: Model[],
   ) {
   }

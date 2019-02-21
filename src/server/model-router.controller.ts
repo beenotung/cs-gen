@@ -7,6 +7,7 @@ import { QueryRouterService } from './query-router.service';
 
 @Controller('model')
 export class ModelRouterController implements ICqrsWriteServer, ICqrsReadServer {
+  /**@deprecated*/
   eventStore: IEventStore = null;
 
   constructor(

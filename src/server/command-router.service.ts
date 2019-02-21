@@ -5,8 +5,10 @@ import { ID, JsonValue } from '../core/type';
 
 @Injectable()
 export class CommandRouterService<Model extends IWriteModel<any>> implements ICqrsWriteServer {
+  /**@deprecated*/
+  eventStore: IEventStore = null;
+
   constructor(
-    public eventStore: IEventStore,
     public models: Model[],
   ) {
   }
