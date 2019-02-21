@@ -1,12 +1,13 @@
-import { ensureCommandType } from 'cqrs-exp';
+import { ensureCommandType, CommonCommandResult } from 'cqrs-exp';
 
-export type UserCommand = {
-  type: 'CreateUser',
-  data: { username: string }
-} | {
-  type: 'ChangeUsername',
-  data: { user_id: string, username: string }
-};
+export type UserCommand = (
+  | {
+      type: 'CreateUser';
+      command: { username: string };
+    }
+  | {
+      type: 'ChangeUsername';
+      command: { user_id: string; username: string };
+    }) & { result: CommonCommandResult };
 
 ensureCommandType<UserCommand>();
-

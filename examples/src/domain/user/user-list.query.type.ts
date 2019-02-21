@@ -1,51 +1,114 @@
 import 'cqrs-exp';
-import { ensureQueryType, IEvent, IModel, pos_int } from 'cqrs-exp';
+import { ensureQueryType, IEventStore, pos_int } from 'cqrs-exp';
 import { UserEvent } from './user.event.type';
-import * as util from 'util';
+import { CommonReadModel } from './common-read-model';
 
 export interface UserList {
   /**
    * username -> user_id
    * */
-  usernameMap: Map<string, string>
+  usernameToUserId: Map<string, string>;
+
+  /**
+   * user_id -> username
+   * */
+  userIdToUsername: Map<string, string>;
 }
 
 export type UserListQuery = ({
-  type: 'FindUserIdByUsername'
-  query: { username: string }
-  response: 'not_found' | { user_id: string }
+  type: 'FindUserIdByUsername';
+  query: { username: string };
+  response: 'not_found' | { user_id: string };
 }) & {
-  session_id: string
-  seq: pos_int
+  session_id: string;
+  seq: pos_int;
 };
 ensureQueryType<UserListQuery>();
 
-export class UserListModel implements IModel<UserList, UserEvent['data'], UserEvent['type'], 'user_list'> {
-  aggregate_type: 'user_list';
-  eventTypes: UserEvent['type'][] = [
-    'UserCreated',
-    'UsernameChanged',
-  ];
+export class UserListReadModel extends CommonReadModel<
+  UserList,
+  UserEvent,
+  UserListQuery,
+  'userlist'
+> {
+  aggregate_type: 'userlist' = 'userlist';
+  queryTypes: UserListQuery['type'][] = ['FindUserIdByUsername'];
+  /**
+   * username -> user_id
+   * */
+  state: UserList;
+  timestamp: pos_int;
 
-  init(): UserList {
-    return {
-      usernameMap: new Map(),
+  /**
+   * user_id -> username
+   * */
+
+  constructor(public eventStore: IEventStore) {
+    super();
+    this.state = {
+      usernameToUserId: new Map(),
+      userIdToUsername: new Map(),
     };
+    this.timestamp = 0;
+    // FIXME merge the selector to ensure ordering
+    this.eventStore.subscribeEventsBy<
+      UserEvent,
+      UserEvent['data'],
+      UserEvent['type']
+    >({ type: 'UserCreated' as UserEvent['type'] }, events =>
+      this.handleEvents(events),
+    );
+    this.eventStore.subscribeEventsBy<
+      UserEvent,
+      UserEvent['data'],
+      UserEvent['type']
+    >({ type: 'UsernameChanged' as UserEvent['type'] }, events =>
+      this.handleEvents(events),
+    );
   }
 
-  reduce(events: Array<IEvent<UserEvent['data'], UserEvent['type']>>, init: UserList): UserList {
-    return events.reduce((acc, c) => {
-      switch (c.type) {
-        case 'UserCreated':
-          acc.usernameMap.set(c.data.username, c.data.user_id);
-          return acc;
-        case 'UsernameChanged':
-          acc.usernameMap.delete(c.data.username);
-          acc.usernameMap.set(c.data.username, c.data.user_id);
-          return acc;
-        default:
-          throw new Error('unexpected event:' + util.format(c));
+  createUser(user_id: string, username: string) {
+    this.state.usernameToUserId.set(username, user_id);
+    this.state.userIdToUsername.set(user_id, username);
+  }
+
+  rename(user_id: string, newUsername: string) {
+    let oldUsername = this.state.userIdToUsername.get(user_id);
+    this.state.usernameToUserId.delete(oldUsername);
+    this.state.userIdToUsername.set(user_id, newUsername);
+  }
+
+  customHandleEvents(events: UserEvent[]): Promise<void> {
+    events.forEach(event => {
+      if (event.timestamp < this.timestamp) {
+        // FIXME merge the selector to ensure ordering
+        // return ;
       }
-    }, init);
+      switch (event.type) {
+        case 'UserCreated':
+          this.createUser(event.data.user_id, event.data.username);
+          break;
+        case 'UsernameChanged':
+          this.rename(event.data.user_id, event.data.username);
+          break;
+        default:
+          console.warn('unknown event of type:' + event!.type);
+          return;
+      }
+      this.timestamp = event.timestamp;
+    });
+    return Promise.resolve();
+  }
+
+  handleQuery(query: UserListQuery): Promise<UserListQuery> {
+    switch (query.type) {
+      case 'FindUserIdByUsername':
+        let user_id = this.state.usernameToUserId.get(query.query.username);
+        query.response = { user_id };
+        break;
+      default:
+        return Promise.reject('unknown query of type:' + query.type);
+    }
+    return Promise.resolve(query);
   }
 }
