@@ -1,13 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ICqrsWriteServer, IEventStore, IWriteModel } from '../core/cqrs.types';
-import { ICommand, ICommandWithEvents } from '../core/data';
+import { ICommand, ICommandWithEvents, IEvent } from '../core/data';
 import { ID } from '../core/type';
 
 @Injectable()
-export class CommandRouterService<Model extends IWriteModel<any, any, any, any, any, any, any>,
+export class CommandRouterService<Model extends IWriteModel<Command, CommandWithEvents, Event>,
   Command extends ICommand<any, any, any>,
-  CommandWithEvents extends ICommandWithEvents<any, any, any, any, any>>
-  implements ICqrsWriteServer<any, any, any, any, any, any, any> {
+  CommandWithEvents extends ICommandWithEvents<any, any, any, any, any>,
+  Event extends IEvent<Event['data'], Event['type']>,
+  >
+  implements ICqrsWriteServer<Command, CommandWithEvents, Event> {
   /**@deprecated*/
   eventStore: IEventStore = null;
 

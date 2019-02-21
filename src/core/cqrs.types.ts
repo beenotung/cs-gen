@@ -45,19 +45,19 @@ export interface ICqrsClient {
   (query: Query, sinceTimestamp: pos_int): Promise<Query>
 }
 
-export interface ICqrsWriteServer<Command extends ICommand<C, R, CT>,
-  CommandWithEvents extends ICommandWithEvents<C, R, E, CT, ET>,
-  C extends JsonValue, R extends JsonValue, E extends JsonValue,
-  CT extends ID = string, ET extends ID = string> {
+export interface ICqrsWriteServer<Command extends ICommand<Command['command'], Command['result'], Command['type']>,
+  CommandWithEvents extends ICommandWithEvents<CommandWithEvents['command'],
+    CommandWithEvents['result'], Event['data'], CommandWithEvents['type'], Event['type']>,
+  Event extends IEvent<Event['data'], Event['type']>,
+  > {
   eventStore: IEventStore;
 
   handleCommand(command: Command): Promise<Command>
 
-  handleCommandAndGetEvents(command: Command): Promise<Command>
+  handleCommandAndGetEvents(command: CommandWithEvents): Promise<CommandWithEvents>
 }
 
-export interface ICqrsReadServer<Query extends IQuery<Q, R, QT>,
-  Q extends JsonValue, R extends JsonValue, QT extends ID = string> {
+export interface ICqrsReadServer<Query extends IQuery<Query['query'], Query['response'], Query['type']>> {
   eventStore: IEventStore;
 
   handleQuery(query: Query): Promise<Query>
@@ -69,12 +69,11 @@ export interface ICqrsReadServer<Query extends IQuery<Q, R, QT>,
   handleQuerySince(query: Query, sinceTimestamp: pos_int): Promise<Query>
 }
 
-export interface IWriteModel<Command extends ICommand<C, R, CT>,
-  CommandWithEvents extends ICommandWithEvents<C, R, E, CT, ET>,
-  C extends JsonValue, R extends JsonValue, E extends JsonValue,
-  CT extends ID = string, ET extends ID = string,
-  > extends ICqrsWriteServer<Command, CommandWithEvents, C, R, E, CT, ET> {
-  commandTypes: CT[]
+export interface IWriteModel<Command extends ICommand<Command['command'], Command['result'], Command['type']>,
+  CommandWithEvents extends ICommandWithEvents<Command['command'], Command['result'], Event['data'], Command['type'], Event['type']>,
+  Event extends IEvent<Event['data'], Event['type']>,
+  > extends ICqrsWriteServer<Command, CommandWithEvents, Event> {
+  commandTypes: Array<Command['type']>
 }
 
 /**
@@ -82,16 +81,16 @@ export interface IWriteModel<Command extends ICommand<C, R, CT>,
  * a.k.a. snapshot maker
  * a.k.a. aggregate maintainer
  * */
-export interface IReadModel<A, Event extends IEvent<E, ET>, Query extends IQuery<Q, R, QT>,
-  E extends JsonValue, ET extends ID,
-  Q extends JsonValue, R extends JsonValue, QT extends ID,
+export interface IReadModel<State,
+  Event extends IEvent<Event['data'], Event['type']>,
+  Query extends IQuery<Query['query'], Query['response'], Query['type']>,
   AT extends ID = string> {
   aggregate_type: AT
-  queryTypes: QT[]
+  queryTypes: Array<Query['type']>
 
   eventStore: IEventStore
 
-  state: A
+  state: State
   timestamp: pos_int
 
   handleEvents(events: Event[]): Promise<void>

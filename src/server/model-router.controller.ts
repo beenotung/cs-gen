@@ -1,21 +1,23 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ICqrsReadServer, ICqrsWriteServer, IEventStore } from '../core/cqrs.types';
-import { ICommand, ICommandWithEvents, IQuery } from '../core/data';
+import { ICommand, ICommandWithEvents, IEvent, IQuery } from '../core/data';
 import { pos_int } from '../core/type';
 import { CommandRouterService } from './command-router.service';
 import { QueryRouterService } from './query-router.service';
 
 @Controller('model')
-export class ModelRouterController<Command extends ICommand<any, any, any>,
-  CommandWithEvents extends ICommandWithEvents<any, any, any, any, any>,
-  Query extends IQuery<any, any, any>,
-  > implements ICqrsWriteServer<any, any, any, any, any, any, any>, ICqrsReadServer<any, any, any, any> {
+export class ModelRouterController<Command extends ICommand<Command['command'], Command['result'], Command['type']>,
+  CommandWithEvents extends ICommandWithEvents<CommandWithEvents['command'],
+    CommandWithEvents['result'], Event['data'], CommandWithEvents['type'], Event['type']>,
+  Event extends IEvent<Event['data'], Event['type']>,
+  Query extends IQuery<Query['query'], Query['response'], Query['type']>,
+  > implements ICqrsWriteServer<Command, CommandWithEvents, Event>, ICqrsReadServer<Query> {
   /**@deprecated*/
   eventStore: IEventStore = null;
 
   constructor(
-    public commandService: CommandRouterService<any, Command, CommandWithEvents>,
-    public queryService: QueryRouterService<any, Query>,
+    public commandService: CommandRouterService<any, Command, CommandWithEvents, Event>,
+    public queryService: QueryRouterService<any, Event, Query>,
   ) {
   }
 
