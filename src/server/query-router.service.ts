@@ -1,10 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ICqrsReadServer, IEventStore, IReadModel } from '../core/cqrs.types';
 import { IQuery } from '../core/data';
-import { ID, JsonValue, pos_int } from '../core/type';
+import { ID, pos_int } from '../core/type';
 
 @Injectable()
-export class QueryRouterService<Model extends IReadModel<any, any, any, any, any>> implements ICqrsReadServer {
+export class QueryRouterService<Model extends IReadModel<any, any, any, any, any, any, any, any, any>,
+  Query extends IQuery<any, any, any>>
+  implements ICqrsReadServer<any, any, any, any> {
   /**@deprecated*/
   eventStore: IEventStore;
 
@@ -21,13 +23,11 @@ export class QueryRouterService<Model extends IReadModel<any, any, any, any, any
     return model;
   }
 
-  handleQuery<Query extends IQuery<Q, R, QT>, Q extends JsonValue, R extends JsonValue, QT extends ID>
-  (query: Query): Promise<Query> {
+  handleQuery(query: Query): Promise<Query> {
     return this.getModelByQueryType(query.type).handleQuery(query);
   }
 
-  handleQuerySince<Query extends IQuery<Q, R, QT>, Q extends JsonValue, R extends JsonValue, QT extends ID>
-  (query: Query, sinceTimestamp: pos_int): Promise<Query> {
+  handleQuerySince(query: Query, sinceTimestamp: pos_int): Promise<Query> {
     return this.getModelByQueryType(query.type).handleQuerySince(query, sinceTimestamp);
   }
 }

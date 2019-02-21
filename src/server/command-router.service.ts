@@ -1,10 +1,13 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ICqrsWriteServer, IEventStore, IWriteModel } from '../core/cqrs.types';
 import { ICommand, ICommandWithEvents } from '../core/data';
-import { ID, JsonValue } from '../core/type';
+import { ID } from '../core/type';
 
 @Injectable()
-export class CommandRouterService<Model extends IWriteModel<any>> implements ICqrsWriteServer {
+export class CommandRouterService<Model extends IWriteModel<any, any, any, any, any, any, any>,
+  Command extends ICommand<any, any, any>,
+  CommandWithEvents extends ICommandWithEvents<any, any, any, any, any>>
+  implements ICqrsWriteServer<any, any, any, any, any, any, any> {
   /**@deprecated*/
   eventStore: IEventStore = null;
 
@@ -21,14 +24,11 @@ export class CommandRouterService<Model extends IWriteModel<any>> implements ICq
     return model;
   }
 
-  handleCommand<Command extends ICommand<C, R, CT>, C extends JsonValue, R extends JsonValue, CT extends ID>
-  (command: Command): Promise<Command> {
+  handleCommand(command: Command): Promise<Command> {
     return this.getModelByCommandType(command.type).handleCommand(command);
   }
 
-  handleCommandAndGetEvents<Command extends ICommandWithEvents<C, R, E, CT, ET>,
-    C extends JsonValue, R extends JsonValue, E extends JsonValue, CT extends ID, ET extends ID>
-  (command: Command): Promise<Command> {
+  handleCommandAndGetEvents(command: CommandWithEvents): Promise<CommandWithEvents> {
     return this.getModelByCommandType(command.type).handleCommandAndGetEvents(command);
   }
 
