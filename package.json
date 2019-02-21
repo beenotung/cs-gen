@@ -25,6 +25,7 @@
   "homepage": "https://gitlab.com/beenotung/cqrs-exp#readme",
   "dependencies": {
     "@beenotung/tslib": "^13.8.1",
+    "@nestjs/common": "^5.7.3",
     "@nestjs/core": "^5.7.2",
     "nest-client": "^0.4.1",
     "rethinkdb-ts": "^2.4.0-rc.12"
