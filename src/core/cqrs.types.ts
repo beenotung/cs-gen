@@ -1,68 +1,77 @@
-import {ICommand, ICommandResultWithEvents, IEvent, INewEvent, IQuery} from './data';
-import {CommonCommandResult, SaveEventResult} from './helper.types';
-import {ID, JsonValue, pos_int} from './type';
+import { ICommand, ICommandWithEvents, IEvent, INewEvent, IQuery } from './data';
+import { SaveEventResult } from './helper.types';
+import { ID, JsonValue, pos_int } from './type';
+
+/**
+ * @field versionSince: inclusive boundary
+ * @field timestampSince: inclusive boundary
+ * */
+export interface IEventSelector<E extends JsonValue, T extends ID = string> {
+  aggregate_id?: string
+  type?: T
+  versionSince?: pos_int
+  timestampSince?: pos_int
+}
 
 export interface IEventStore {
   saveEvents<E extends JsonValue, T extends ID>(newEvents: Array<INewEvent<E, T>>): Promise<SaveEventResult>
 
-  getEventsFor<E extends JsonValue, T extends ID>(aggregate_id: string): Promise<Array<IEvent<E, T>>>
+  getEventsFor<Event extends IEvent<E, T>, E extends JsonValue, T extends ID>(aggregate_id: string): Promise<Event[]>
 
-  /**
-   * @param aggregate_id: id of the aggregate root
-   * @param sinceVersion: inclusive boundary
-   * */
-  getEventsForSince<E extends JsonValue, T extends ID>(aggregate_id: string, sinceVersion: pos_int): Promise<Array<IEvent<E, T>>>
+  getEventsBy<Event extends IEvent<E, T>, E extends JsonValue, T extends ID>(selector: IEventSelector<E, T>): Promise<Event[]>
 
   subscribeEventsFor<E extends JsonValue, T extends ID>(aggregate_id: string, cb: (events: Array<IEvent<E, T>>) => void)
 
-  /**
-   * @param aggregate_id: id of the aggregate root
-   * @param sinceVersion: inclusive boundary
-   * @param cb: callback function to consume events
-   * */
-  subscribeEventsForSince<E extends JsonValue, T extends ID>
-  (aggregate_id: string, sinceVersion: pos_int, cb: (events: Array<IEvent<E, T>>) => void)
-}
-
-export interface ISince {
-  type: 'version' | 'timestamp'
-  since: pos_int
+  subscribeEventsBy<Event extends IEvent<E, T>, E extends JsonValue, T extends ID>
+  (selector: IEventSelector<E, T>, cb: (events: Event[]) => void)
 }
 
 export interface ICqrsClient {
-  sendCommand<Command extends ICommand<C, R, CT>, C extends JsonValue, R extends JsonValue, CT extends ID>(command: Command): Promise<R>
+  sendCommand<Command extends ICommand<C, R, CT>, C extends JsonValue, R extends JsonValue, CT extends ID>
+  (command: Command): Promise<Command>
 
-  sendCommandAndGetEvents<Command extends ICommand<C, R, CT>, C extends JsonValue, R extends JsonValue, CT extends ID,
-    E extends JsonValue, ET extends ID>(command: Command): Promise<ICommandResultWithEvents<R, E, ET>>
+  sendCommandAndGetEvents<Command extends ICommandWithEvents<C, R, E, CT, ET>,
+    C extends JsonValue, R extends JsonValue, E extends JsonValue, CT extends ID, ET extends ID>
+  (command: Command): Promise<Command>
 
-  query(query: IQuery<Q, R, QT>): Promise<R>
+  query<Query extends IQuery<Q, R, QT>, Q extends JsonValue, R extends JsonValue, QT extends ID>
+  (query: Query): Promise<Query>
 
   /**
    * @param query
-   * @param since: specify the minimum version of aggregates
+   * @param sinceTimestamp: minimum timestamp required to answer this query
    * */
-  querySince<Q extends JsonValue, R extends JsonValue, T extends ID>(query: IQuery<Q, R, T>, since: ISince): Promise<R>
+  querySince<Query extends IQuery<Q, R, QT>, Q extends JsonValue, R extends JsonValue, QT extends ID>
+  (query: Query, sinceTimestamp: pos_int): Promise<Query>
 }
 
 export interface ICqrsWriteServer {
   eventStore: IEventStore;
 
-  handleCommand<C extends JsonValue, T extends ID, R extends JsonValue = CommonCommandResult>(command: ICommand<C, T>): Promise<R>
+  handleCommand<Command extends ICommand<C, R, CT>, C extends JsonValue, R extends JsonValue, CT extends ID>
+  (command: Command): Promise<Command>
 
-  handleCommandAndGetEvents<C extends JsonValue, CT extends ID,
-    E extends JsonValue, ET extends ID,
-    R extends JsonValue = CommonCommandResult>
-  (command: ICommand<C, CT>): Promise<ICommandResultWithEvents<R, E, ET>>
+  handleCommandAndGetEvents<Command extends ICommandWithEvents<C, R, E, CT, ET>,
+    C extends JsonValue, R extends JsonValue, E extends JsonValue, CT extends ID, ET extends ID>
+  (command: Command): Promise<Command>
 }
 
 export interface ICqrsReadServer {
   eventStore: IEventStore;
 
-  handleEvents<E extends JsonValue, T extends ID>(events: Array<IEvent<E, T>>): Promise<void>
+  handleQuery<Query extends IQuery<Q, R, QT>, Q extends JsonValue, R extends JsonValue, QT extends ID>
+  (query: Query): Promise<Query>
 
-  handleQuery<Q extends JsonValue, R extends JsonValue, T extends ID>(query: IQuery<Q, R, T>): Promise<R>
+  /**
+   * @param query
+   * @param sinceTimestamp: minimum timestamp required to answer this query
+   * */
+  handleQuerySince<Query extends IQuery<Q, R, QT>, Q extends JsonValue, R extends JsonValue, QT extends ID>
+  (query: Query, sinceTimestamp: pos_int): Promise<Query>
+}
 
-  handleQuerySince<Q extends JsonValue, R extends JsonValue, T extends ID>(query: IQuery<Q, R, T>, since: ISince): Promise<R>
+export interface IWriteModel<CT extends ID = string> extends ICqrsWriteServer {
+  commandTypes: CT[]
 }
 
 /**
@@ -70,11 +79,24 @@ export interface ICqrsReadServer {
  * a.k.a. snapshot maker
  * a.k.a. aggregate maintainer
  * */
-export interface IModel<A, E extends JsonValue, ET extends ID = string, AT extends ID = string> {
+export interface IReadModel<A, E extends JsonValue, ET extends ID = string, QT extends ID = string, AT extends ID = string> {
   aggregate_type: AT
-  eventTypes: ET[]
+  queryTypes: QT[]
 
-  init(): A
+  eventStore: IEventStore
 
-  reduce(events: Array<IEvent<E, ET>>, init: A): A
+  state: A
+  timestamp: pos_int
+
+  handleEvents<Event extends IEvent<E, T>, E extends JsonValue, T extends ID>(events: Event[]): Promise<void>
+
+  handleQuery<Query extends IQuery<Q, R, QT>, Q extends JsonValue, R extends JsonValue, QT extends ID>
+  (query: Query): Promise<Query>
+
+  /**
+   * @param query
+   * @param sinceTimestamp: minimum timestamp required to answer this query
+   * */
+  handleQuerySince<Query extends IQuery<Q, R, QT>, Q extends JsonValue, R extends JsonValue, QT extends ID>
+  (query: Query, sinceTimestamp: pos_int): Promise<Query>
 }

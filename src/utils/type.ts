@@ -5,7 +5,7 @@ import { ICommand, IEvent, IQuery } from '../core/data';
 export function ensureTypeFulfill<Target extends Base, Base>(): void {
 }
 
-export function ensureCommandType<CustomCommand extends ICommand<CustomCommand['data'], CustomCommand['type']>>(): void {
+export function ensureCommandType<CustomCommand extends ICommand<CustomCommand['command'], CustomCommand['type']>>(): void {
 }
 
 export function ensureEventType<CustomEvent extends IEvent<CustomEvent['data'], CustomEvent['type']>, >(): void {

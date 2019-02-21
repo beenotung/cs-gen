@@ -1,6 +1,6 @@
-import {Drop} from '@beenotung/tslib/type';
-import {CommonCommandResult} from './helper.types';
-import {ID, JsonValue, pos_int, timestamp} from './type';
+import { Drop } from '@beenotung/tslib/type';
+import { CommonCommandResult } from './helper.types';
+import { ID, JsonValue, pos_int, timestamp } from './type';
 
 export interface IAggregate<T extends ID = string> {
   aggregate_id: string
@@ -32,10 +32,10 @@ export interface ICommand<C extends JsonValue, R extends JsonValue = CommonComma
   result: R
 }
 
-export interface ICommandResultWithEvents<R extends JsonValue, E extends JsonValue, T extends ID = string> {
-  result: R
-  events: Array<IEvent<E, T>>
-}
+export type ICommandWithEvents<C extends JsonValue, R extends JsonValue, E extends JsonValue,
+  CT extends ID = string, ET extends ID = string> =
+  ICommand<C, R, CT>
+  & { events: Array<IEvent<E, ET>> };
 
 export interface IQuery<Q extends JsonValue, R extends JsonValue, T extends ID = string> {
   type: T
