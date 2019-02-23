@@ -1,53 +1,48 @@
 import 'cqrs-exp';
-import { ID, IEvent, IEventStore, IQuery, IReadModel, pos_int } from 'cqrs-exp';
-import { createDefer, Defer } from '@beenotung/tslib/async/defer';
-import { compare_number } from '@beenotung/tslib/number';
+import { IEvent, IQuery, IReadModel, pos_int } from 'cqrs-exp';
+import { remove } from '@beenotung/tslib';
 
-export interface PendingQuery<
-  Query extends IQuery<Query['query'], Query['response'], Query['type']>
-> {
-  query: Query;
-  sinceTimestamp: pos_int;
-  defer: Defer<Query, any>;
+function then(p: void | Promise<void>, cb: () => void) {
+  if (p && p.then) {
+    p.then(() => cb());
+  } else {
+    cb();
+  }
 }
 
-export abstract class CommonReadModel<
-  State,
-  Event extends IEvent<Event['data'], Event['type']>,
-  Query extends IQuery<Query['query'], Query['response'], Query['type']>,
-  AT extends ID
-> implements IReadModel<State, Event, Query, AT> {
-  abstract aggregate_type: AT;
-  abstract eventStore: IEventStore;
-  abstract queryTypes: Array<Query['type']>;
-  abstract state: State;
+export abstract class CommonReadModel<Event extends IEvent<Event['data'], Event['type']>,
+  Query extends IQuery<Query['query'], Query['response'], Query['type']>>
+  implements IReadModel<Event, Query> {
   abstract timestamp: pos_int;
 
-  pendingQueries: Array<PendingQuery<Query>> = [];
+  abstract handleEvent(events: Event[]): void | Promise<void>
 
-  abstract customHandleEvents(events: Event[]): Promise<void>;
+  /**
+   * hook to be called after onEvent()
+   * */
+  onPostEvents: Array<() => void> = [];
 
-  abstract handleQuery(query: Query): Promise<Query>;
-
-  handleEvents(events: Event[]): Promise<void> {
-    events = events.sort((a, b) => compare_number(a.version, b.version));
-    return this.customHandleEvents(events).then(x => {
-      this.pendingQueries = this.pendingQueries.filter(pendingQuery => {
-        if (this.timestamp >= pendingQuery.sinceTimestamp) {
-          this.handleQuery(pendingQuery.query)
-            .then(x => pendingQuery.defer.resolve(x))
-            .catch(e => pendingQuery.defer.reject(e));
-          return false;
-        }
-        return true;
-      });
-      return x;
-    });
+  onEvent(events: Event[]): void {
+    let res = this.handleEvent(events);
+    then(res, () => this.onPostEvents.forEach(f => f()));
   }
 
-  handleQuerySince(query: Query, sinceTimestamp: pos_int): Promise<Query> {
-    let defer = createDefer<any, any>();
-    this.pendingQueries.push({ query, sinceTimestamp, defer });
-    return defer.promise;
+  abstract query(query: Query): Promise<Query['response']>
+
+  querySince(query: Query, sinceTimestamp: pos_int): Promise<Query['response']> {
+    if (this.timestamp < sinceTimestamp) {
+      return this.query(query);
+    }
+    return new Promise((resolve, reject) => {
+      let f = () => {
+        if (this.timestamp < sinceTimestamp) {
+          this.query(query)
+            .then(resolve)
+            .catch(reject);
+          remove(this.onPostEvents, f);
+        }
+      };
+      this.onPostEvents.push(f);
+    });
   }
 }

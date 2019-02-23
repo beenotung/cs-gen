@@ -28,7 +28,7 @@ export class UserReadModel extends CommonReadModel<
   state: User;
   timestamp: pos_int;
 
-  constructor(public eventStore: IEventStore) {
+  constructor(public eventStore: IEventStore<UserEvent>) {
     super();
     this.state = null;
     this.timestamp = null;

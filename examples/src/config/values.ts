@@ -3,6 +3,7 @@ import {
   LocalstorageEventStore,
   NestCqrsClientStub,
   QueryRouterService,
+  CqrsService,
 } from 'cqrs-exp';
 import { UserQuery, UserReadModel } from '../domain/user/user.query.type';
 import { UserListReadModel } from '../domain/user/user-list.query.type';
@@ -18,13 +19,10 @@ export namespace config {
   export let userReadModel = new UserReadModel(eventStore);
   export let userListReadModel = new UserListReadModel(eventStore);
 
-  export let commandRouterService = new CommandRouterService([
-    /* TODO */
-  ]);
-  export let queryRouterService = new QueryRouterService([
-    userReadModel,
-    userListReadModel,
-  ]);
+  export let cqrsService = new CqrsService(eventStore);
+
+  cqrsService.attachWriteModel(user);
+  cqrsService.attachReadModel(userReadModel,[]);
 }
 export let appClient = new NestCqrsClientStub(config.baseUrl);
 

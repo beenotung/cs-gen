@@ -2,6 +2,8 @@ import 'cqrs-exp';
 import { ensureQueryType, IEventStore, pos_int } from 'cqrs-exp';
 import { UserEvent } from './user.event.type';
 import { CommonReadModel } from './common-read-model';
+import { USER_LIST } from './user.constants';
+import { UserListEvent } from './user-list.event.type';
 
 export interface UserList {
   /**
@@ -25,12 +27,10 @@ export type UserListQuery = ({
 };
 ensureQueryType<UserListQuery>();
 
-export class UserListReadModel extends CommonReadModel<
-  UserList,
+export class UserListReadModel extends CommonReadModel<UserList,
   UserEvent,
   UserListQuery,
-  'userlist'
-> {
+  'userlist'> {
   aggregate_type: 'userlist' = 'userlist';
   queryTypes: UserListQuery['type'][] = ['FindUserIdByUsername'];
   /**
@@ -43,7 +43,7 @@ export class UserListReadModel extends CommonReadModel<
    * user_id -> username
    * */
 
-  constructor(public eventStore: IEventStore) {
+  constructor(public eventStore: IEventStore<UserListEvent>) {
     super();
     this.state = {
       usernameToUserId: new Map(),
@@ -51,18 +51,22 @@ export class UserListReadModel extends CommonReadModel<
     };
     this.timestamp = 0;
     // FIXME merge the selector to ensure ordering
-    this.eventStore.subscribeEventsBy<
-      UserEvent,
-      UserEvent['data'],
-      UserEvent['type']
-    >({ type: 'UserCreated' as UserEvent['type'] }, events =>
+    this.eventStore.subscribeEventsFor(USER_LIST, events => events.forEach(userListEvent => {
+      switch (userListEvent.type) {
+        case 'UserCreated': {
+          this.eventStore.subscribeEventsFor(userListEvent.data.user_id, events => events.forEach(userEvent => {
+
+          }));
+          userListEvent.data.user_id;
+        }
+      }
+    }));
+    this.eventStore.subscribeEventsBy({ type: 'UserCreated' as UserEvent['type'] }, events =>
       this.handleEvents(events),
     );
-    this.eventStore.subscribeEventsBy<
-      UserEvent,
+    this.eventStore.subscribeEventsBy<UserEvent,
       UserEvent['data'],
-      UserEvent['type']
-    >({ type: 'UsernameChanged' as UserEvent['type'] }, events =>
+      UserEvent['type']>({ type: 'UsernameChanged' as UserEvent['type'] }, events =>
       this.handleEvents(events),
     );
   }
