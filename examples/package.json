@@ -21,12 +21,14 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
+    "@beenotung/tslib": "^13.8.1",
     "@nestjs/common": "^5.1.0",
     "@nestjs/core": "^5.1.0",
     "cqrs-exp": "file:..",
     "reflect-metadata": "^0.1.12",
     "rxjs": "^6.2.2",
-    "typescript": "^3.0.1"
+    "typescript": "^3.0.1",
+    "typestub-multihashes": "0.0.1"
   },
   "devDependencies": {
     "@nestjs/testing": "^5.1.0",
