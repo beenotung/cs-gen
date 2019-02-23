@@ -1,8 +1,8 @@
-import { IEvent, INewEvent } from './data';
+import { IEvent } from './data';
 
 export type HttpStatusCode = number;
 export type CommonCommandResult<Event extends IEvent<Event['data'], Event['type']>> =
-  { ok: Array<INewEvent<Event>> }
+  'ok'
   | 'timeout'
   | 'quota_excess'
   | 'no_permission'

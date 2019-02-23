@@ -32,6 +32,7 @@ export interface ICommand<C extends JsonValue, R extends CommonCommandResult<Eve
   type: T
   command: C
   result: R
+  events: Event[]
 }
 
 export interface IQuery<Q extends JsonValue, R extends JsonValue, T extends ID = string> {
