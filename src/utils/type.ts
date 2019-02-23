@@ -5,13 +5,14 @@ import { ICommand, IEvent, IQuery } from '../core/data';
 export function ensureTypeFulfill<Target extends Base, Base>(): void {
 }
 
-export function ensureCommandType<CustomCommand extends ICommand<CustomCommand['command'], CustomCommand['result'], CustomCommand['type']>>(): void {
+export function ensureCommandType<Command extends ICommand<Command['command'], Command['result'], Event, Command['type']>,
+  Event extends IEvent<Event['data'], Event['type']>>(): void {
 }
 
 export function ensureEventType<CustomEvent extends IEvent<CustomEvent['data'], CustomEvent['type']>, >(): void {
 }
 
-export function ensureQueryType<CustomQuery extends IQuery<CustomQuery['query'], CustomQuery['response'], CustomQuery['type']>>(): void {
+export function ensureQueryType<Query extends IQuery<Query['query'], Query['response'], Query['type']>>(): void {
 }
 
 /* tslint:enable:no-empty */

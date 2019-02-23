@@ -1,14 +1,12 @@
-import { groupBy } from '@beenotung/tslib/functional';
-import { Consumer } from '@beenotung/tslib/functional/types';
 import { mapGetOrSetDefault } from '@beenotung/tslib/map';
 import { getLocalStorage, Store } from '@beenotung/tslib/store';
-import { IEventSelector, IEventStore } from '../core/cqrs.types';
 import { IEvent, INewEvent } from '../core/data';
 import { SaveEventResult } from '../core/helper.types';
-import { ID, JsonValue, pos_int } from '../core/type';
+import { IEventConsumer, IEventSelector, IEventStore } from '../core/interface';
+import { pos_int } from '../core/type';
 import { IEventMeta } from './data';
 
-const KEY_EVENT_LIST = '_event-list';
+const KEY_EVENT_LIST = '_aggregate-id-list';
 const KEY_EVENT_META = '_event-meta';
 
 function eventMetaKey(aggregate_id: string): string {
@@ -19,12 +17,12 @@ function eventKey(event: { aggregate_id: string, version: pos_int }): string {
   return [event.aggregate_id, event.version].join('-');
 }
 
-function eventFilter<Event extends IEvent<any, any>>(events: Event[], selector: IEventSelector<any, any>): Event[] {
+function eventFilter<Event extends IEvent<any, any>>(events: Event[], selector: IEventSelector<Event['data'], Event['type']>): Event[] {
   return events.filter(event => {
-    if (selector.aggregate_id && event.aggregate_id !== selector.aggregate_id) {
+    if (selector.aggregate_id !== event.aggregate_id) {
       return false;
     }
-    if (selector.type && event.type !== selector.type) {
+    if (selector.types !== 'all' && selector.types.indexOf(event.type) === -1) {
       return false;
     }
     if (selector.versionSince && event.version > selector.versionSince) {
@@ -37,120 +35,104 @@ function eventFilter<Event extends IEvent<any, any>>(events: Event[], selector: 
   });
 }
 
-export class LocalstorageEventStore implements IEventStore {
+export class LocalstorageEventStore<Event extends IEvent<Event['data'], Event['type']>> implements IEventStore<Event> {
   _store: Store;
-  _eventIds: string[];
+  _aggregateIds: string[];
+  _eventMetas = new Map<string, IEventMeta>();
 
-  _aggregateEventListeners = new Map<string, Array<Consumer<Array<IEvent<any, any>>>>>();
-  _allEventListeners: Array<Consumer<Array<IEvent<any, any>>>> = [];
-
-  constructor(public dirpath: string) {
-    // this._store = CachedObjectStore.create(dirpath);
+  constructor(dirpath: string) {
     this._store = Store.create(getLocalStorage(dirpath));
-    this._eventIds = this._store.getObject(KEY_EVENT_LIST) || [];
+    this._aggregateIds = this._store.getObject(KEY_EVENT_LIST) || [];
   }
 
-  getEventIds(): string[] {
-    return this._eventIds.map(x => x);
+  onEvent = (events: Event[]) => {
+    /* init place folder */
   }
 
-  getObject<T>(key: string) {
-    return this._store.getObject<T>(key);
+  getAggregateIds(raw = false): string[] {
+    if (raw) {
+      return this._aggregateIds;
+    }
+    return this._aggregateIds.map(x => x);
   }
 
-  saveObject<T>(key: string, data: T) {
-    return this._store.setObject(key, data);
+  saveAggregateIds(aggregateIds: string[]): void {
+    this._aggregateIds = aggregateIds.map(x => x);
+    this._store.setObject(KEY_EVENT_LIST, this._aggregateIds);
   }
 
   getEventMeta(aggregate_id: string): IEventMeta {
-    return this.getObject(eventMetaKey(aggregate_id)) || {
+    return mapGetOrSetDefault(this._eventMetas, eventMetaKey(aggregate_id), () => this._store.getObject(aggregate_id) || {
       aggregate_id,
       last_version: 0,
+    });
+  }
+
+  saveEventMeta(eventMeta: IEventMeta): void {
+    this._eventMetas.set(eventMeta.aggregate_id, eventMeta);
+    this._store.setObject(eventMetaKey(eventMeta.aggregate_id), eventMeta);
+  }
+
+  async saveEvents(events: Array<INewEvent<Event['data'], Event['type']>>): Promise<SaveEventResult<Event>> {
+    const eventsToSave = new Array<IEvent<Event['data'], Event['type']>>(events.length);
+    const eventMetas = new Map<string, IEventMeta>();
+    const aggregateIds = new Set(this.getAggregateIds(true));
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
+      const eventMeta = mapGetOrSetDefault(eventMetas, event.aggregate_id, () => this.getEventMeta(event.aggregate_id));
+      if (event.version && event.version !== eventMeta.last_version + 1) {
+        return 'version_conflict';
+      }
+      aggregateIds.add(event.aggregate_id);
+      eventsToSave[i] = {
+        aggregate_id: event.aggregate_id,
+        type: event.type,
+        version: eventMeta.last_version + 1,
+        timestamp: event.timestamp,
+        data: event.data,
+      };
+      eventMeta.last_version++;
+    }
+    eventsToSave.forEach(event => this._store.setObject(eventKey(event), event));
+    eventMetas.forEach(eventMeta => this.saveEventMeta(eventMeta));
+    this.saveAggregateIds(Array.from(aggregateIds));
+    return { ok: eventsToSave as Event[] };
+  }
+
+  getEventsFor(aggregate_id: string, cb: IEventConsumer<Event>): void {
+    const n = this.getEventMeta(aggregate_id).last_version;
+    for (let version = 1; version <= n; version++) {
+      cb([this._store.getObject(eventKey({ aggregate_id, version }))]);
+    }
+    cb([]);
+  }
+
+  getEventsBy(selector: IEventSelector<Event['data'], Event['type']>, cb: IEventConsumer<Event>) {
+    this.getEventsFor(selector.aggregate_id, events => {
+      if (events.length === 0) {
+        cb([]);
+        return;
+      }
+      events = eventFilter(events, selector);
+      if (events.length > 0) {
+        return cb(events);
+      }
+    });
+  }
+
+  subscribeEventsFor(aggregate_id: string, cb: IEventConsumer<Event>): void {
+    const f = this.onEvent;
+    this.onEvent = events => {
+      f(events);
+      cb(events.filter(event => event.aggregate_id === aggregate_id));
     };
   }
 
-  onEvents(events: Array<IEvent<any, any>>) {
-    setTimeout(() => {
-      groupBy(event => event.aggregate_id, events)
-        .forEach((events, aggregate_id) =>
-          mapGetOrSetDefault(this._aggregateEventListeners, aggregate_id, () => [])
-            .forEach(cb => {
-              try {
-                cb(events);
-              } catch (e) {
-                console.error(e);
-              }
-            }),
-        );
-      this._allEventListeners.forEach(cb => {
-        try {
-          cb(events);
-        } catch (e) {
-          console.error(e);
-        }
-      });
-    });
-  }
-
-  saveEvents<E extends JsonValue, T extends ID>(newEvents: Array<INewEvent<E, T>>): Promise<SaveEventResult> {
-    const eventsToSave: Array<IEvent<E, T>> = [];
-    const metas = new Map<string, IEventMeta>();
-    for (const newEvent of newEvents) {
-      const metaKey = eventMetaKey(newEvent.aggregate_id);
-      const eventMeta = mapGetOrSetDefault(metas, metaKey, () => this.getEventMeta(newEvent.aggregate_id));
-      if (typeof newEvent.version === 'number' && newEvent.version !== eventMeta.last_version + 1) {
-        return Promise.resolve('version_conflict' as 'version_conflict');
-      }
-      eventMeta.last_version++;
-      const event: IEvent<E, T> = Object.assign({
-        version: eventMeta.last_version,
-      }, newEvent);
-      eventsToSave.push(event);
-    }
-    const newEventIds = this.getEventIds();
-    eventsToSave.forEach(event => {
-      const eventId = eventKey(event);
-      newEventIds.push(eventId);
-      this.saveObject(eventId, event);
-    });
-    metas.forEach(meta => this.saveObject(eventMetaKey(meta.aggregate_id), meta));
-    this.saveObject(KEY_EVENT_LIST, newEventIds);
-    this._eventIds = newEventIds;
-    this.onEvents(eventsToSave);
-    return Promise.resolve('ok' as 'ok');
-  }
-
-  getEventsFor<Event extends IEvent<E, T>, E extends JsonValue, T extends ID>(aggregate_id: string): Promise<Event[]> {
-    const meta = this.getEventMeta(aggregate_id);
-    const events: Event[] = new Array(meta.last_version);
-    for (let version = 1; version <= meta.last_version; version++) {
-      events.push(this.getObject(eventKey({ aggregate_id, version })));
-    }
-    return Promise.resolve(events);
-  }
-
-  getEventsBy<Event extends IEvent<E, T>, E extends JsonValue, T extends ID>(selector: IEventSelector<E, T>): Promise<Event[]> {
-    if (selector.aggregate_id && Object.keys(selector).length === 1) {
-      return this.getEventsFor(selector.aggregate_id);
-    }
-    const matchedEvents: Event[] = [];
-    this.getEventIds().forEach(eventId => {
-      const event: Event = this.getObject(eventId);
-      matchedEvents.push(...eventFilter([event], selector));
-    });
-    return Promise.resolve(matchedEvents);
-  }
-
-  subscribeEventsFor<E extends JsonValue, T extends ID>(aggregate_id: string, cb: (events: Array<IEvent<E, T>>) => void) {
-    mapGetOrSetDefault(this._aggregateEventListeners, aggregate_id, () => [])
-      .push(cb);
-  }
-
-  subscribeEventsBy<Event extends IEvent<E, T>, E extends JsonValue, T extends ID>
-  (selector: IEventSelector<E, T>, cb: (events: Event[]) => void) {
-    if (selector.aggregate_id && Object.keys(selector).length === 1) {
-      return this.subscribeEventsFor(selector.aggregate_id, cb);
-    }
-    this._allEventListeners.push(events => cb(eventFilter<any>(events, selector)));
+  subscribeEventsBy(selector: IEventSelector<Event['data'], Event['type']>, cb: (events: Event[]) => void): void {
+    const f = this.onEvent;
+    this.onEvent = events => {
+      f(events);
+      cb(eventFilter(events, selector));
+    };
   }
 }

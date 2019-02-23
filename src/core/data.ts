@@ -18,7 +18,8 @@ export interface IEvent<E extends JsonValue, T extends ID = string> {
 
 export type INewEvent<E extends JsonValue, T extends ID = string> =
   Drop<IEvent<E, T>, 'version'>
-  & Partial<IEvent<E, T>>;
+  & Partial<IEvent<E, T>>
+  ;
 
 export interface ISnapshot<A extends JsonValue> {
   aggregate_id: string
@@ -26,16 +27,12 @@ export interface ISnapshot<A extends JsonValue> {
   data: A
 }
 
-export interface ICommand<C extends JsonValue, R extends JsonValue = CommonCommandResult, T extends ID = string> {
+export interface ICommand<C extends JsonValue, R extends CommonCommandResult<Event>,
+  Event extends IEvent<Event['data'], Event['type']>, T extends ID = string> {
   type: T
   command: C
   result: R
 }
-
-export type ICommandWithEvents<C extends JsonValue, R extends JsonValue, E extends JsonValue,
-  CT extends ID = string, ET extends ID = string> =
-  ICommand<C, R, CT>
-  & { events: Array<IEvent<E, ET>> };
 
 export interface IQuery<Q extends JsonValue, R extends JsonValue, T extends ID = string> {
   type: T

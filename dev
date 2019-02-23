@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+set -o pipefail
+( npm run build && echo build success ) || ( npm run postbuild && echo build failed )
