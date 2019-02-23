@@ -2,7 +2,7 @@ import { IEvent, INewEvent } from './data';
 
 export type HttpStatusCode = number;
 export type CommonCommandResult<Event extends IEvent<Event['data'], Event['type']>> =
-  { ok: Array<INewEvent<Event['data'], Event['type']>> }
+  { ok: Array<INewEvent<Event>> }
   | 'timeout'
   | 'quota_excess'
   | 'no_permission'

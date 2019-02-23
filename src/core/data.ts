@@ -16,9 +16,9 @@ export interface IEvent<E extends JsonValue, T extends ID = string> {
   data: E
 }
 
-export type INewEvent<E extends JsonValue, T extends ID = string> =
-  Drop<IEvent<E, T>, 'version'>
-  & Partial<IEvent<E, T>>
+export type INewEvent<Event extends IEvent<Event['data'], Event['type']>> =
+  Drop<Event, 'version'>
+  & Partial<Event>
   ;
 
 export interface ISnapshot<A extends JsonValue> {

@@ -17,7 +17,7 @@ export type IEventConsumer<Event extends IEvent<Event['data'], Event['type']>> =
   (events: Event[]) => void | Promise<void>;
 
 export interface IEventStore<Event extends IEvent<Event['data'], Event['type']>> {
-  saveEvents(events: Array<INewEvent<Event['data'], Event['type']>>): Promise<SaveEventResult<Event>>
+  saveEvents(events: Array<INewEvent<Event>>): Promise<SaveEventResult<Event>>
 
   getEventsFor(aggregate_id: string, cb: IEventConsumer<Event>): void
 

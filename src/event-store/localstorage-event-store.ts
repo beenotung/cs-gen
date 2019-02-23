@@ -47,7 +47,7 @@ export class LocalstorageEventStore<Event extends IEvent<Event['data'], Event['t
 
   onEvent = (events: Event[]) => {
     /* init place folder */
-  }
+  };
 
   getAggregateIds(raw = false): string[] {
     if (raw) {
@@ -73,7 +73,7 @@ export class LocalstorageEventStore<Event extends IEvent<Event['data'], Event['t
     this._store.setObject(eventMetaKey(eventMeta.aggregate_id), eventMeta);
   }
 
-  async saveEvents(events: Array<INewEvent<Event['data'], Event['type']>>): Promise<SaveEventResult<Event>> {
+  async saveEvents(events: Array<INewEvent<Event>>): Promise<SaveEventResult<Event>> {
     const eventsToSave = new Array<IEvent<Event['data'], Event['type']>>(events.length);
     const eventMetas = new Map<string, IEventMeta>();
     const aggregateIds = new Set(this.getAggregateIds(true));
