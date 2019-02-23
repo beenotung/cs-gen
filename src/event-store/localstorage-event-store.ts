@@ -47,7 +47,7 @@ export class LocalstorageEventStore<Event extends IEvent<Event['data'], Event['t
 
   onEvent = (events: Event[]) => {
     /* init place folder */
-  };
+  }
 
   getAggregateIds(raw = false): string[] {
     if (raw) {

@@ -27,7 +27,7 @@ export interface ISnapshot<A extends JsonValue> {
   data: A
 }
 
-export interface ICommand<C extends JsonValue, R extends CommonCommandResult<Event>,
+export interface ICommand<C extends JsonValue, R extends CommonCommandResult,
   Event extends IEvent<Event['data'], Event['type']>, T extends ID = string> {
   type: T
   command: C

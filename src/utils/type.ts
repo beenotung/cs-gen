@@ -10,7 +10,7 @@ export function ensureCommandType<Command extends ICommand<Command['command'], C
   >(): void {
 }
 
-export function ensureEventType<CustomEvent extends IEvent<CustomEvent['data'], CustomEvent['type']>, >(): void {
+export function ensureEventType<Event extends IEvent<Event['data'], Event['type']>, >(): void {
 }
 
 export function ensureQueryType<Query extends IQuery<Query['query'], Query['response'], Query['type']>>(): void {

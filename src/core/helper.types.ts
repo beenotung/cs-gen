@@ -1,7 +1,7 @@
 import { IEvent } from './data';
 
 export type HttpStatusCode = number;
-export type CommonCommandResult<Event extends IEvent<Event['data'], Event['type']>> =
+export type CommonCommandResult =
   'ok'
   | 'timeout'
   | 'quota_excess'
