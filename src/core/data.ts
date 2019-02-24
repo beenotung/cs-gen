@@ -33,6 +33,7 @@ export interface ICommand<C extends JsonValue, R extends CommonCommandResult,
   command: C
   result: R
   events: Event[]
+  timestamp: pos_int
 }
 
 export interface IQuery<Q extends JsonValue, R extends JsonValue, T extends ID = string> {
@@ -41,4 +42,5 @@ export interface IQuery<Q extends JsonValue, R extends JsonValue, T extends ID =
   seq: pos_int
   query: Q
   response?: R
+  timestamp: pos_int
 }
