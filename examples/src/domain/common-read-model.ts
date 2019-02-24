@@ -1,5 +1,5 @@
 import 'cqrs-exp';
-import { IEvent, IQuery, IReadModel, pos_int } from 'cqrs-exp';
+import { IEvent, IQuery, IReadModel, pos_int, IEventStore } from 'cqrs-exp';
 import { remove } from '@beenotung/tslib';
 
 function then(p: void | Promise<void>, cb: () => void) {
@@ -10,12 +10,15 @@ function then(p: void | Promise<void>, cb: () => void) {
   }
 }
 
-export abstract class CommonReadModel<Event extends IEvent<Event['data'], Event['type']>,
-  Query extends IQuery<Query['query'], Query['response'], Query['type']>>
-  implements IReadModel<Event, Query> {
+export abstract class CommonReadModel<
+  Event extends IEvent<Event['data'], Event['type']>,
+  Query extends IQuery<Query['query'], Query['response'], Query['type']>
+> implements IReadModel<Event, Query> {
   abstract timestamp: pos_int;
 
-  abstract handleEvent(events: Event[]): void | Promise<void>
+  constructor(public eventStore: IEventStore<Event>) {}
+
+  abstract handleEvent(events: Event[]): void | Promise<void>;
 
   /**
    * hook to be called after onEvent()
@@ -27,9 +30,12 @@ export abstract class CommonReadModel<Event extends IEvent<Event['data'], Event[
     then(res, () => this.onPostEvents.forEach(f => f()));
   }
 
-  abstract query(query: Query): Promise<Query['response']>
+  abstract query(query: Query): Promise<Query['response']>;
 
-  querySince(query: Query, sinceTimestamp: pos_int): Promise<Query['response']> {
+  querySince(
+    query: Query,
+    sinceTimestamp: pos_int,
+  ): Promise<Query['response']> {
     if (this.timestamp < sinceTimestamp) {
       return this.query(query);
     }

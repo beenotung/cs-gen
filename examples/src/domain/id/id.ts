@@ -14,9 +14,5 @@ function getCounter(): number {
 }
 
 export function genId(): string {
-  return [
-    deviceId,
-    Date.now(),
-    getCounter(),
-  ].join(':');
+  return [deviceId, Date.now(), getCounter()].join(':');
 }

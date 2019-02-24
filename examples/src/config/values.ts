@@ -5,10 +5,10 @@ import {
   QueryRouterService,
   CqrsService,
 } from 'cqrs-exp';
-import { UserQuery, UserReadModel } from '../domain/user/user.query.type';
-import { UserListReadModel } from '../domain/user/user-list.query.type';
-import { UserCommand } from '../domain/user/user.command.type';
-import { UserEvent } from '../domain/user/user.event.type';
+import { UserQuery, UserReadModel } from '../domain/user1/user.query.type';
+import { UserListReadModel } from '../domain/user1/user-list.query.type';
+import { UserCommand } from '../domain/user1/user.command.type';
+import { UserEvent } from '../domain/user1/user.event.type';
 
 export namespace config {
   export let host = 'localhost';
@@ -22,7 +22,7 @@ export namespace config {
   export let cqrsService = new CqrsService(eventStore);
 
   cqrsService.attachWriteModel(user);
-  cqrsService.attachReadModel(userReadModel,[]);
+  cqrsService.attachReadModel(userReadModel, []);
 }
 export let appClient = new NestCqrsClientStub(config.baseUrl);
 

@@ -12,7 +12,10 @@ export class UserCommandHandler implements IWriteModel<UserCommand, UserEvent> {
     switch (command.type) {
       case 'CreateUser': {
         let aggregate_id = [
-          str_filter(command.command.username, c => base58Letters.indexOf(c) !== -1),
+          str_filter(
+            command.command.username,
+            c => base58Letters.indexOf(c) !== -1,
+          ),
           genId(),
         ].join(':');
         let event: UserEvent = {

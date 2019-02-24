@@ -1,0 +1,39 @@
+== Use Cases
+
+=== Create User Account
+create two accounts,
+one for service provider,
+one for service consumer.
+
+Event: UserCreated
+
+=== Register Service
+For service provider to declare what kind of services he/she can provide.
+
+Event: ServiceRegistered
+
+=== Browser Available Services
+For service consumer to explore services by keyword.
+
+Query: FindServicesByKeyboard
+
+=== Place Booking by Service-Consumer User
+For service consumer to propose booking of a service.
+
+Event: BookingPlaced
+
+=== Confirm Booking by Service-Provider User
+For service provider to accept/reject a booking proposal.
+
+Event: BookingConfirmed
+
+=== Check Booking Record by both types of User
+For service provider and service consumer to check
+the booking status.
+
+== Status Definition
+
+=== Booking Status
+- Placed
+- Accepted
+- Rejected

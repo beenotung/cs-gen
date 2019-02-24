@@ -1,6 +1,8 @@
 import { ensureQueryType, IEventStore, JsonValue, pos_int } from 'cqrs-exp';
 import { UserEvent } from './user.event.type';
-import { CommonReadModel } from './common-read-model';
+import { CommonReadModel } from '../common-read-model';
+import { config } from '../../config/values';
+import eventStore = config.eventStore;
 
 export interface User {
   user_id: string;
@@ -17,12 +19,36 @@ export type UserQuery = ({
 };
 ensureQueryType<UserQuery>();
 
-export class UserReadModel extends CommonReadModel<
-  User,
-  UserEvent,
-  UserQuery,
-  'user'
-> {
+export class UserReadModel extends CommonReadModel<UserEvent, UserQuery> {
+  timestamp: number = 0;
+
+  constructor() {
+    super();
+  }
+
+  handleEvent(events: UserEvent[]): void | Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  query(
+    query: UserQuery,
+  ): Promise<
+    | 'not_found'
+    | {
+        user:
+          | (User & string)
+          | (User & number)
+          | (User &
+              import('C:/Users/USER/workspace/gitlab.com/beenotung/cqrs-exp/dist/index').JsonArray)
+          | (User &
+              import('C:/Users/USER/workspace/gitlab.com/beenotung/cqrs-exp/dist/index').JsonObject);
+      }
+  > {
+    throw new Error('Method not implemented.');
+  }
+}
+
+export class UserReadModel1 extends CommonReadModel<UserEvent, UserQuery> {
   aggregate_type: 'user' = 'user';
   queryTypes: UserQuery['type'][] = ['GetUser'];
   state: User;
