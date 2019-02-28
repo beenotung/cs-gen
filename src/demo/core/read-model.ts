@@ -2,6 +2,7 @@ import { IEvent, IQuery } from './data-types';
 import { EventStore } from './event-store';
 import { Handler, Mapper } from './callback';
 import { mapGetOrSetDefault } from '@beenotung/tslib/map';
+import { JsonValue } from './util-types';
 
 /**
  * @alias QueryHandler

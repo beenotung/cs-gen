@@ -3,6 +3,7 @@ import { EventStore } from '../core/event-store';
 import { DomainEvent, ServiceRegistered, UserRegistered } from './domain-event';
 import { DomainQuery, ListService, ListUser } from './domain-query';
 import { HashedArray } from '@beenotung/tslib/hashed-array';
+import { ensureJsonValue } from '../utils/json';
 
 export interface User {
   user_id: string
@@ -55,10 +56,10 @@ export class DomainReadModel extends ReadModel<DomainEvent, DomainQuery> {
    * */
 
   listUser(query: ListUser) {
-    return this.users.array;
+    return ensureJsonValue(this.users.array);
   }
 
   listService(query: ListService) {
-    return this.services.array as ListService['response'];
+    return ensureJsonValue(this.services.array);
   }
 }
