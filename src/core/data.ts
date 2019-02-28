@@ -36,7 +36,9 @@ export interface ICommand<C extends JsonValue, R extends CommonCommandResult,
   timestamp: pos_int
 }
 
-export interface IQuery<Q extends JsonValue, R extends JsonValue, T extends ID = string> {
+export interface IQuery<Q extends JsonValue = JsonValue,
+  R extends JsonValue = JsonValue,
+  T extends ID = string> {
   type: T
   session_id: string
   seq: pos_int

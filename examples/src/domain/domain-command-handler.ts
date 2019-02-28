@@ -8,16 +8,27 @@ export function handleDomainCommand(
 ): CommonCommandResult | DomainEvent[] {
   switch (command.type) {
     case 'CreateUser': {
-      let aggregate_id = hashObject(command);
+      let user_id = hashObject(command);
       return [
         {
           type: 'UserCreated',
-          aggregate_id,
+          aggregate_id: user_id,
+          data: {
+            user_id: user_id,
+            nickname: command.command.nickname,
+          },
+          timestamp: Date.now(),
+          version: 1,
         },
       ];
-      break;
     }
-    case 'RegisterService':
+    case 'RegisterService': {
+      let service_id=hashObject(command);
+      return [{
+        type:'ServiceRegistered',
+        aggregate_id:command.command.ser
+      }];
+    }
     case 'PlaceBooking':
     case 'AcceptBooking':
     case 'RejectBooking':
