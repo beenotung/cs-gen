@@ -4,7 +4,7 @@ export type timestamp = number;
 
 export type JsonPrimitive = string | number;
 
-export interface JsonArray extends Array<JsonPrimitive | JsonArray> {
+export interface JsonArray extends Array<JsonValue> {
 }
 
 export interface JsonObject {

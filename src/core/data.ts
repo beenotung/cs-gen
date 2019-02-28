@@ -37,7 +37,7 @@ export interface ICommand<C extends JsonValue, R extends CommonCommandResult,
 }
 
 export interface IQuery<Q extends JsonValue = JsonValue,
-  R extends JsonValue = JsonValue,
+  R = JsonValue,
   T extends ID = string> {
   type: T
   session_id: string
