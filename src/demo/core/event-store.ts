@@ -10,7 +10,7 @@ const allAggregateEvents = new Map<string, IEvent[]>();
 const store = Store.create(getLocalStorage('data', Number.MAX_SAFE_INTEGER));
 const KEY_EVENTS = 'events';
 
-const events: IEvent[] = store.getObject(KEY_EVENTS);
+const events: IEvent[] = store.getObject(KEY_EVENTS) || [];
 events.forEach(event => mapGetOrSetDefault(allAggregateEvents, event.aggregate_id, () => []).push(event));
 
 /**
