@@ -10,7 +10,7 @@ export class DomainWriteModel extends WriteModel<DomainCommand, DomainEvent> {
   }
 
   registerUser(command: RegisterUser) {
-    let e: UserRegistered = {
+    const e: UserRegistered = {
       type: 'UserRegistered',
       aggregate_id: command.command.user_id,
       seq: 1,
@@ -25,7 +25,7 @@ export class DomainWriteModel extends WriteModel<DomainCommand, DomainEvent> {
   }
 
   registerService(command: RegisterService) {
-    let e: ServiceRegistered = {
+    const e: ServiceRegistered = {
       type: 'ServiceRegistered',
       aggregate_id: command.command.service_id,
       seq: 1,

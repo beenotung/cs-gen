@@ -3,7 +3,7 @@ export type Handler<T, R = void> = (t: T) => Result<R>;
 export type Mapper<T, R> = (t: T) => R;
 
 export function then<A = void, B = void>(task1: () => Result<A>, task2: (a: A) => Result<B>): Result<B> {
-  let result1 = task1();
+  const result1 = task1();
   if (typeof result1 === 'object' && !!result1 && 'then' in result1) {
     return result1.then((a: A) => task2(a));
   }
@@ -17,8 +17,8 @@ export function all<A = void>(tasks: Array<(a: A) => Result<A>>, initial = void 
     case 1:
       return tasks[0](initial);
     default: {
-      let headTask = tasks[0];
-      let tailTask = tasks.slice(1);
+      const headTask = tasks[0];
+      const tailTask = tasks.slice(1);
       return then(() => headTask(initial), result => all(tailTask, result));
     }
   }

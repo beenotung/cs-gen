@@ -1,8 +1,7 @@
+import { mapGetOrSetDefault } from '@beenotung/tslib/map';
+import { Handler, Mapper } from './callback';
 import { IEvent, IQuery } from './data-types';
 import { EventStore } from './event-store';
-import { Handler, Mapper } from './callback';
-import { mapGetOrSetDefault } from '@beenotung/tslib/map';
-import { JsonValue } from './util-types';
 
 /**
  * @alias QueryHandler
@@ -11,7 +10,7 @@ import { JsonValue } from './util-types';
 export class ReadModel<Event extends IEvent<Event['event'], Event['type']> = any,
   Query extends IQuery<Query['query'], Query['response'], Query['type']> = any> {
   queryHandlers = new Map<Query['type'], Mapper<Query, Query['response']>>();
-  eventHandlers = new Map<Event['type'], Handler<Event>[]>();
+  eventHandlers = new Map<Event['type'], Array<Handler<Event>>>();
 
   constructor(public eventStore: EventStore<Event['type']>) {
   }
@@ -38,4 +37,3 @@ export class ReadModel<Event extends IEvent<Event['event'], Event['type']> = any
     return this.queryHandlers.get(query.type)(query);
   }
 }
-

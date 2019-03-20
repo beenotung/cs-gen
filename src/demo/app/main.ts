@@ -1,8 +1,8 @@
-import { DomainWriteModel } from '../demo-domain/domain-write-model';
-import { DomainReadModel } from '../demo-domain/domain-read-model';
+import { CqrsServer } from '../core/cqrs-server';
 import { EventStore } from '../core/event-store';
 import { DomainEvent } from '../demo-domain/domain-event';
-import { CqrsServer } from '../core/cqrs-server';
+import { DomainReadModel } from '../demo-domain/domain-read-model';
+import { DomainWriteModel } from '../demo-domain/domain-write-model';
 
 export let eventStore = new EventStore<DomainEvent['type']>();
 export let appWriteModel = new DomainWriteModel();

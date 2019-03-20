@@ -1,5 +1,5 @@
-import { ICommand, IEvent, INewEvent } from './data-types';
 import { Handler, Result } from './callback';
+import { ICommand, IEvent, INewEvent } from './data-types';
 
 /**
  * @alias CommandHandler

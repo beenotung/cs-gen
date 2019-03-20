@@ -4,7 +4,7 @@ export interface RegisterUser extends ICommand {
   type: 'RegisterUser'
   command: {
     user_id: string
-    nickname: string
+    nickname: string,
   }
 }
 
@@ -14,7 +14,7 @@ export interface RegisterService extends ICommand {
     user_id: string
     service_id: string
     service_name: string
-    service_desc: string
+    service_desc: string,
   }
 }
 

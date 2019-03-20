@@ -1,7 +1,7 @@
-import { id, JsonValue } from './util-types';
-import { Handler } from './callback';
-import { mapGetOrSetDefault } from '@beenotung/tslib/map';
 import { remove } from '@beenotung/tslib/array';
+import { mapGetOrSetDefault } from '@beenotung/tslib/map';
+import { Handler } from './callback';
+import { id, JsonValue } from './util-types';
 
 export class Dispatcher<Type extends id = any, Data extends JsonValue = any> {
   handlers = new Map<Type, Array<Handler<any>>>();
@@ -15,7 +15,7 @@ export class Dispatcher<Type extends id = any, Data extends JsonValue = any> {
    * @param handler: must be the same object when called register()
    * */
   unregister<E>(type: Type, handler: Handler<E>): void {
-    let handlers = mapGetOrSetDefault(this.handlers, type, () => []);
+    const handlers = mapGetOrSetDefault(this.handlers, type, () => []);
     remove(handlers, handler);
   }
 

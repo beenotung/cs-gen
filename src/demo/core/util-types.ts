@@ -17,4 +17,3 @@ export interface JsonArray {
 }
 
 export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-

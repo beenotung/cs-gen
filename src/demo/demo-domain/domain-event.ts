@@ -4,7 +4,7 @@ export interface UserRegistered extends IEvent {
   type: 'UserRegistered'
   event: {
     user_id: string
-    nickname: string
+    nickname: string,
   }
 }
 
@@ -14,8 +14,8 @@ export interface ServiceRegistered extends IEvent {
     service_id: string
     provider_user_id: string
     service_name: string
-    service_desc: string
+    service_desc: string,
   }
 }
 
-export type DomainEvent = UserRegistered | ServiceRegistered
+export type DomainEvent = UserRegistered | ServiceRegistered;

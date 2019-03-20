@@ -1,9 +1,9 @@
-import { ReadModel } from '../core/read-model';
+import { HashedArray } from '@beenotung/tslib/hashed-array';
 import { EventStore } from '../core/event-store';
+import { ReadModel } from '../core/read-model';
+import { ensureJsonValue } from '../utils/json';
 import { DomainEvent, ServiceRegistered, UserRegistered } from './domain-event';
 import { DomainQuery, ListService, ListUser } from './domain-query';
-import { HashedArray } from '@beenotung/tslib/hashed-array';
-import { ensureJsonValue } from '../utils/json';
 
 export interface User {
   user_id: string

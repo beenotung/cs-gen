@@ -1,25 +1,27 @@
 import { getObjectType } from '@beenotung/tslib/type';
-import { JsonArray, JsonObject, JsonPrimitive, JsonValue } from '../core/util-types';
+import { JsonValue } from '../core/util-types';
 
 /**
  * check to enforce the result is json value (e.g. without Map, Set, undefined)
  * return cloned value
  * */
 export function ensureJsonValue<T>(o: T): T & JsonValue {
-  let type = getObjectType(o);
+  const type = getObjectType(o);
   switch (type) {
-    case 'Number':
     case 'String':
+    case 'Number':
     case 'Null':
-      return o as JsonPrimitive & T;
+    case 'Undefined':
+      return o as any;
     case 'Array':
-      return (o as unknown as any[]).map(x => ensureJsonValue(x)) as unknown as JsonArray & T;
+      return (o as any as any[]).map(x => ensureJsonValue(x)) as any;
     case 'Object': {
-      let result = {};
-      Object.keys(o).forEach(x => result[x] = ensureJsonValue(o[x]));
-      return result as JsonObject & T;
+      const res = {};
+      Object.keys(o).forEach(x => res[x] = ensureJsonValue(o[x]));
+      return res as any;
     }
+    default:
+      console.error('expected json value, but got:', o);
+      throw new TypeError('expected json value, but got typeof: ' + type);
   }
-  console.error('expected json value, but got:', o);
-  throw new TypeError('expected json value, but got typeof: ' + type);
 }

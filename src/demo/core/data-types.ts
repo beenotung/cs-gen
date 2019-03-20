@@ -1,5 +1,5 @@
-import { id, JsonValue, pos_int } from './util-types';
 import { Drop } from '@beenotung/tslib/type';
+import { id, JsonValue, pos_int } from './util-types';
 
 export interface IAggregate<T extends id = any> {
   aggregate_id: id

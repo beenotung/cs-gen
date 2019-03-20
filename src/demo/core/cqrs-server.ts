@@ -1,17 +1,10 @@
-import { ReadModel } from './read-model';
-import { WriteModel } from './write-model';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { CommandHandlingFailed, CqrsDomainEvent, UnknownCommandReceived, UnknownQueryReceived } from '../cqrs-domain/cqrs-domain-event';
+import { Result, then } from './callback';
 import { ICommand, IEvent, INewEvent, IQuery } from './data-types';
 import { EventStore } from './event-store';
-import { Result, then } from './callback';
-import {
-  CommandHandlingFailed,
-  CqrsDomainEvent,
-  UnknownCommandReceived,
-  UnknownQueryReceived,
-} from '../cqrs-domain/cqrs-domain-event';
-import { CommandResult, InternalCommandResult } from '../cqrs-domain/cqrs-command-result';
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { DomainEvent } from '../demo-domain/domain-event';
+import { ReadModel } from './read-model';
+import { WriteModel } from './write-model';
 
 export type ICqrsServer = { command: WriteModel['command'] } & { query: ReadModel['query'] };
 
@@ -34,15 +27,15 @@ export class CqrsServer<Command extends ICommand<Command['command'], Command['ty
   }
 
   command<C extends Command = any>(command: C | any): Result<Event[]> {
-    let returnError = (event: INewEvent<CqrsDomainEvent>, response: string | object, status: number): any => {
+    const returnError = (event: INewEvent<CqrsDomainEvent>, response: string | object, status: number): any => {
       return then(() => this.eventStore.saveEvents([event]), () => {
         throw new HttpException(response, status);
       });
     };
 
-    let writeModel = this.writeModels.find(x => x.commandHandlers.has(command.type));
+    const writeModel = this.writeModels.find(x => x.commandHandlers.has(command.type));
     if (!writeModel) {
-      let e: INewEvent<UnknownCommandReceived> = {
+      const e: INewEvent<UnknownCommandReceived> = {
         type: 'UnknownCommandReceived',
         aggregate_id: 'cqrs-server',
         event: command,
@@ -52,11 +45,12 @@ export class CqrsServer<Command extends ICommand<Command['command'], Command['ty
       return returnError(e, e.type, HttpStatus.NOT_ACCEPTABLE);
     }
 
-    return then(() => writeModel.command(command), (newEvents: INewEvent<Event>[]): Result<Event[]> => {
+    return then(() => writeModel.command(command), (newEvents: Array<INewEvent<Event>>): Result<Event[]> => {
       if (!Array.isArray(newEvents)) {
-        console.error('wrong implementation, expected to get array of event when handling command of type:', command.type, 'but got:', newEvents);
-        let message = 'wrong implementation, expected to get array of event when handling command of type: ' + command.type;
-        let e: INewEvent<CommandHandlingFailed> = {
+        console.error('wrong implementation, expected to get array of event when handling command of type:',
+          command.type, 'but got:', newEvents);
+        const message = 'wrong implementation, expected to get array of event when handling command of type: ' + command.type;
+        const e: INewEvent<CommandHandlingFailed> = {
           type: 'CommandHandlingFailed',
           aggregate_id: 'cqrs-server',
           event: { command, error_message: message },
@@ -71,7 +65,7 @@ export class CqrsServer<Command extends ICommand<Command['command'], Command['ty
   }
 
   query<Q extends Query = any>(query: Q | any): Q['response'] {
-    let readModel = this.readModels.find(x => x.queryHandlers.has(query.type));
+    const readModel = this.readModels.find(x => x.queryHandlers.has(query.type));
     if (!readModel) {
       const e: INewEvent<UnknownQueryReceived> = {
         type: 'UnknownQueryReceived',
