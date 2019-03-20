@@ -4,11 +4,10 @@ import { createEventStream } from './event-stream-impl';
 export class EventStoreImpl implements EventStore {
   events: Event[] = [];
 
-  constructor() {
-  }
+  constructor() {}
 
   getAll(): EventStream<Event> {
-    let stream = createEventStream();
+    const stream = createEventStream();
     setTimeout(() => {
       this.events.forEach(e => stream.emit(e));
     });
@@ -16,12 +15,14 @@ export class EventStoreImpl implements EventStore {
   }
 
   getAllBy(selector: EventSelector): EventStream<Event> {
-    let stream = createEventStream();
+    const stream = createEventStream();
     setTimeout(() => {
       this.events.forEach(e => {
         if (
-          (!selector.aggregate_id || selector.aggregate_id === e.aggregate_id)
-          && (!selector.aggregate_type || selector.aggregate_type === e.aggregate_type)
+          (!selector.aggregate_id ||
+            selector.aggregate_id === e.aggregate_id) &&
+          (!selector.aggregate_type ||
+            selector.aggregate_type === e.aggregate_type)
         ) {
           stream.emit(e);
         }
@@ -30,7 +31,5 @@ export class EventStoreImpl implements EventStore {
     return stream;
   }
 
-  store(event: Event) {
-  }
+  store(event: Event) {}
 }
-

@@ -1,5 +1,5 @@
-import { EventStoreImpl } from './event-store-impl';
 import { EventStore, EventStream } from '../event-store';
+import { EventStoreImpl } from './event-store-impl';
 import { EventStreamImpl } from './event-stream-impl';
 
 export function createEventStore(): EventStore {
