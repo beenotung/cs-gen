@@ -1,0 +1,88 @@
+export type ChannelEvent<T> = { data: T } | { error: any };
+
+export interface ChannelConsumer<T> {
+  (channelEvent: ChannelEvent<T>): void;
+}
+
+export interface ChannelTransformer<T, R> {
+  (channelEvent: ChannelEvent<T>): ChannelEvent<R> | Promise<ChannelEvent<R>>;
+}
+
+export interface ChannelDataTransformer<T, R> {
+  (data: T): R | Promise<R>;
+}
+
+export function then<T>(
+  f: () => T | Promise<T>,
+  onData: (data: T) => void,
+  onError: (error: any) => void,
+): void {
+  try {
+    let dataOrPromise = f();
+    let promise = dataOrPromise as Promise<T>;
+    if (typeof promise.then === 'function') {
+      promise.then(data => onData(data));
+      promise.catch(error => onError(error));
+    } else {
+      onData(dataOrPromise as T);
+    }
+  } catch (e) {
+    onError(e);
+  }
+}
+
+export class Channel<T> {
+  consumers: Array<ChannelConsumer<T>> = [];
+
+  emit(channelEvent: ChannelEvent<T>): void {
+    this.consumers.forEach(consumer => consumer(channelEvent));
+  }
+
+  emitData(data: T): void {
+    this.emit({ data });
+  }
+
+  emitError(error: any): void {
+    this.emit({ error });
+  }
+
+  sink(consumer: ChannelConsumer<T>): void {
+    this.consumers.push(consumer);
+  }
+
+  transform<R>(transformer: ChannelTransformer<T, R>): Channel<R> {
+    let channel = new Channel<R>();
+    this.sink(channelEvent =>
+      then(
+        () => transformer(channelEvent),
+        channelEvent => channel.emit(channelEvent),
+        error => channel.emitError(error),
+      ),
+    );
+    return channel;
+  }
+
+  transformData<R>(transformer: ChannelDataTransformer<T, R>): Channel<R> {
+    let channel = new Channel<R>();
+    this.sink((channelEvent: ChannelEvent<T>) => {
+      if ('data' in channelEvent) {
+        then(
+          () => transformer(channelEvent.data),
+          data => channel.emitData(data),
+          error => channel.emitError(error),
+        );
+      } else {
+        channel.emit(channelEvent);
+      }
+    });
+    return channel;
+  }
+
+  /**
+   * block and wait
+   * */
+  peek(consumer: ChannelConsumer<T>): Channel<T> {
+    let channel = new Channel<T>();
+    return channel;
+  }
+}

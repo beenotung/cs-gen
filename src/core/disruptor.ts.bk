@@ -1,0 +1,63 @@
+export interface Producer<T> {
+  writingSlot: number;
+
+  emit(data: T)
+}
+
+export interface Consumer<T> {
+  readingSlot: number;
+
+  onData(data: T, sequence: number, endOfBatch: boolean): Promise<void>
+  onDataBatch(dataBatch:T[],sequences:number[]):Promise<void>
+}
+
+export let MAX_ARRAY_SIZE = 4294967295;
+
+export class RingBuffer<T> {
+  private readonly buffer: T[];
+  private readonly size: number;
+  private start: number;
+  private end: number;
+  private amount: number;
+
+  constructor(size = MAX_ARRAY_SIZE) {
+    this.buffer = new Array(size);
+    this.size = size;
+    this.amount = 0;
+    this.start = 0;
+    this.end = size;
+  }
+
+  allocate(): number {
+    this.end = (this.start + this.amount + 1) % this.size;
+    return this.end;
+  }
+
+  set(index: number, data: T) {
+    this.buffer[index] = data
+  }
+
+  get(index: number): T {
+    return this.buffer[index]
+  }
+}
+
+export class Disruptor<T> {
+  ringBuffer: RingBuffer<T>;
+  consumers: Array<Consumer<T>> = [];
+
+  constructor(bufferSize?: number) {
+    this.ringBuffer = new RingBuffer<T>(bufferSize)
+  }
+
+  subscribe(onData: Consumer<T>['onData']) {
+    let consumer: Consumer<T> = {
+      onData: onData,
+      readingSlot:0
+    };
+    this.consumers.push(consumer)
+  }
+
+  publish(data: T) {
+  }
+}

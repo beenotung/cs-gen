@@ -1,22 +1,4 @@
-export interface BaseData<T> {
-  id: string;
-  type: T;
-  timestamp?: number;
-}
-
-export interface DomainEvent<T = string, E = any> extends BaseData<T> {
-  event: E;
-}
-
-export interface Query<T = string, Q = any, R = any> extends BaseData<T> {
-  query: Q;
-  response: R;
-}
-
-export interface Command<T = string, C = any, E = any> extends BaseData<T> {
-  command: C;
-  events: E[];
-}
+import 'reflect-metadata';
 
 export interface Model<State = any> {
   /**
