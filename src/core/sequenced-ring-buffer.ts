@@ -38,10 +38,11 @@ export class SequencedRingBuffer<T> {
   size: number = 0;
   private putPos = 0;
   private getPos = 0;
-  private sequence: number = 0;
+  private sequence: number;
 
-  constructor(capacity: number) {
+  constructor(capacity: number, initialSequence = 0) {
     this.capacity = capacity;
+    this.sequence = initialSequence;
   }
 
   ensureHasCapacity(allocate: number) {
