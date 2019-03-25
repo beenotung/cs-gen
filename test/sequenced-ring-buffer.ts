@@ -1,4 +1,7 @@
-import { SequenceData, SequencedRingBuffer } from '../src/core/sequenced-ring-buffer';
+import {
+  SequenceData,
+  SequencedRingBuffer,
+} from '../src/core/sequenced-ring-buffer';
 
 let test = require('tape');
 
@@ -13,7 +16,11 @@ test('ring buffer test', t => {
   seq = ringBuffer.enqueue('banana');
   t.equal(seq, 1, 'sequence number should be increased');
 
-  t.equal(ringBuffer.toArray().length, 2, 'toArray() should return all the items');
+  t.equal(
+    ringBuffer.toArray().length,
+    2,
+    'toArray() should return all the items',
+  );
 
   value = ringBuffer.dequeue();
   t.equal(value.sequence, 0, 'sequence number of dequeue-ed item should match');
@@ -26,7 +33,11 @@ test('ring buffer test', t => {
   t.equal(array[0].sequence, 1, 'sequence in item of toArray() should match');
   ringBuffer.dequeue();
 
-  t.equal(ringBuffer.toArray().length, 0, 'toArray() should return empty array when the buffer is cleared');
+  t.equal(
+    ringBuffer.toArray().length,
+    0,
+    'toArray() should return empty array when the buffer is cleared',
+  );
 
   console.log('== BEGIN test full and reuse space ==');
   ringBuffer.enqueue('more');
@@ -38,15 +49,22 @@ test('ring buffer test', t => {
   ringBuffer.enqueue('fill?');
   console.log('internal:', ringBuffer);
   console.log('data:', ringBuffer.toArray());
-  t.throws(() => ringBuffer.enqueue('still not fill?'), /*BufferOutOfSpaceError*/ Error, 'should throw error when fulled');
+  t.throws(
+    () => ringBuffer.enqueue('still not fill?'),
+    /*BufferOutOfSpaceError*/ Error,
+    'should throw error when fulled',
+  );
   console.log('internal:', ringBuffer);
   console.log('data:', ringBuffer.toArray());
   console.log('== END test full and reuse space ==');
 
   ringBuffer.dequeue();
   ringBuffer.dequeue();
-  t.equal(ringBuffer.dequeue().sequence, 4, 'sequence number should not be reset when array space is reused');
+  t.equal(
+    ringBuffer.dequeue().sequence,
+    4,
+    'sequence number should not be reset when array space is reused',
+  );
 
   t.end();
 });
-

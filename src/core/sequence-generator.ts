@@ -1,6 +1,6 @@
 export interface SequenceGeneratorConfig {
-  step: number
-  offset: number
+  step: number;
+  offset: number;
 }
 
 export class SequenceGenerator {
@@ -28,7 +28,7 @@ export class SequenceGenerator {
    * apply side-effect
    * */
   getAndSetNext(): number {
-    return this.current += this.config.step;
+    return (this.current += this.config.step);
   }
 
   /**

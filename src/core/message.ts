@@ -1,5 +1,5 @@
-import { nonEmptyField, requireField } from '../validate';
 import { is, or, validate } from 'ts-class-validator';
+import { nonEmptyField, requireField } from '../validate';
 
 export class Message<T extends string = string> {
   @validate(requireField('id'), nonEmptyField('id'))

@@ -5,10 +5,14 @@ export class IndexOutOfRangeError extends Error {
    * @param upperBound: exclusive upper bound of valid value
    * @param message: for the super class
    * */
-  constructor(index: number, lowerBound: number, upperBound: number, message?: string) {
+  constructor(
+    index: number,
+    lowerBound: number,
+    upperBound: number,
+    message?: string,
+  ) {
     super(message);
   }
-
 }
 
 export class BufferOutOfSpaceError extends Error {
@@ -18,24 +22,27 @@ export class BufferOutOfSpaceError extends Error {
    * @param capacity: maximum space available
    * @param message: for the super class
    * */
-  constructor(allocate: number, used: number, capacity: number, message?: string) {
+  constructor(
+    allocate: number,
+    used: number,
+    capacity: number,
+    message?: string,
+  ) {
     super(message);
   }
 }
 
-export class BufferEmptyError extends Error {
-
-}
+export class BufferEmptyError extends Error {}
 
 export interface SequenceData<T> {
-  sequence: number
-  value: T
+  sequence: number;
+  value: T;
 }
 
 export class SequencedRingBuffer<T> {
   readonly capacity: number;
+  size = 0;
   private readonly entities: Array<SequenceData<T>> = new Array(this.capacity);
-  size: number = 0;
   private putPos = 0;
   private getPos = 0;
   private sequence: number;
@@ -63,7 +70,7 @@ export class SequencedRingBuffer<T> {
     if (this.size === 0) {
       throw new BufferEmptyError();
     }
-    let value = this.entities[this.getPos];
+    const value = this.entities[this.getPos];
     delete this.entities[this.getPos];
     this.getPos = (this.getPos + 1) % this.capacity;
     this.size--;
@@ -71,7 +78,7 @@ export class SequencedRingBuffer<T> {
   }
 
   toArray(): Array<SequenceData<T>> {
-    let result = new Array<SequenceData<T>>(this.size);
+    const result = new Array<SequenceData<T>>(this.size);
     for (let i = 0; i != this.size; i++) {
       result[i] = this.entities[(this.getPos + i) % this.capacity];
     }
