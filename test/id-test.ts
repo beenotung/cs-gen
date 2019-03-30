@@ -1,9 +1,10 @@
-import { eventToId } from '../src/event';
+import {eventToId} from "../src/event-store";
 
 console.log(
   eventToId({
     aggregate_type: 'user',
     aggregate_id: '1',
     seq: 0,
+    event: ''
   }),
 );

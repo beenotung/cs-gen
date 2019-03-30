@@ -1,11 +1,6 @@
 import { Command } from './command';
 import { DomainEvent } from './domain-event';
 
-export type LogicProcessor<State = any, C = Command, E = DomainEvent> = (
-  state: State,
-  command: C,
-) => E[];
-
 /**
  * must guarantee the command ordering
  * */
@@ -13,8 +8,10 @@ export type InputProcessor<C = Command> = (command: C) => Promise<C>;
 
 /**
  * must be free of side-effect
+ * can mutate the {state}
  * */
 export type LogicProcessor<State = any, C = Command, E = DomainEvent> = (
+  state: State,
   command: C,
 ) => E[];
 

@@ -1,5 +1,5 @@
 import { validateGet } from 'ts-class-validator';
-import { Message } from '../src/model';
+import {Message} from "../src/core/message";
 
 let msg = new Message();
 msg.id = '101';
