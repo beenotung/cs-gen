@@ -1,66 +1,14 @@
 import { exec } from '@beenotung/tslib/child_process';
 import { writeFile as _writeFile } from '@beenotung/tslib/fs';
+import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
 import { genServiceCode, genTypeCode } from './gen-code';
-
-const mkdirp = require('async-mkdirp');
-const Service = 'Service';
 
 function writeFile(filename: string, code: string) {
   code = code.trim();
   code += '\n';
   return _writeFile(filename, code);
-}
-
-function classNameToServiceName(className: string): string {
-  let serviceName = className;
-  if (className.length > Service.length && className.endsWith(Service)) {
-    serviceName = className.replace(Service, '');
-  }
-  const head = serviceName[0] || '';
-  const headLower = head.toLowerCase();
-  if (head !== headLower) {
-    serviceName = headLower + serviceName.substring(1);
-  }
-  return serviceName;
-}
-
-function serviceNameToClassName(serviceDirname: string): string {
-  let className = serviceDirname;
-  if (!className.endsWith(Service)) {
-    className += Service;
-  }
-  const head = className[0] || '';
-  const headUpper = head.toUpperCase();
-  if (head !== headUpper) {
-    className = headUpper + className.substring(1);
-  }
-  return className;
-}
-
-function getServiceArgs(args: {
-  serviceFilename?: string;
-  serviceDirname?: string;
-  serviceClassName?: string;
-}): {
-  serviceFilename: string;
-  serviceDirname: string;
-  serviceClassName: string;
-} {
-  let { serviceDirname, serviceClassName } = args;
-  if (!serviceDirname || !serviceClassName) {
-    serviceDirname = 'core';
-  }
-  if (!serviceClassName) {
-    serviceClassName = serviceNameToClassName(serviceDirname);
-  }
-  if (!serviceDirname) {
-    serviceDirname = classNameToServiceName(serviceClassName);
-  }
-  const serviceFilename =
-    args.serviceFilename || `${serviceDirname}.service.ts`;
-  return { serviceDirname, serviceClassName, serviceFilename };
 }
 
 export async function genServiceFile(args: {
@@ -113,7 +61,7 @@ async function runNestCommand(args: {
 }) {
   const { cwd, cmd, errorMsg } = args;
   const { stdout, stderr } = await exec(cmd, { cwd });
-  if (stdout.indexOf('CREATE') == -1) {
+  if (stdout.indexOf('CREATE') === -1) {
     console.error(errorMsg);
     console.error('cmd:');
     console.error(cmd);
