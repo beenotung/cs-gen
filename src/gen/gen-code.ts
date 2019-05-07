@@ -12,7 +12,10 @@ export function genServiceCode(args: {
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ${[callTypeName, ...args.typeNames]
     .sort()
-    .join(', ')} } from '../${typeDirname}/${typeFilename}';
+    .join(', ')} } from '../${typeDirname}/${typeFilename.replace(
+    /\.ts$/,
+    '',
+  )}';
 
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);

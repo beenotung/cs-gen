@@ -1,11 +1,17 @@
 import { exec } from '@beenotung/tslib/child_process';
-import { writeFile } from '@beenotung/tslib/fs';
+import { writeFile as _writeFile } from '@beenotung/tslib/fs';
 import * as path from 'path';
 import { Call } from '../types';
 import { genServiceCode, genTypeCode } from './gen-code';
 
 const mkdirp = require('async-mkdirp');
 const Service = 'Service';
+
+function writeFile(filename: string, code: string) {
+  code = code.trim();
+  code += '\n';
+  return _writeFile(filename, code);
+}
 
 function classNameToServiceName(className: string): string {
   let serviceName = className;
@@ -122,7 +128,7 @@ async function runNestCommand(args: {
 const defaultArgs = {
   outDirname: 'out',
   typeDirname: 'domain',
-  typeFilename: 'types',
+  typeFilename: 'types.ts',
   callTypeName: 'Call',
   queryTypeName: 'Query',
   commandTypeName: 'Command',
