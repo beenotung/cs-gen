@@ -106,6 +106,9 @@ export type ${commandTypeName} = ${commandTypes
 export type ${callTypeName} = ${queryTypeName} | ${commandTypeName};
 
 checkCallType({} as ${callTypeName});
+
+export type CallRequest = { Type: Call['Type'], In: Call['In'] };
+export type CallResponse = { Out: Call['Out'] };
 `;
   return code.replace(/\n\n\n\n/g, '\n\n').trim();
 }

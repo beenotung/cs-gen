@@ -169,6 +169,37 @@ async function setIdeaConfig(args: {
   ]);
 }
 
+async function setEditorConfig(args: { projectDirname: string }) {
+  const { projectDirname } = args;
+  const filename = path.join(projectDirname, '.editorconfig');
+  const text = `# EditorConfig helps developers define and maintain consistent coding styles between different editors and IDEs
+# http://editorconfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+
+# We recommend you to keep these unchanged
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.xml]
+indent_style = space
+indent_size = 4
+
+[*.json]
+indent_style = space
+indent_size = 2`;
+  await writeFile(filename, text);
+}
+
 function hasNestProject(args: { projectDirname: string }): Promise<boolean> {
   const { projectDirname } = args;
   const filename = path.join(projectDirname, 'nest-cli.json');
@@ -209,20 +240,24 @@ export async function genProject(_args: {
       cmd: `nest new --skip-install ${projectName}`,
       errorMsg: `Failed to create nest project`,
     });
-    await setTslint({ projectDirname });
-    await setIdeaConfig({ projectDirname, projectName });
-    if (!(await hasServiceFile({ ...args, projectDirname }))) {
-      await runNestCommand({
-        cwd: projectDirname,
-        cmd: `nest g module ${serviceDirname}`,
-        errorMsg: `Failed to create nest module`,
-      });
-      await runNestCommand({
-        cwd: projectDirname,
-        cmd: `nest g service ${serviceDirname}`,
-        errorMsg: `Failed to create nest service`,
-      });
-    }
+  }
+  await mkdirp(path.join(projectDirname, '.idea'));
+  await Promise.all([
+    setTslint({ projectDirname }),
+    setIdeaConfig({ projectDirname, projectName }),
+    setEditorConfig({ projectDirname }),
+  ]);
+  if (!(await hasServiceFile({ ...args, projectDirname }))) {
+    await runNestCommand({
+      cwd: projectDirname,
+      cmd: `nest g module ${serviceDirname}`,
+      errorMsg: `Failed to create nest module`,
+    });
+    await runNestCommand({
+      cwd: projectDirname,
+      cmd: `nest g service ${serviceDirname}`,
+      errorMsg: `Failed to create nest service`,
+    });
   }
 
   await genTypeFile({
