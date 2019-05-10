@@ -16,14 +16,15 @@
     "downlevelIteration": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "es5",
+    "target": "es6",
     "outDir": "dist"
   },
   "include": [
     "src/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/**/*spec.ts"
   ],
   "compileOnSave": false,
   "atom": {

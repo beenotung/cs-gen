@@ -1,5 +1,17 @@
 import { Call } from '../types';
 
+function removeTsExtname(s: string): string {
+  return s.replace(/\.ts$/, '');
+}
+
+function getTypeFileImportPath(args: {
+  typeDirname: string;
+  typeFilename: string;
+}) {
+  const { typeDirname, typeFilename } = args;
+  return `'../${typeDirname}/${removeTsExtname(typeFilename)}'`;
+}
+
 export function genServiceCode(args: {
   serviceClassName: string;
   typeDirname: string;
@@ -7,27 +19,23 @@ export function genServiceCode(args: {
   typeNames: string[];
   callTypeName: string;
 }) {
-  const { callTypeName, serviceClassName, typeDirname, typeFilename } = args;
+  const { callTypeName, serviceClassName } = args;
   const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ${[callTypeName, ...args.typeNames]
     .sort()
-    .join(', ')} } from '../${typeDirname}/${typeFilename.replace(
-    /\.ts$/,
-    '',
-  )}';
+    .join(', ')} } from ${getTypeFileImportPath(args)};
 
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
 }
 
-type C = ${callTypeName};
-
 @Injectable()
 export class ${serviceClassName} {
-  Call(Type: C['Type']): (In: C['In']) => C['Out'] {
+  Call<C extends Call>(Type: C['Type']): (In: C['In']) => C['Out'] {
+    const _type = Type as Call['Type'];
     let res: (In: C['In']) => C['Out'];
-    switch (Type) {
+    switch (_type) {
       ${args.typeNames
         .map(
           s => `case '${s}':
@@ -38,7 +46,7 @@ export class ${serviceClassName} {
         .join('')
         .trim()}
       default:
-        const x: never = Type;
+        const x: never = _type;
         console.log('not implemented call type:', x);
         throw new HttpException('not implemented call type:' + x, HttpStatus.NOT_IMPLEMENTED);
     }
@@ -58,6 +66,59 @@ export class ${serviceClassName} {
 }
 `;
   return code.trim();
+}
+
+export function genControllerCode(args: {
+  typeDirname: string;
+  typeFilename: string;
+  callTypeName: string;
+  serviceClassName: string;
+  serviceFilename: string;
+  controllerClassName: string;
+  serviceApiPath: string;
+  callApiPath: string;
+}) {
+  const {
+    callTypeName,
+    serviceClassName,
+    serviceFilename,
+    serviceApiPath,
+    callApiPath,
+    controllerClassName,
+  } = args;
+  const serviceObjectName =
+    serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
+  return `
+import { Body, Controller, Post } from '@nestjs/common';
+import { ${callTypeName} } from ${getTypeFileImportPath(args)};
+import { LogService } from 'cqrs-exp';
+import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
+
+@Controller('${serviceApiPath}')
+export class ${controllerClassName} {
+  constructor(
+    public logService: LogService,
+    public ${serviceObjectName}: ${serviceClassName},
+  ) {
+    this.restore();
+  }
+
+  restore() {
+    const keys = this.logService.getKeysSync();
+    for (const key of keys) {
+      const call = this.logService.getObject<${callTypeName}>(key);
+      this.coreService.Call(call.Type)(call.In);
+    }
+  }
+
+  @Post('${callApiPath}')
+  async call<C extends ${callTypeName}>(@Body()body: { Type: C['Type'], In: C['In'] }): Promise<{ Out: C['Out'] }> {
+    this.logService.storeObject(body);
+    const out = this.coreService.Call(body.Type)(body.In);
+    return Promise.resolve(out).then(Out => ({ Out }));
+  }
+}
+`.trim();
 }
 
 function genCallTypesCode(callTypes: Call[]) {
@@ -106,9 +167,6 @@ export type ${commandTypeName} = ${commandTypes
 export type ${callTypeName} = ${queryTypeName} | ${commandTypeName};
 
 checkCallType({} as ${callTypeName});
-
-export type CallRequest = { Type: Call['Type'], In: Call['In'] };
-export type CallResponse = { Out: Call['Out'] };
 `;
   return code.replace(/\n\n\n\n/g, '\n\n').trim();
 }

@@ -13,7 +13,7 @@ async function test() {
 
   let userIdType = '{ UserId: string }';
   let userType = '{ UserId: string, UserName: string }';
-  let successType = '{ Success: boolean }';
+  let successType = '({ Success: true } | { Success: false; Reason: string })';
 
   console.log('generating project...');
   await genProject({

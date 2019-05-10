@@ -40,7 +40,10 @@
   "homepage": "https://gitlab.com/beenotung/cqrs-exp#readme",
   "dependencies": {
     "@beenotung/tslib": "^14.11.0",
-    "async-mkdirp": "^1.2.7"
+    "@nestjs/common": "^6.0.0",
+    "async-mkdirp": "^1.2.7",
+    "mkdirp-sync": "0.0.3",
+    "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "@types/node": "^8.10.48",

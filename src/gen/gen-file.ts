@@ -7,7 +7,7 @@ import {
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
-import { genServiceCode, genTypeCode } from './gen-code';
+import { genControllerCode, genServiceCode, genTypeCode } from './gen-code';
 
 function writeFile(filename: string, code: string) {
   code = code.trim();
@@ -57,6 +57,30 @@ export async function genServiceFile(args: {
   return writeFile(pathname, code);
 }
 
+export async function genControllerFile(args: {
+  typeDirname: string;
+  typeFilename: string;
+  callTypeName: string;
+  serviceClassName: string;
+  serviceFilename: string;
+  controllerClassName: string;
+  serviceApiPath: string;
+  callApiPath: string;
+  controllerFilename: string;
+  projectDirname: string;
+  serviceDirname: string;
+}) {
+  const code = genControllerCode(args);
+  const { serviceDirname, controllerFilename } = args;
+
+  const projectDirname = args.projectDirname || 'out';
+  const dirname = path.join(projectDirname, 'src', serviceDirname);
+  await mkdirp(dirname);
+  const pathname = path.join(dirname, controllerFilename);
+
+  return writeFile(pathname, code);
+}
+
 export async function genTypeFile(args: {
   projectDirname: string;
   typeDirname: string;
@@ -97,18 +121,6 @@ async function runNestCommand(args: {
     throw new Error(errorMsg);
   }
 }
-
-const defaultArgs = {
-  outDirname: 'out',
-  typeDirname: 'domain',
-  typeFilename: 'types.ts',
-  callTypeName: 'Call',
-  queryTypeName: 'Query',
-  commandTypeName: 'Command',
-  serviceFilename: 'core.service.ts',
-  serviceDirname: 'core',
-  serviceClassName: 'CoreService',
-};
 
 async function setTslint(args: { projectDirname: string }) {
   const { projectDirname } = args;
@@ -206,6 +218,22 @@ function hasNestProject(args: { projectDirname: string }): Promise<boolean> {
   return hasFile(filename);
 }
 
+export const defaultGenProjectArgs = {
+  outDirname: 'out',
+  typeDirname: 'domain',
+  typeFilename: 'types.ts',
+  callTypeName: 'Call',
+  queryTypeName: 'Query',
+  commandTypeName: 'Command',
+  serviceDirname: 'core',
+  serviceFilename: 'core.service.ts',
+  serviceClassName: 'CoreService',
+  controllerFilename: 'core.controller.ts',
+  controllerClassName: 'CoreController',
+  serviceApiPath: 'core',
+  callApiPath: 'call',
+};
+
 export async function genProject(_args: {
   outDirname?: string;
   projectName: string;
@@ -219,9 +247,11 @@ export async function genProject(_args: {
   serviceFilename?: string;
   serviceDirname?: string;
   serviceClassName?: string;
+  serviceAPIPath?: string;
+  callApiPath?: string;
 }) {
   const args = {
-    ...defaultArgs,
+    ...defaultGenProjectArgs,
     ..._args,
   };
   const {
@@ -260,16 +290,16 @@ export async function genProject(_args: {
     });
   }
 
-  await genTypeFile({
-    ...args,
-    projectDirname,
-  });
-  await genServiceFile({
-    ...args,
-    projectDirname,
-    typeNames: [
-      ...queryTypes.map(t => t.Type),
-      ...commandTypes.map(t => t.Type),
-    ],
-  });
+  await Promise.all([
+    genTypeFile({ ...args, projectDirname }),
+    genServiceFile({
+      ...args,
+      projectDirname,
+      typeNames: [
+        ...queryTypes.map(t => t.Type),
+        ...commandTypes.map(t => t.Type),
+      ],
+    }),
+    genControllerFile({ ...args, projectDirname }),
+  ]);
 }
