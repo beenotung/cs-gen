@@ -6,8 +6,10 @@ const rimraf = require('rimraf');
 
 async function test() {
   let outDirname = path.join('out', 'gen');
-  console.log('clearing out folder...');
-  rimraf.sync(outDirname);
+  if (!'dev') {
+    console.log('clearing out folder...');
+    rimraf.sync(outDirname);
+  }
 
   let userIdType = '{ UserId: string }';
   let userType = '{ UserId: string, UserName: string }';

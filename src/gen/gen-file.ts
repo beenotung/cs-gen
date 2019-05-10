@@ -1,5 +1,9 @@
 import { exec } from '@beenotung/tslib/child_process';
-import { writeFile as _writeFile } from '@beenotung/tslib/fs';
+import {
+  hasFile,
+  readFile,
+  writeFile as _writeFile,
+} from '@beenotung/tslib/fs';
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
@@ -9,6 +13,27 @@ function writeFile(filename: string, code: string) {
   code = code.trim();
   code += '\n';
   return _writeFile(filename, code);
+}
+
+export function getServiceFilePathname(args: {
+  projectDirname: string;
+  serviceFilename: string;
+  serviceDirname: string;
+}) {
+  const { serviceDirname, serviceFilename } = args;
+
+  const projectDirname = args.projectDirname || 'out';
+  const dirname = path.join(projectDirname, 'src', serviceDirname);
+  return path.join(dirname, serviceFilename);
+}
+
+export function hasServiceFile(args: {
+  projectDirname: string;
+  serviceFilename: string;
+  serviceDirname: string;
+}): Promise<boolean> {
+  const pathname = getServiceFilePathname(args);
+  return hasFile(pathname);
 }
 
 export async function genServiceFile(args: {
@@ -85,6 +110,71 @@ const defaultArgs = {
   serviceClassName: 'CoreService',
 };
 
+async function setTslint(args: { projectDirname: string }) {
+  const { projectDirname } = args;
+  const filename = path.join(projectDirname, 'tslint.json');
+  const bin = await readFile(filename);
+  const text = bin.toString();
+  const json = JSON.parse(text);
+  /* move the key to the first slot */
+  json.rules = {
+    'interface-over-type-literal': false,
+    ...json.rules,
+  };
+  /* override existing value */
+  json.rules['interface-over-type-literal'] = false;
+  const newText = JSON.stringify(json, null, 2);
+  // /* preserve compact formatting */
+  // const newText = text.replace('  "rules": {\n','  "rules": {\n    "interface-over-type-literal": false,\n');
+  await writeFile(filename, newText);
+}
+
+async function setIdeaConfig(args: {
+  projectDirname: string;
+  projectName: string;
+}) {
+  const { projectDirname, projectName } = args;
+
+  const projectFilename = path.join(
+    projectDirname,
+    '.idea',
+    projectName + '.iml',
+  );
+  const projectFileContent = `<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>`;
+
+  const moduleFilename = path.join(projectDirname, '.idea', 'modules.xml');
+  const moduleFileContent = `<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/${projectName}.iml" filepath="$PROJECT_DIR$/.idea/${projectName}.iml" />
+    </modules>
+  </component>
+</project>`;
+
+  await Promise.all([
+    writeFile(projectFilename, projectFileContent),
+    writeFile(moduleFilename, moduleFileContent),
+  ]);
+}
+
+function hasNestProject(args: { projectDirname: string }): Promise<boolean> {
+  const { projectDirname } = args;
+  const filename = path.join(projectDirname, 'nest-cli.json');
+  return hasFile(filename);
+}
+
 export async function genProject(_args: {
   outDirname?: string;
   projectName: string;
@@ -113,21 +203,27 @@ export async function genProject(_args: {
   await mkdirp(outDirname);
   const projectDirname = path.join(outDirname, projectName);
 
-  await runNestCommand({
-    cwd: outDirname,
-    cmd: `nest new --skip-install ${projectName}`,
-    errorMsg: `Failed to create nest project`,
-  });
-  await runNestCommand({
-    cwd: projectDirname,
-    cmd: `nest g module ${serviceDirname}`,
-    errorMsg: `Failed to create nest module`,
-  });
-  await runNestCommand({
-    cwd: projectDirname,
-    cmd: `nest g service ${serviceDirname}`,
-    errorMsg: `Failed to create nest service`,
-  });
+  if (!(await hasNestProject({ projectDirname }))) {
+    await runNestCommand({
+      cwd: outDirname,
+      cmd: `nest new --skip-install ${projectName}`,
+      errorMsg: `Failed to create nest project`,
+    });
+    await setTslint({ projectDirname });
+    await setIdeaConfig({ projectDirname, projectName });
+    if (!(await hasServiceFile({ ...args, projectDirname }))) {
+      await runNestCommand({
+        cwd: projectDirname,
+        cmd: `nest g module ${serviceDirname}`,
+        errorMsg: `Failed to create nest module`,
+      });
+      await runNestCommand({
+        cwd: projectDirname,
+        cmd: `nest g service ${serviceDirname}`,
+        errorMsg: `Failed to create nest service`,
+      });
+    }
+  }
 
   await genTypeFile({
     ...args,

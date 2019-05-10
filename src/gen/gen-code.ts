@@ -95,17 +95,17 @@ ${genCallTypesCode(queryTypes)}
 
 export type ${queryTypeName} = ${queryTypes
     .map(({ Type }) => Type)
-    .join(' | ')};
+    .join(' | ') || 'never'};
 
 ${genCallTypesCode(commandTypes)}
 
 export type ${commandTypeName} = ${commandTypes
     .map(({ Type }) => Type)
-    .join(' | ')};
+    .join(' | ') || 'never'};
 
 export type ${callTypeName} = ${queryTypeName} | ${commandTypeName};
 
 checkCallType({} as ${callTypeName});
 `;
-  return code.trim();
+  return code.replace(/\n\n\n\n/g, '\n\n').trim();
 }
