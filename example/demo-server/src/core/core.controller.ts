@@ -3,6 +3,7 @@ import { Call } from '../domain/types';
 import { LogService } from 'cqrs-exp';
 import { CoreService } from './core.service';
 import * as path from 'path';
+import { Bar } from 'cli-progress';
 
 @Controller('core')
 export class CoreController {
@@ -17,10 +18,16 @@ export class CoreController {
 
   restore() {
     const keys = this.logService.getKeysSync();
+    const bar = new Bar({
+      format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
+    });
+    bar.start(keys.length, 0);
     for (const key of keys) {
       const call = this.logService.getObject<Call>(key);
       this.coreService.Call(call.Type)(call.In);
+      bar.increment(1);
     }
+    bar.stop();
   }
 
   @Post('call')

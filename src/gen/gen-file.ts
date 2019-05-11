@@ -1,4 +1,5 @@
 import { exec } from '@beenotung/tslib/child_process';
+import { compare } from '@beenotung/tslib/compare';
 import {
   hasFile,
   readFile,
@@ -7,57 +8,87 @@ import {
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
-import { genControllerCode, genServiceCode, genTypeCode } from './gen-code';
+import {
+  genControllerCode,
+  genModuleCode,
+  genServiceCode,
+  genTypeCode,
+} from './gen-code';
 
-function writeFile(filename: string, code: string) {
+async function writeFile(filename: string, code: string) {
   code = code.trim();
   code += '\n';
-  return _writeFile(filename, code);
+  await _writeFile(filename, code);
 }
 
-export function getServiceFilePathname(args: {
-  projectDirname: string;
-  serviceFilename: string;
-  serviceDirname: string;
-}) {
-  const { serviceDirname, serviceFilename } = args;
-
-  const projectDirname = args.projectDirname || 'out';
-  const dirname = path.join(projectDirname, 'src', serviceDirname);
-  return path.join(dirname, serviceFilename);
+function getSrcDirname(args: { projectDirname: string }): string {
+  const { projectDirname } = args;
+  return path.join(projectDirname, 'src');
 }
 
-export function hasServiceFile(args: {
+function getModuleDirname(args: {
+  outDirname: string;
   projectDirname: string;
-  serviceFilename: string;
-  serviceDirname: string;
-}): Promise<boolean> {
-  const pathname = getServiceFilePathname(args);
-  return hasFile(pathname);
+  moduleDirname: string;
+}): string {
+  const { moduleDirname } = args;
+  return path.join(getSrcDirname(args), moduleDirname);
 }
 
-export async function genServiceFile(args: {
+async function genLogicProcessorFile(args: {
+  outDirname: string;
   projectDirname: string;
+  logicProcessorDirname: string;
+  logicProcessorFilename: string;
+  logicProcessorClassName: string;
+}): Promise<{ logicProcessorCode: string }> {
+  const {
+    logicProcessorDirname,
+    logicProcessorFilename,
+    logicProcessorClassName,
+  } = args;
+  const code = `
+export class ${logicProcessorClassName} {
+}
+`;
+  const filename = path.join(
+    getSrcDirname(args),
+    logicProcessorDirname,
+    logicProcessorFilename,
+  );
+  if (await hasFile(filename)) {
+    return { logicProcessorCode: (await readFile(filename)).toString() };
+  }
+  await writeFile(filename, code);
+  return { logicProcessorCode: code };
+}
+
+async function genServiceFile(args: {
+  outDirname: string;
+  projectDirname: string;
+  moduleDirname: string;
   serviceFilename: string;
-  serviceDirname: string;
   serviceClassName: string;
   typeDirname: string;
   typeFilename: string;
   typeNames: string[];
   callTypeName: string;
+  logicProcessorDirname: string;
+  logicProcessorFilename: string;
+  logicProcessorClassName: string;
+  logicProcessorCode: string;
 }) {
+  const { serviceFilename } = args;
   const code = genServiceCode(args);
-  const { serviceDirname, serviceFilename } = args;
+  const filename = path.join(getModuleDirname(args), serviceFilename);
 
-  const projectDirname = args.projectDirname || 'out';
-  const dirname = path.join(projectDirname, 'src', serviceDirname);
-  await mkdirp(dirname);
-  const pathname = path.join(dirname, serviceFilename);
-
-  return writeFile(pathname, code);
+  return writeFile(filename, code);
 }
 
-export async function genControllerFile(args: {
+async function genControllerFile(args: {
+  outDirname: string;
+  projectDirname: string;
+  moduleDirname: string;
   typeDirname: string;
   typeFilename: string;
   callTypeName: string;
@@ -67,21 +98,15 @@ export async function genControllerFile(args: {
   serviceApiPath: string;
   callApiPath: string;
   controllerFilename: string;
-  projectDirname: string;
-  serviceDirname: string;
 }) {
+  const { controllerFilename } = args;
   const code = genControllerCode(args);
-  const { serviceDirname, controllerFilename } = args;
+  const filename = path.join(getModuleDirname(args), controllerFilename);
 
-  const projectDirname = args.projectDirname || 'out';
-  const dirname = path.join(projectDirname, 'src', serviceDirname);
-  await mkdirp(dirname);
-  const pathname = path.join(dirname, controllerFilename);
-
-  return writeFile(pathname, code);
+  return writeFile(filename, code);
 }
 
-export async function genTypeFile(args: {
+async function genTypeFile(args: {
   projectDirname: string;
   typeDirname: string;
   typeFilename: string;
@@ -122,6 +147,30 @@ async function runNestCommand(args: {
   }
 }
 
+async function genModuleFile(args: {
+  outDirname: string;
+  projectDirname: string;
+  moduleDirname: string;
+  moduleFilename: string;
+  moduleClassName: string;
+  serviceFilename: string;
+  serviceClassName: string;
+  controllerFilename: string;
+  controllerClassName: string;
+}) {
+  const { projectDirname, moduleDirname, moduleFilename } = args;
+  const code = genModuleCode(args);
+  const filename = path.join(getModuleDirname(args), moduleFilename);
+  if (!(await hasFile(filename))) {
+    await runNestCommand({
+      cwd: projectDirname,
+      cmd: `nest g module ${moduleDirname}`,
+      errorMsg: `Failed to create nest module`,
+    });
+  }
+  await writeFile(filename, code);
+}
+
 async function setTslint(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const filename = path.join(projectDirname, 'tslint.json');
@@ -138,6 +187,37 @@ async function setTslint(args: { projectDirname: string }) {
   const newText = JSON.stringify(json, null, 2);
   // /* preserve compact formatting */
   // const newText = text.replace('  "rules": {\n','  "rules": {\n    "interface-over-type-literal": false,\n');
+  await writeFile(filename, newText);
+}
+
+function setPackageDependency(
+  json: object,
+  depType: 'dependencies' | 'devDependencies',
+  name: string,
+  version: string,
+): void {
+  json[depType][name] = version;
+  const newDep = {};
+  Object.entries(json[depType])
+    .sort(([k1, v1], [k2, v2]) => compare(k1, k2))
+    .forEach(([k, v]) => (newDep[k] = v));
+  json[depType] = newDep;
+}
+
+async function setPackage(args: { projectDirname: string }) {
+  const { projectDirname } = args;
+  const filename = path.join(projectDirname, 'package.json');
+  const bin = await readFile(filename);
+  const text = bin.toString();
+  const json = JSON.parse(text);
+  setPackageDependency(json, 'dependencies', 'cli-progress', '^2.1.1');
+  setPackageDependency(
+    json,
+    'devDependencies',
+    '@types/cli-progress',
+    '^1.8.1',
+  );
+  const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
 }
 
@@ -159,6 +239,7 @@ async function setIdeaConfig(args: {
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/data" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -184,7 +265,8 @@ async function setIdeaConfig(args: {
 async function setEditorConfig(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const filename = path.join(projectDirname, '.editorconfig');
-  const text = `# EditorConfig helps developers define and maintain consistent coding styles between different editors and IDEs
+  const text = `
+# EditorConfig helps developers define and maintain consistent coding styles between different editors and IDEs
 # http://editorconfig.org
 
 root = true
@@ -208,7 +290,8 @@ indent_size = 4
 
 [*.json]
 indent_style = space
-indent_size = 2`;
+indent_size = 2
+`;
   await writeFile(filename, text);
 }
 
@@ -225,13 +308,18 @@ export const defaultGenProjectArgs = {
   callTypeName: 'Call',
   queryTypeName: 'Query',
   commandTypeName: 'Command',
-  serviceDirname: 'core',
+  moduleDirname: 'core',
+  moduleFilename: 'core.module.ts',
+  moduleClassName: 'CoreModule',
   serviceFilename: 'core.service.ts',
   serviceClassName: 'CoreService',
   controllerFilename: 'core.controller.ts',
   controllerClassName: 'CoreController',
   serviceApiPath: 'core',
   callApiPath: 'call',
+  logicProcessorDirname: 'domain',
+  logicProcessorFilename: 'logic-processor.ts',
+  logicProcessorClassName: 'LogicProcessor',
 };
 
 export async function genProject(_args: {
@@ -244,62 +332,67 @@ export async function genProject(_args: {
   callTypeName?: string;
   queryTypeName?: string;
   commandTypeName?: string;
+  moduleDirname?: string;
   serviceFilename?: string;
-  serviceDirname?: string;
   serviceClassName?: string;
+  controllerFilename?: string;
+  controllerClassName?: string;
   serviceAPIPath?: string;
   callApiPath?: string;
+  logicProcessorDirname?: string;
+  logicProcessorFilename?: string;
+  logicProcessorClassName?: string;
 }) {
-  const args = {
+  const __args = {
     ...defaultGenProjectArgs,
     ..._args,
   };
   const {
     outDirname,
     projectName,
-    serviceDirname,
     queryTypes,
     commandTypes,
-  } = args;
+    typeDirname,
+    logicProcessorDirname,
+  } = __args;
   await mkdirp(outDirname);
   const projectDirname = path.join(outDirname, projectName);
+  const args = {
+    ...__args,
+    projectDirname,
+  };
 
-  if (!(await hasNestProject({ projectDirname }))) {
+  if (!(await hasNestProject(args))) {
     await runNestCommand({
       cwd: outDirname,
       cmd: `nest new --skip-install ${projectName}`,
       errorMsg: `Failed to create nest project`,
     });
   }
-  await mkdirp(path.join(projectDirname, '.idea'));
   await Promise.all([
-    setTslint({ projectDirname }),
-    setIdeaConfig({ projectDirname, projectName }),
-    setEditorConfig({ projectDirname }),
+    mkdirp(path.join(projectDirname, '.idea')),
+    mkdirp(path.join(projectDirname, typeDirname)),
+    mkdirp(path.join(projectDirname, logicProcessorDirname)),
   ]);
-  if (!(await hasServiceFile({ ...args, projectDirname }))) {
-    await runNestCommand({
-      cwd: projectDirname,
-      cmd: `nest g module ${serviceDirname}`,
-      errorMsg: `Failed to create nest module`,
-    });
-    await runNestCommand({
-      cwd: projectDirname,
-      cmd: `nest g service ${serviceDirname}`,
-      errorMsg: `Failed to create nest service`,
-    });
-  }
-
+  const [{ logicProcessorCode }] = await Promise.all([
+    genLogicProcessorFile(args),
+    setTslint(args),
+    setPackage(args),
+    setIdeaConfig({ projectDirname, projectName }),
+    setEditorConfig(args),
+    genTypeFile(args),
+  ]);
+  await genModuleFile(args);
   await Promise.all([
-    genTypeFile({ ...args, projectDirname }),
     genServiceFile({
       ...args,
-      projectDirname,
+      logicProcessorCode,
       typeNames: [
         ...queryTypes.map(t => t.Type),
         ...commandTypes.map(t => t.Type),
       ],
     }),
-    genControllerFile({ ...args, projectDirname }),
+    genControllerFile(args),
   ]);
+  // TODO refactor core controller to call logic processor
 }

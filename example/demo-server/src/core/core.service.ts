@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Call, CreateUser, GetProfile, GetUserList, RenameUser } from '../domain/types';
-import { CoreServiceImpl } from './core-service-impl';
+import { LogicProcessor } from '../domain/logic-processor';
 
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
@@ -8,7 +8,7 @@ function not_impl(name: string): any {
 
 @Injectable()
 export class CoreService {
-  impl = new CoreServiceImpl();
+  impl = new LogicProcessor();
 
   Call<C extends Call>(Type: C['Type']): (In: C['In']) => C['Out'] {
     const _type = Type as Call['Type'];

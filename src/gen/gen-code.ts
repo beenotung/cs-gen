@@ -11,20 +11,64 @@ function getTypeFileImportPath(args: {
   const { typeDirname, typeFilename } = args;
   return `'../${typeDirname}/${removeTsExtname(typeFilename)}'`;
 }
+export function genModuleCode(args: {
+  moduleClassName: string;
+  serviceFilename: string;
+  serviceClassName: string;
+  controllerFilename: string;
+  controllerClassName: string;
+}) {
+  const {
+    moduleClassName,
+    serviceFilename,
+    serviceClassName,
+    controllerFilename,
+    controllerClassName,
+  } = args;
+  return `
+import { Module } from '@nestjs/common';
+import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
+import { LogService } from 'cqrs-exp';
+import * as path from 'path';
+import { ${controllerClassName} } from './${removeTsExtname(
+    controllerFilename,
+  )}';
 
+@Module({
+  controllers: [${controllerClassName}],
+  providers: [${serviceClassName}, { provide: LogService, useValue: new LogService(path.join('data', 'log')) }],
+})
+export class ${moduleClassName} {
+}
+`.trim();
+}
 export function genServiceCode(args: {
   serviceClassName: string;
   typeDirname: string;
   typeFilename: string;
   typeNames: string[];
   callTypeName: string;
+  logicProcessorDirname: string;
+  logicProcessorFilename: string;
+  logicProcessorClassName: string;
+  logicProcessorCode: string;
 }) {
-  const { callTypeName, serviceClassName } = args;
+  const {
+    callTypeName,
+    serviceClassName,
+    logicProcessorDirname,
+    logicProcessorFilename,
+    logicProcessorClassName,
+    logicProcessorCode,
+  } = args;
   const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ${[callTypeName, ...args.typeNames]
     .sort()
     .join(', ')} } from ${getTypeFileImportPath(args)};
+import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(
+    logicProcessorFilename,
+  )}';
 
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
@@ -32,6 +76,8 @@ function not_impl(name: string): any {
 
 @Injectable()
 export class ${serviceClassName} {
+  impl = new ${logicProcessorClassName}();
+
   Call<C extends Call>(Type: C['Type']): (In: C['In']) => C['Out'] {
     const _type = Type as Call['Type'];
     let res: (In: C['In']) => C['Out'];
@@ -56,7 +102,11 @@ export class ${serviceClassName} {
   ${args.typeNames
     .map(
       s => `${s}(In: ${s}['In']): ${s}['Out'] {
-    return not_impl('${s}');
+    ${
+      logicProcessorCode.indexOf(s) === -1
+        ? `return not_impl('${s}');`
+        : `return this.impl.${s}(In);`
+    }
   }
 
   `,
@@ -94,6 +144,7 @@ import { ${callTypeName} } from ${getTypeFileImportPath(args)};
 import { LogService } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import * as path from 'path';
+import { Bar } from 'cli-progress';
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
@@ -108,10 +159,16 @@ export class ${controllerClassName} {
 
   restore() {
     const keys = this.logService.getKeysSync();
+    const bar = new Bar({
+      format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
+    });
+    bar.start(keys.length, 0);
     for (const key of keys) {
       const call = this.logService.getObject<${callTypeName}>(key);
       this.coreService.Call(call.Type)(call.In);
+      bar.increment(1);
     }
+    bar.stop();
   }
 
   @Post('${callApiPath}')

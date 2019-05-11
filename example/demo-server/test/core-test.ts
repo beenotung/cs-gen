@@ -4,9 +4,8 @@ import { LogService } from 'cqrs-exp';
 import { CoreService } from '../src/core/core.service';
 import { CreateUser } from '../src/domain/types';
 
-let ls = new LogService();
 let cs = new CoreService();
-let cc = new CoreController(ls, cs);
+let cc = new CoreController(cs);
 
 async function test() {
   let users = cs.impl.users;

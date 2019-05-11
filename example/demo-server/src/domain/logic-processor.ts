@@ -1,6 +1,6 @@
 import { CreateUser } from 'src/domain/types';
 
-export class CoreServiceImpl {
+export class LogicProcessor {
   users: Array<{ UserId: string, UserName: string }> = [];
 
   CreateUser(In: CreateUser['In']): CreateUser['Out'] {

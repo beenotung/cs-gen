@@ -5,15 +5,16 @@ import * as path from 'path';
 const rimraf = require('rimraf');
 
 async function test() {
-  let outDirname = path.join('example');
+  const outDirname = path.join('example');
   if (!'dev') {
     console.log('clearing out folder...');
     rimraf.sync(outDirname);
   }
 
-  let userIdType = '{ UserId: string }';
-  let userType = '{ UserId: string, UserName: string }';
-  let successType = '({ Success: true } | { Success: false; Reason: string })';
+  const userIdType = '{ UserId: string }';
+  const userType = '{ UserId: string, UserName: string }';
+  const successType =
+    '({ Success: true } | { Success: false; Reason: string })';
 
   console.log('generating project...');
   await genProject({
