@@ -5,7 +5,7 @@ import * as path from 'path';
 const rimraf = require('rimraf');
 
 async function test() {
-  let outDirname = path.join('out', 'gen');
+  let outDirname = path.join('example');
   if (!'dev') {
     console.log('clearing out folder...');
     rimraf.sync(outDirname);

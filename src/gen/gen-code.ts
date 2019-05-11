@@ -93,13 +93,16 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { ${callTypeName} } from ${getTypeFileImportPath(args)};
 import { LogService } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
+import * as path from 'path';
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
+  logService: LogService;
+
   constructor(
-    public logService: LogService,
     public ${serviceObjectName}: ${serviceClassName},
   ) {
+    this.logService = new LogService(path.join('data', 'log'));
     this.restore();
   }
 

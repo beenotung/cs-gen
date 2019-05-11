@@ -4,7 +4,6 @@ import { compare_string } from '@beenotung/tslib/string';
 import { Injectable } from '@nestjs/common';
 import { readdirSync } from 'fs';
 import mkdirp = require('mkdirp-sync');
-import * as path from 'path';
 
 @Injectable()
 export class LogService {
@@ -12,7 +11,7 @@ export class LogService {
   private acc: number;
   private store: CachedObjectStore;
 
-  constructor(private dataDirname: string = path.join('data', 'log')) {
+  constructor(private dataDirname: string) {
     mkdirp(dataDirname);
     this.store = CachedObjectStore.create(dataDirname);
   }

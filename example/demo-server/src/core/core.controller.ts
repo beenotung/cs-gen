@@ -2,13 +2,16 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { Call } from '../domain/types';
 import { LogService } from 'cqrs-exp';
 import { CoreService } from './core.service';
+import * as path from 'path';
 
 @Controller('core')
 export class CoreController {
+  logService: LogService;
+
   constructor(
-    public logService: LogService,
     public coreService: CoreService,
   ) {
+    this.logService = new LogService(path.join('data', 'log'));
     this.restore();
   }
 
