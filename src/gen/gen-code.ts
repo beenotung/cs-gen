@@ -1,3 +1,4 @@
+import { groupBy } from '@beenotung/tslib';
 import { Call } from '../types';
 
 function removeTsExtname(s: string): string {
@@ -11,6 +12,7 @@ function getTypeFileImportPath(args: {
   const { typeDirname, typeFilename } = args;
   return `'../${typeDirname}/${removeTsExtname(typeFilename)}'`;
 }
+
 export function genModuleCode(args: {
   moduleClassName: string;
   serviceFilename: string;
@@ -42,6 +44,7 @@ export class ${moduleClassName} {
 }
 `.trim();
 }
+
 export function genServiceCode(args: {
   serviceClassName: string;
   typeDirname: string;
@@ -60,10 +63,11 @@ export function genServiceCode(args: {
     logicProcessorFilename,
     logicProcessorClassName,
     logicProcessorCode,
+    typeNames,
   } = args;
   const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ${[callTypeName, ...args.typeNames]
+import { ${[callTypeName, ...typeNames]
     .sort()
     .join(', ')} } from ${getTypeFileImportPath(args)};
 import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(
@@ -82,15 +86,15 @@ export class ${serviceClassName} {
     const _type = Type as Call['Type'];
     let res: (In: C['In']) => C['Out'];
     switch (_type) {
-      ${args.typeNames
-        .map(
-          s => `case '${s}':
+      ${typeNames
+    .map(
+      s => `case '${s}':
         res = this.${s};
         break;
       `,
-        )
-        .join('')
-        .trim()}
+    )
+    .join('')
+    .trim()}
       default:
         const x: never = _type;
         console.log('not implemented call type:', x);
@@ -99,14 +103,14 @@ export class ${serviceClassName} {
     return res.bind(this);
   }
 
-  ${args.typeNames
+  ${typeNames
     .map(
       s => `${s}(In: ${s}['In']): ${s}['Out'] {
     ${
-      logicProcessorCode.indexOf(s) === -1
-        ? `return not_impl('${s}');`
-        : `return this.impl.${s}(In);`
-    }
+        logicProcessorCode.indexOf(s) === -1
+          ? `return not_impl('${s}');`
+          : `return this.impl.${s}(In);`
+        }
   }
 
   `,
@@ -196,19 +200,23 @@ function genCallTypesCode(callTypes: Call[]) {
 }
 
 export function genTypeCode(args: {
-  queryTypes: Call[];
-  commandTypes: Call[];
+  callTypes: Call[];
   callTypeName: string;
   queryTypeName: string;
   commandTypeName: string;
+  mixedTypeName: string;
 }) {
   const {
-    callTypeName,
     queryTypeName,
     commandTypeName,
-    queryTypes,
-    commandTypes,
+    mixedTypeName,
+    callTypeName,
+    callTypes,
   } = args;
+  const callTypesMap = groupBy(t => t.CallType, callTypes);
+  const queryTypes = callTypesMap.get('Query');
+  const commandTypes = callTypesMap.get('Command');
+  const mixedTypes = callTypesMap.get('Mixed');
   const code = `
 import { checkCallType } from 'cqrs-exp';
 
@@ -223,8 +231,13 @@ ${genCallTypesCode(commandTypes)}
 export type ${commandTypeName} = ${commandTypes
     .map(({ Type }) => Type)
     .join(' | ') || 'never'};
+${genCallTypesCode(commandTypes)}
 
-export type ${callTypeName} = ${queryTypeName} | ${commandTypeName};
+export type ${mixedTypeName} = ${mixedTypes
+    .map(({ Type }) => Type)
+    .join(' | ') || 'never'};
+
+export type ${callTypeName} = ${queryTypeName} | ${commandTypeName} | ${mixedTypeName};
 
 checkCallType({} as ${callTypeName});
 `;

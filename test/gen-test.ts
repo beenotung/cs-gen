@@ -1,6 +1,7 @@
 import { catchMain } from '@beenotung/tslib/node';
 import { genProject } from '../src/gen/gen-file';
 import * as path from 'path';
+import { flattenCallTypes } from '../src';
 
 const rimraf = require('rimraf');
 
@@ -20,18 +21,21 @@ async function test() {
   await genProject({
     outDirname,
     projectName: 'demo-server',
-    queryTypes: [
-      { Type: 'GetProfile', In: userIdType, Out: userType },
-      { Type: 'GetUserList', In: 'void', Out: `Array<${userType}>` },
-    ],
-    commandTypes: [
-      { Type: 'CreateUser', In: userType, Out: successType },
-      {
-        Type: 'RenameUser',
-        In: '{ UserId: string, NewUsername: string }',
-        Out: successType,
-      },
-    ],
+    callTypes: flattenCallTypes({
+      queryTypes: [
+        { Type: 'GetProfile', In: userIdType, Out: userType },
+        { Type: 'GetUserList', In: 'void', Out: `Array<${userType}>` },
+      ],
+      commandTypes: [
+        { Type: 'CreateUser', In: userType, Out: successType },
+        {
+          Type: 'RenameUser',
+          In: '{ UserId: string, NewUsername: string }',
+          Out: successType,
+        },
+      ],
+      mixedTypes: [],
+    }),
   });
 
   console.log('all passed.');

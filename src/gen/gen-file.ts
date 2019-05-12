@@ -110,11 +110,11 @@ async function genTypeFile(args: {
   projectDirname: string;
   typeDirname: string;
   typeFilename: string;
-  queryTypes: Call[];
-  commandTypes: Call[];
+  callTypes: Call[];
   callTypeName: string;
   queryTypeName: string;
   commandTypeName: string;
+  mixedTypeName: string;
 }) {
   const code = genTypeCode(args);
 
@@ -308,6 +308,7 @@ export const defaultGenProjectArgs = {
   callTypeName: 'Call',
   queryTypeName: 'Query',
   commandTypeName: 'Command',
+  mixedTypeName: 'Mixed',
   moduleDirname: 'core',
   moduleFilename: 'core.module.ts',
   moduleClassName: 'CoreModule',
@@ -327,11 +328,11 @@ export async function genProject(_args: {
   projectName: string;
   typeDirname?: string;
   typeFilename?: string;
-  queryTypes: Call[];
-  commandTypes: Call[];
+  callTypes: Call[];
   callTypeName?: string;
   queryTypeName?: string;
   commandTypeName?: string;
+  mixedTypeName?: string,
   moduleDirname?: string;
   serviceFilename?: string;
   serviceClassName?: string;
@@ -350,10 +351,9 @@ export async function genProject(_args: {
   const {
     outDirname,
     projectName,
-    queryTypes,
-    commandTypes,
     typeDirname,
     logicProcessorDirname,
+    callTypes,
   } = __args;
   await mkdirp(outDirname);
   const projectDirname = path.join(outDirname, projectName);
@@ -387,10 +387,7 @@ export async function genProject(_args: {
     genServiceFile({
       ...args,
       logicProcessorCode,
-      typeNames: [
-        ...queryTypes.map(t => t.Type),
-        ...commandTypes.map(t => t.Type),
-      ],
+      typeNames: callTypes.map(t => t.Type),
     }),
     genControllerFile(args),
   ]);
