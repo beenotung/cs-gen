@@ -1,6 +1,6 @@
 import { groupBy } from '@beenotung/tslib';
+import { getTsType } from '../ts-type';
 import { Call } from '../types';
-import { getTsType } from '../utils';
 
 function removeTsExtname(s: string): string {
   return s.replace(/\.ts$/, '');
