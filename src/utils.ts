@@ -1,4 +1,5 @@
 import { Call, CallType, Result } from './types';
+import { JsonValue } from '@beenotung/tslib';
 
 export function checkCallType(t: Call) {
   /* static type check only */
@@ -39,4 +40,40 @@ export function flattenCallTypes(args: {
     ...(queryTypes || []).map(t => ({ ...t, CallType: Query })),
     ...(mixedTypes || []).map(t => ({ ...t, CallType: Mixed })),
   ];
+}
+
+/* name -> type */
+const typeMap = new Map<string, string>();
+
+export function setTsType(name: string, type: string): void {
+
+}
+
+export function getTsType(o: JsonValue): string {
+  const type = typeof o;
+  switch (type) {
+    case 'string':
+      if (typeMap.has(o)) {
+        return typeMap.get(o);
+      }
+      return type;
+    case 'number':
+    case 'boolean':
+    case 'bigint':
+    case 'symbol':
+    case 'undefined':
+      return type;
+    case 'object':
+      if (Array.isArray(o)) {
+        if(o.length<1){
+          throw new TypeError('cannot determine type of empty array')
+        }
+        return `Array<${getTsType(o[0])}>`
+      } else {
+
+      }
+    default:
+      console.error('unknown type', { type, o });
+      throw new TypeError('unknown type: ' + type);
+  }
 }
