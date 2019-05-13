@@ -1,5 +1,4 @@
 import { Call, CallType, Result } from './types';
-import { JsonValue } from '@beenotung/tslib';
 
 export function checkCallType(t: Call) {
   /* static type check only */
@@ -15,7 +14,11 @@ export function then<T, R>(x: Result<T>, f: (x: T) => Result<R>): Result<R> {
   return f(x as T);
 }
 
-export interface PartialCall<Type extends string = string, In = any, Out = any> {
+export interface PartialCall<
+  Type extends string = string,
+  In = any,
+  Out = any
+> {
   Type: Type;
   In: In;
   Out: Out;
@@ -26,15 +29,11 @@ const Query: CallType = 'Query';
 const Mixed: CallType = 'Mixed';
 
 export function flattenCallTypes(args: {
-  queryTypes?: PartialCall[],
-  commandTypes?: PartialCall[],
-  mixedTypes?: PartialCall[],
+  queryTypes?: PartialCall[];
+  commandTypes?: PartialCall[];
+  mixedTypes?: PartialCall[];
 }): Call[] {
-  const {
-    queryTypes,
-    commandTypes,
-    mixedTypes,
-  } = args;
+  const { queryTypes, commandTypes, mixedTypes } = args;
   return [
     ...(commandTypes || []).map(t => ({ ...t, CallType: Command })),
     ...(queryTypes || []).map(t => ({ ...t, CallType: Query })),
@@ -46,10 +45,10 @@ export function flattenCallTypes(args: {
 const typeMap = new Map<string, string>();
 
 export function setTsType(name: string, type: string): void {
-
+  typeMap.set(name, type);
 }
 
-export function getTsType(o: JsonValue): string {
+export function getTsType(o: any, format = false, indentation = ''): string {
   const type = typeof o;
   switch (type) {
     case 'string':
@@ -65,12 +64,29 @@ export function getTsType(o: JsonValue): string {
       return type;
     case 'object':
       if (Array.isArray(o)) {
-        if(o.length<1){
-          throw new TypeError('cannot determine type of empty array')
+        if (o.length < 1) {
+          throw new TypeError('cannot determine type of empty array');
         }
-        return `Array<${getTsType(o[0])}>`
+        return `Array<${getTsType(o[0])}>`;
       } else {
-
+        if (format) {
+          const indent = indentation + '  ';
+          let res = indentation + '{';
+          Object.entries(o).forEach(([k, v]) => {
+            res +=
+              '\n' +
+              indent +
+              JSON.stringify(k) +
+              ': ' +
+              getTsType(v, format, indent) +
+              ';';
+          });
+          res += '\n' + indentation + '}';
+          return res;
+        }
+        return `{ ${Object.entries(o)
+          .map(([k, v]) => `${JSON.stringify(k)}: ${getTsType(v)}`)
+          .join('; ')} }`;
       }
     default:
       console.error('unknown type', { type, o });

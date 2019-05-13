@@ -3,8 +3,8 @@ import { readdir } from '@beenotung/tslib/fs';
 import { compare_string } from '@beenotung/tslib/string';
 import { Injectable } from '@nestjs/common';
 import { readdirSync } from 'fs';
-import { Call, Result } from '../types';
 import mkdirp = require('mkdirp-sync');
+import { Call, Result } from '../types';
 
 @Injectable()
 export class LogService {
@@ -22,7 +22,7 @@ export class LogService {
   }
 
   async getKeys(): Promise<string[]> {
-    for (; ;) {
+    for (;;) {
       const ss = await readdir(this.dataDirname);
       if (ss.some(s => s.indexOf('.') !== -1)) {
         continue;
@@ -31,8 +31,7 @@ export class LogService {
     }
   }
 
-  storeCall(call: Call): void {
-  }
+  storeCall(call: Call): void {}
 
   storeObject(value): Result<void> {
     const key = this.nextKey();

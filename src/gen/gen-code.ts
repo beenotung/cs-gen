@@ -1,5 +1,6 @@
 import { groupBy } from '@beenotung/tslib';
 import { Call } from '../types';
+import { getTsType } from '../utils';
 
 function removeTsExtname(s: string): string {
   return s.replace(/\.ts$/, '');
@@ -87,14 +88,14 @@ export class ${serviceClassName} {
     let res: (In: C['In']) => C['Out'];
     switch (_type) {
       ${typeNames
-    .map(
-      s => `case '${s}':
+        .map(
+          s => `case '${s}':
         res = this.${s};
         break;
       `,
-    )
-    .join('')
-    .trim()}
+        )
+        .join('')
+        .trim()}
       default:
         const x: never = _type;
         console.log('not implemented call type:', x);
@@ -107,10 +108,10 @@ export class ${serviceClassName} {
     .map(
       s => `${s}(In: ${s}['In']): ${s}['Out'] {
     ${
-        logicProcessorCode.indexOf(s) === -1
-          ? `return not_impl('${s}');`
-          : `return this.impl.${s}(In);`
-        }
+      logicProcessorCode.indexOf(s) === -1
+        ? `return not_impl('${s}');`
+        : `return this.impl.${s}(In);`
+    }
   }
 
   `,
@@ -199,7 +200,7 @@ function genCallTypesCode(callTypes: Call[]) {
     .trim();
 }
 
-export function genTypeCode(args: {
+export function genCallTypeCode(args: {
   callTypes: Call[];
   callTypeName: string;
   queryTypeName: string;
@@ -242,4 +243,12 @@ export type ${callTypeName} = ${queryTypeName} | ${commandTypeName} | ${mixedTyp
 checkCallType({} as ${callTypeName});
 `;
   return code.replace(/\n\n\n\n/g, '\n\n').trim();
+}
+export function genTypeCode(name: string, demo: any, format = false): string {
+  return `
+/** Example of ${name}:
+${JSON.stringify(demo, null, 2)}
+ */
+export type ${name} = ${getTsType(demo, format)};
+`.trim();
 }

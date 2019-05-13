@@ -9,10 +9,10 @@ import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
 import {
+  genCallTypeCode,
   genControllerCode,
   genModuleCode,
   genServiceCode,
-  genTypeCode,
 } from './gen-code';
 
 async function writeFile(filename: string, code: string) {
@@ -116,7 +116,7 @@ async function genTypeFile(args: {
   commandTypeName: string;
   mixedTypeName: string;
 }) {
-  const code = genTypeCode(args);
+  const code = genCallTypeCode(args);
 
   const typeDirname = args.typeDirname || 'domain';
   const typeFilename = args.typeFilename || 'types.ts';
@@ -332,7 +332,7 @@ export async function genProject(_args: {
   callTypeName?: string;
   queryTypeName?: string;
   commandTypeName?: string;
-  mixedTypeName?: string,
+  mixedTypeName?: string;
   moduleDirname?: string;
   serviceFilename?: string;
   serviceClassName?: string;
