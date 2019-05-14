@@ -1,5 +1,9 @@
+import { getMaxArraySize } from '@beenotung/tslib/array';
 import { CachedObjectStore } from '@beenotung/tslib/cached-store';
 import { readdir } from '@beenotung/tslib/fs';
+import {
+  NonVoidResultPool,
+} from '@beenotung/tslib/result-pool';
 import { compare_string } from '@beenotung/tslib/string';
 import { Injectable } from '@nestjs/common';
 import { readdirSync } from 'fs';
@@ -11,6 +15,7 @@ export class LogService {
   private now: number;
   private acc: number;
   private store: CachedObjectStore;
+  private fsPool = new NonVoidResultPool(getMaxArraySize());
 
   constructor(private dataDirname: string) {
     mkdirp(dataDirname);
@@ -35,9 +40,12 @@ export class LogService {
 
   storeObject(value): Result<void> {
     const key = this.nextKey();
-    this.store.setObject(key, value);
+    return this.fsPool.run(() => this.store.setObject(key, value));
   }
 
+  // getObject<T>(key: string): Result<T | null> {
+  //   return this.fsPool.run(()=>this.store.getObject(key));
+  // }
   getObject<T>(key: string): T | null {
     return this.store.getObject(key);
   }
