@@ -1,4 +1,4 @@
-import { groupBy } from '@beenotung/tslib';
+import { groupBy } from '@beenotung/tslib/functional';
 import { getTsType } from '../ts-type';
 import { Call } from '../types';
 
