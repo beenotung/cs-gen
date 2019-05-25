@@ -1,9 +1,7 @@
 import { getMaxArraySize } from '@beenotung/tslib/array';
 import { CachedObjectStore } from '@beenotung/tslib/cached-store';
 import { readdir } from '@beenotung/tslib/fs';
-import {
-  NonVoidResultPool,
-} from '@beenotung/tslib/result-pool';
+import { NonVoidResultPool } from '@beenotung/tslib/result-pool';
 import { compare_string } from '@beenotung/tslib/string';
 import { Injectable } from '@nestjs/common';
 import { readdirSync } from 'fs';
