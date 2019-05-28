@@ -1,5 +1,5 @@
 import { groupBy } from '@beenotung/tslib/functional';
-import { getTsType } from '../ts-type';
+import { genTsType } from 'gen-ts-type';
 import { Call } from '../types';
 
 function removeTsExtname(s: string): string {
@@ -244,11 +244,11 @@ checkCallType({} as ${callTypeName});
 `;
   return code.replace(/\n\n\n\n/g, '\n\n').trim();
 }
-export function genTypeCode(name: string, demo: any, format = false): string {
+export function genTypeCode(name: string, demo: any): string {
   return `
 /** Example of ${name}:
 ${JSON.stringify(demo, null, 2)}
  */
-export type ${name} = ${getTsType(demo, format)};
+export type ${name} = ${genTsType(demo)};
 `.trim();
 }

@@ -1,4 +1,3 @@
-import { getTsType } from '../src';
 import { YEAR } from '@beenotung/tslib/time';
 import { genTypeCode } from '../src/gen/gen-code';
 
@@ -10,4 +9,4 @@ let UserDemo = {
 };
 // let tsType = getTsType(UserDemo);
 // console.log(`export type User = ${tsType};`);
-console.log(genTypeCode('User', UserDemo, true));
+console.log(genTypeCode('User', UserDemo));
