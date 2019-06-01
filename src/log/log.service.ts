@@ -1,27 +1,36 @@
-import { getMaxArraySize } from '@beenotung/tslib/array';
-import { CachedObjectStore } from '@beenotung/tslib/cached-store';
-import { readdir } from '@beenotung/tslib/fs';
 import { NonVoidResultPool } from '@beenotung/tslib/result-pool';
 import { compare_string } from '@beenotung/tslib/string';
 import { Injectable } from '@nestjs/common';
-import { readdirSync } from 'fs';
+import * as fs from 'graceful-fs';
 import mkdirp = require('mkdirp-sync');
-import { Call, Result } from '../types';
+import * as util from 'util';
+
+const readdir: typeof fs.readdir.__promisify__ = util.promisify(fs.readdir);
+const writeFile: typeof fs.writeFile.__promisify__ = util.promisify(fs.writeFile);
+
+function fixFS() {
+  const realFs = require('fs');
+  const gracefulFs = require('graceful-fs');
+  gracefulFs.gracefulify(realFs);
+}
 
 @Injectable()
 export class LogService {
   private now: number;
   private acc: number;
-  private store: CachedObjectStore;
-  private fsPool = new NonVoidResultPool(getMaxArraySize());
+  // private store: AsyncStore;
+  private fsPool = new NonVoidResultPool(8000);
 
   constructor(private dataDirname: string) {
+    fixFS();
     mkdirp(dataDirname);
-    this.store = CachedObjectStore.create(dataDirname);
+    // this.store = CachedObjectStore.create(dataDirname);
+    // this.store = Store.create(getLocalStorage(dataDirname));
+    // this.store = AsyncStore.create(dataDirname)
   }
 
   getKeysSync(): string[] {
-    return this.sortKeys(readdirSync(this.dataDirname));
+    return this.sortKeys(fs.readdirSync(this.dataDirname));
   }
 
   async getKeys(): Promise<string[]> {
@@ -34,17 +43,17 @@ export class LogService {
     }
   }
 
-  storeCall(call: Call): void {}
-
-  storeObject(value): Result<void> {
+  storeObject(value: any): void {
     const key = this.nextKey();
-    return this.fsPool.run(() => this.store.setObject(key, value));
+    // return this.fsPool.run(() => this.store.setObject(key, value));
+    // this.store.setObject(key, value);
+    writeFile(key, JSON.stringify(value));
   }
 
   // getObject<T>(key: string): Result<T | null> {
   //   return this.fsPool.run(()=>this.store.getObject(key));
   // }
-  getObject<T>(key: string): T | null {
+  getObject<T>(key: string): Promise<T | null> {
     return this.store.getObject(key);
   }
 

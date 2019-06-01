@@ -9,4 +9,9 @@ for (;;) {
     logService.storeObject({ n, i });
   }
   n *= 2;
+  if (n >= 262144) {
+    break;
+  }
+  // if(n>=8192){break}
 }
+console.log('queued all');
