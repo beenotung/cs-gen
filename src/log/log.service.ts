@@ -6,7 +6,9 @@ import mkdirp = require('mkdirp-sync');
 import * as util from 'util';
 
 const readdir: typeof fs.readdir.__promisify__ = util.promisify(fs.readdir);
-const writeFile: typeof fs.writeFile.__promisify__ = util.promisify(fs.writeFile);
+const writeFile: typeof fs.writeFile.__promisify__ = util.promisify(
+  fs.writeFile,
+);
 
 function fixFS() {
   const realFs = require('fs');

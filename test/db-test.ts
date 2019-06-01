@@ -4,7 +4,7 @@ import { catchMain } from '@beenotung/tslib/node';
 let db = new Db({
   connectionOptions: {
     // host: 'localhost',
-    host: '10.0.2.15',
+    host: '192.168.1.27',
   },
 });
 
@@ -25,6 +25,13 @@ async function test() {
       console.log('sub user event done');
     },
   );
+  setTimeout(() => {
+    console.log('stop now');
+    cursor.close(err => {
+      console.log({ err });
+      db.close();
+    });
+  }, 5000);
 }
 
 catchMain(test());
