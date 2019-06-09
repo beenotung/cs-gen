@@ -10,12 +10,16 @@ export interface Call<Type extends string = string, In = any, Out = any> {
 export type Result<T> = T | Promise<T>;
 
 export interface IEvent {
+  aggregate_id: string;
+  version: string;
   command_id: string;
   timestamp: number;
-  aggregate_id: string;
+  event_type?: string;
 }
 
+/*
 type ExampleEvent = IEvent & {
   event_type: 'ExampleEvent';
   username: string;
 };
+*/

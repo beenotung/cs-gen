@@ -7,3 +7,6 @@ dist/
 *.tgz
 out/
 data/
+rethinkdb_data/
+log.txt
+pnpm-debug.log
