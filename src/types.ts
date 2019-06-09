@@ -9,12 +9,22 @@ export interface Call<Type extends string = string, In = any, Out = any> {
 
 export type Result<T> = T | Promise<T>;
 
+export interface ICommand {
+  command_id: string;
+  version: string;
+  timestamp: number;
+  command_type?: string;
+}
+
 export interface IEvent {
   aggregate_id: string;
   version: string;
   command_id: string;
   timestamp: number;
   event_type?: string;
+}
+export interface IQuery {
+  query_type?: string;
 }
 
 /*

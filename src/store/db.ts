@@ -1,9 +1,10 @@
 import * as r from 'rethinkdb';
 import { Expression } from '../lib/rethinkdb';
-import { IEvent } from '../types';
+import { ICommand, IEvent } from '../types';
 import { EventSelector } from './types';
 
 export namespace tables {
+  export const command: r.Table = r.table('command');
   export const event: r.Table = r.table('event');
 }
 
@@ -47,6 +48,10 @@ export class Db {
     await conn.close();
   }
 
+  storeCommand<C extends ICommand>(command: C) {
+    return this.run(tables.command.insert(command));
+  }
+
   storeEvent<E extends IEvent>(event: E) {
     return this.run(tables.event.insert(event));
   }
@@ -61,9 +66,21 @@ export class Db {
       filter = filter.eq(selector.command_id);
     }
     if (selector.version) {
-      filter = filter.and(Expression.cast(row<IEvent>('version')).match(
-        '^' + selector.version,
-      ) as Expression<boolean>);
+      const version = selector.version;
+      const rowExpr = row<IEvent>('version');
+      switch (version.split('.').length) {
+        case 1:
+        case 2:
+          filter = filter.and(Expression.cast(rowExpr).match(
+            '^' + version + '\\.',
+          ) as Expression<boolean>);
+          break;
+        case 3:
+          filter = filter.and(rowExpr.eq(version));
+          break;
+        default:
+          throw new TypeError('invalid version: ' + selector.version);
+      }
     }
     if (selector.event_types) {
       const rowExpr = row<IEvent>('event_type');

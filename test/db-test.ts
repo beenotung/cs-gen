@@ -1,5 +1,6 @@
 import { Db } from '../src/store/db';
 import { catchMain } from '@beenotung/tslib/node';
+import { later } from '@beenotung/tslib';
 
 let db = new Db({
   connectionOptions: {
@@ -26,10 +27,10 @@ async function test() {
       console.log('sub user event done');
     },
   );
-  setTimeout(() => {
-    console.log('stop now');
-    db.close();
-  }, 5000);
+  await later(5000);
+  console.log('stop now');
+  await cursor.close();
+  await db.close();
 }
 
 catchMain(test());
