@@ -60,7 +60,7 @@ export class Db {
     return this.run(tables.event.insert(events));
   }
 
-  async subEvents(selector: EventSelector): Promise<r.Cursor> {
+  selectEvents(selector: EventSelector): r.Sequence {
     let filter = row<IEvent>('aggregate_id').eq(selector.aggregate_id);
     if (selector.command_id) {
       filter = filter.eq(selector.command_id);
@@ -93,9 +93,19 @@ export class Db {
       }
       filter = filter.and(accExpr);
     }
+    return tables.event.filter(filter);
+  }
+
+  async getEventsCount(selector: EventSelector): Promise<number> {
+    const seq = this.selectEvents(selector);
+    return await this.run(seq.count());
+  }
+
+  async subEvents(selector: EventSelector): Promise<r.Cursor> {
+    const seq = this.selectEvents(selector);
     const changesOptions: r.ChangesOptions = {} as any;
     changesOptions.includeInitial = true;
-    let op = tables.event.filter(filter).changes(changesOptions);
+    let op = seq.changes(changesOptions);
     if (selector.skip) {
       op = op.skip(selector.skip);
     }

@@ -11,6 +11,7 @@ import { Call } from '../types';
 import {
   genCallTypeCode,
   genControllerCode,
+  genMainCode,
   genModuleCode,
   genServiceCode,
 } from './gen-code';
@@ -171,6 +172,32 @@ async function genModuleFile(args: {
   await writeFile(filename, code);
 }
 
+async function updateMainFile(args: { projectDirname: string }) {
+  const srcPath = getSrcDirname(args);
+  const mainPath = path.join(srcPath, 'main.ts');
+  const originalMainCode = (await readFile(mainPath)).toString();
+  const newMainCode = genMainCode(originalMainCode);
+  console.log({
+    mainPath,
+    originalMainCode,
+    newMainCode,
+  });
+  if (originalMainCode.trim() !== newMainCode.trim()) {
+    await writeFile(mainPath, newMainCode);
+  }
+}
+
+async function updateGitIgnore(args: { projectDirname: string }) {
+  const srcPath = getSrcDirname(args);
+  const filePath = path.join(srcPath, 'main.ts');
+  let text = (await readFile(filePath)).toString();
+  text = text
+    .split('\n')
+    .filter(s => s !== '/.idea')
+    .join('\n');
+  await writeFile(filePath, text);
+}
+
 async function setTslint(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const filename = path.join(projectDirname, 'tslint.json');
@@ -211,6 +238,9 @@ async function setPackage(args: { projectDirname: string }) {
   const text = bin.toString();
   const json = JSON.parse(text);
   setPackageDependency(json, 'dependencies', 'cli-progress', '^2.1.1');
+  setPackageDependency(json, 'dependencies', 'engine.io', '^3.3.2');
+  setPackageDependency(json, 'dependencies', 'engine.io-client', '^3.3.2');
+  setPackageDependency(json, 'dependencies', 'primus', '^7.3.3');
   setPackageDependency(
     json,
     'devDependencies',
@@ -369,10 +399,11 @@ export async function genProject(_args: {
       errorMsg: `Failed to create nest project`,
     });
   }
+  const srcDirname = getSrcDirname(args);
   await Promise.all([
     mkdirp(path.join(projectDirname, '.idea')),
-    mkdirp(path.join(projectDirname, typeDirname)),
-    mkdirp(path.join(projectDirname, logicProcessorDirname)),
+    mkdirp(path.join(srcDirname, typeDirname)),
+    mkdirp(path.join(srcDirname, logicProcessorDirname)),
   ]);
   const [{ logicProcessorCode }] = await Promise.all([
     genLogicProcessorFile(args),
@@ -381,6 +412,8 @@ export async function genProject(_args: {
     setIdeaConfig({ projectDirname, projectName }),
     setEditorConfig(args),
     genTypeFile(args),
+    updateMainFile(args),
+    updateGitIgnore(args),
   ]);
   await genModuleFile(args);
   await Promise.all([

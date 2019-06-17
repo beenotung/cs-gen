@@ -22,10 +22,6 @@ async function test() {
     outDirname,
     projectName: 'demo-server',
     callTypes: flattenCallTypes({
-      queryTypes: [
-        { Type: 'GetProfile', In: userIdType, Out: userType },
-        { Type: 'GetUserList', In: 'void', Out: `Array<${userType}>` },
-      ],
       commandTypes: [
         { Type: 'CreateUser', In: userType, Out: successType },
         {
@@ -33,6 +29,10 @@ async function test() {
           In: '{ UserId: string, NewUsername: string }',
           Out: successType,
         },
+      ],
+      queryTypes: [
+        { Type: 'GetProfile', In: userIdType, Out: userType },
+        { Type: 'GetUserList', In: 'void', Out: `Array<${userType}>` },
       ],
       mixedTypes: [],
     }),

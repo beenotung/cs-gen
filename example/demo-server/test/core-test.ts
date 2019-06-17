@@ -1,6 +1,5 @@
 import { CoreController } from '../src/core/core.controller';
 import 'cqrs-exp';
-import { LogService } from 'cqrs-exp';
 import { CoreService } from '../src/core/core.service';
 import { CreateUser } from '../src/domain/types';
 

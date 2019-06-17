@@ -29,11 +29,11 @@ const Query: CallType = 'Query';
 const Mixed: CallType = 'Mixed';
 
 export function flattenCallTypes(args: {
-  queryTypes?: PartialCall[];
   commandTypes?: PartialCall[];
+  queryTypes?: PartialCall[];
   mixedTypes?: PartialCall[];
 }): Call[] {
-  const { queryTypes, commandTypes, mixedTypes } = args;
+  const { commandTypes, queryTypes, mixedTypes } = args;
   return [
     ...(commandTypes || []).map(t => ({ ...t, CallType: Command })),
     ...(queryTypes || []).map(t => ({ ...t, CallType: Query })),

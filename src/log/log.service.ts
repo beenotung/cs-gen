@@ -1,14 +1,16 @@
-import { NonVoidResultPool } from '@beenotung/tslib/result-pool';
+import { later } from '@beenotung/tslib/async/wait';
 import { compare_string } from '@beenotung/tslib/string';
 import { Injectable } from '@nestjs/common';
 import * as fs from 'graceful-fs';
 import mkdirp = require('mkdirp-sync');
+import * as path from 'path';
 import * as util from 'util';
 
 const readdir: typeof fs.readdir.__promisify__ = util.promisify(fs.readdir);
 const writeFile: typeof fs.writeFile.__promisify__ = util.promisify(
   fs.writeFile,
 );
+const readFile: typeof fs.readFile.__promisify__ = util.promisify(fs.readFile);
 
 function fixFS() {
   const realFs = require('fs');
@@ -21,7 +23,7 @@ export class LogService {
   private now: number;
   private acc: number;
   // private store: AsyncStore;
-  private fsPool = new NonVoidResultPool(8000);
+  // private fsPool = new NonVoidResultPool(8000);
 
   constructor(private dataDirname: string) {
     fixFS();
@@ -39,6 +41,8 @@ export class LogService {
     for (;;) {
       const ss = await readdir(this.dataDirname);
       if (ss.some(s => s.indexOf('.') !== -1)) {
+        console.log('waiting temp files to be cleared in', this.dataDirname);
+        await later(1000);
         continue;
       }
       return this.sortKeys(ss);
@@ -49,14 +53,21 @@ export class LogService {
     const key = this.nextKey();
     // return this.fsPool.run(() => this.store.setObject(key, value));
     // this.store.setObject(key, value);
-    writeFile(key, JSON.stringify(value));
+    writeFile(this.keyToPath(key), JSON.stringify(value));
   }
 
   // getObject<T>(key: string): Result<T | null> {
   //   return this.fsPool.run(()=>this.store.getObject(key));
   // }
-  getObject<T>(key: string): Promise<T | null> {
-    return this.store.getObject(key);
+  async getObject<T>(key: string): Promise<T | null> {
+    // return this.store.getObject(key);
+    const bin = await readFile(this.keyToPath(key));
+    const text = bin ? bin.toString() : null;
+    return JSON.parse(text);
+  }
+
+  private keyToPath(key: string) {
+    return path.join(this.dataDirname, key);
   }
 
   private sortKeys(ss: string[]): string[] {

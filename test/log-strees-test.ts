@@ -1,4 +1,4 @@
-import { LogService } from '../src';
+import { LogService } from '../src/log/log.service';
 import path = require('path');
 
 let logService = new LogService(path.join('data', 'log'));

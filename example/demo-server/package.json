@@ -25,9 +25,12 @@
     "@nestjs/platform-express": "^6.0.0",
     "cli-progress": "^2.1.1",
     "cqrs-exp": "file:../..",
+    "engine.io": "^3.3.2",
+    "engine.io-client": "^3.3.2",
+    "primus": "^7.3.3",
     "reflect-metadata": "^0.1.12",
     "rimraf": "^2.6.2",
-    "rxjs": "^6.3.3"
+    "rxjs": "^6.5.2"
   },
   "devDependencies": {
     "@nestjs/testing": "^6.0.0",

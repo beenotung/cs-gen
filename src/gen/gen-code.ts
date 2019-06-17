@@ -144,32 +144,33 @@ export function genControllerCode(args: {
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
   return `
+import * as path from 'path';
 import { Body, Controller, Post } from '@nestjs/common';
 import { ${callTypeName} } from ${getTypeFileImportPath(args)};
 import { LogService } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
-import * as path from 'path';
 import { Bar } from 'cli-progress';
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
   logService: LogService;
+  ready: Promise<void>;
 
   constructor(
     public ${serviceObjectName}: ${serviceClassName},
   ) {
     this.logService = new LogService(path.join('data', 'log'));
-    this.restore();
+    this.ready = this.restore();
   }
 
-  restore() {
+  async restore() {
     const keys = this.logService.getKeysSync();
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
     bar.start(keys.length, 0);
     for (const key of keys) {
-      const call = this.logService.getObject<${callTypeName}>(key);
+      const call = await this.logService.getObject<${callTypeName}>(key);
       this.coreService.Call(call.Type)(call.In);
       bar.increment(1);
     }
@@ -178,6 +179,7 @@ export class ${controllerClassName} {
 
   @Post('${callApiPath}')
   async call<C extends ${callTypeName}>(@Body()body: { Type: C['Type'], In: C['In'] }): Promise<{ Out: C['Out'] }> {
+    await this.ready;
     this.logService.storeObject(body);
     const out = this.coreService.Call(body.Type)(body.In);
     return Promise.resolve(out).then(Out => ({ Out }));
@@ -215,9 +217,9 @@ export function genCallTypeCode(args: {
     callTypes,
   } = args;
   const callTypesMap = groupBy(t => t.CallType, callTypes);
-  const queryTypes = callTypesMap.get('Query');
-  const commandTypes = callTypesMap.get('Command');
-  const mixedTypes = callTypesMap.get('Mixed');
+  const queryTypes = callTypesMap.get('Query') || [];
+  const commandTypes = callTypesMap.get('Command') || [];
+  const mixedTypes = callTypesMap.get('Mixed') || [];
   const code = `
 import { checkCallType } from 'cqrs-exp';
 
@@ -232,7 +234,8 @@ ${genCallTypesCode(commandTypes)}
 export type ${commandTypeName} = ${commandTypes
     .map(({ Type }) => Type)
     .join(' | ') || 'never'};
-${genCallTypesCode(commandTypes)}
+
+${genCallTypesCode(mixedTypes)}
 
 export type ${mixedTypeName} = ${mixedTypes
     .map(({ Type }) => Type)
@@ -244,6 +247,7 @@ checkCallType({} as ${callTypeName});
 `;
   return code.replace(/\n\n\n\n/g, '\n\n').trim();
 }
+
 export function genTypeCode(name: string, demo: any): string {
   return `
 /** Example of ${name}:
@@ -251,4 +255,60 @@ ${JSON.stringify(demo, null, 2)}
  */
 export type ${name} = ${genTsType(demo)};
 `.trim();
+}
+
+function insert(
+  content: string,
+  insertPattern: string,
+  insertContent: string,
+): string {
+  const i = content.indexOf(insertPattern);
+  if (i === -1) {
+    throw new Error('failed to locate ' + JSON.stringify(insertPattern));
+  }
+  return content.substring(0, i) + insertContent + content.substring(i);
+}
+
+export function genMainCode(originalCode: string): string {
+  if (originalCode.includes('attachServer')) {
+    return originalCode;
+  }
+  let newCode = insert(
+    originalCode,
+    'async function bootstrap',
+    `import { Server } from 'http';
+
+const Primus = require('primus');
+export let primus;
+
+function attachServer(server: Server) {
+  const primus_options = {
+    pathname: '/primus',
+    parser: 'JSON',
+    compression: true,
+    transformer: 'engine.io',
+  };
+
+  primus = new Primus(server, primus_options);
+
+  // /*
+  primus.on('connection', spark => {
+    console.log(spark.id, 'connected');
+    spark.write('hi from server');
+    spark.on('data', data => {
+      console.log('client data:', data);
+    });
+  });
+  // */
+}
+
+`,
+  );
+  newCode = insert(
+    newCode,
+    'await app.listen',
+    `attachServer(app.getHttpServer());
+  `,
+  );
+  return newCode;
 }

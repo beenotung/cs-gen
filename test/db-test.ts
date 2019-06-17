@@ -1,6 +1,6 @@
 import { Db } from '../src/store/db';
 import { catchMain } from '@beenotung/tslib/node';
-import { later } from '@beenotung/tslib';
+import { later } from '@beenotung/tslib/async/wait';
 
 let db = new Db({
   connectionOptions: {

@@ -1,4 +1,4 @@
-import { LogService } from '../src';
+import { LogService } from '../src/log/log.service';
 import { catchMain } from '@beenotung/tslib/node';
 import path = require('path');
 
