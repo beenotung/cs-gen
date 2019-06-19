@@ -231,15 +231,15 @@ export function genCallTypeCode(args: {
   const code = `
 import { checkCallType } from 'cqrs-exp';
 
-${genCallTypesCode(queryTypes)}
-
-export type ${queryTypeName} = ${queryTypes
-    .map(({ Type }) => Type)
-    .join(' | ') || 'never'};
-
 ${genCallTypesCode(commandTypes)}
 
 export type ${commandTypeName} = ${commandTypes
+    .map(({ Type }) => Type)
+    .join(' | ') || 'never'};
+
+${genCallTypesCode(queryTypes)}
+
+export type ${queryTypeName} = ${queryTypes
     .map(({ Type }) => Type)
     .join(' | ') || 'never'};
 
@@ -249,7 +249,7 @@ export type ${subscribeTypeName} = ${subscribeTypes
     .map(({ Type }) => Type)
     .join(' | ') || 'never'};
 
-export type ${callTypeName} = ${queryTypeName} | ${commandTypeName} | ${subscribeTypeName};
+export type ${callTypeName} = ${commandTypeName} | ${queryTypeName} | ${subscribeTypeName};
 
 checkCallType({} as ${callTypeName});
 `;
