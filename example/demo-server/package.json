@@ -27,6 +27,7 @@
     "cqrs-exp": "file:../..",
     "engine.io": "^3.3.2",
     "engine.io-client": "^3.3.2",
+    "nestlib": "^0.3.1",
     "primus": "^7.3.3",
     "reflect-metadata": "^0.1.12",
     "rimraf": "^2.6.2",

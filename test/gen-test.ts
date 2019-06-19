@@ -29,12 +29,17 @@ async function test() {
           In: '{ UserId: string, NewUsername: string }',
           Out: successType,
         },
+        {
+          Type: 'CreateItem',
+          In: '{ ItemName: string, UserId: string }',
+          Out: successType,
+        },
       ],
       queryTypes: [
         { Type: 'GetProfile', In: userIdType, Out: userType },
         { Type: 'GetUserList', In: 'void', Out: `Array<${userType}>` },
       ],
-      mixedTypes: [],
+      subscribeTypes: [{ Type: 'SubscribeItems', In: 'void' }],
     }),
   });
 

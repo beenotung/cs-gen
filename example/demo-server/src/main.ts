@@ -16,15 +16,10 @@ function attachServer(server: Server) {
 
   primus = new Primus(server, primus_options);
 
-  // /*
   primus.on('connection', spark => {
     console.log(spark.id, 'connected');
-    spark.write('hi from server');
-    spark.on('data', data => {
-      console.log('client data:', data);
-    });
+    // spark.send('connection', 'ready');
   });
-  // */
 }
 
 async function bootstrap() {

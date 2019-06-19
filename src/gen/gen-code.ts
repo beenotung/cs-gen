@@ -164,7 +164,7 @@ export class ${controllerClassName} {
   }
 
   async restore() {
-    const keys = this.logService.getKeysSync();
+    const keys = await this.logService.getKeys();
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
@@ -177,6 +177,7 @@ export class ${controllerClassName} {
     bar.stop();
   }
 
+  /*
   @Post('${callApiPath}')
   async call<C extends ${callTypeName}>(@Body()body: { Type: C['Type'], In: C['In'] }): Promise<{ Out: C['Out'] }> {
     await this.ready;
@@ -184,20 +185,27 @@ export class ${controllerClassName} {
     const out = this.coreService.Call(body.Type)(body.In);
     return Promise.resolve(out).then(Out => ({ Out }));
   }
+  */
 }
 `.trim();
 }
 
-function genCallTypesCode(callTypes: Call[]) {
+function genCallTypesCode(callTypes: Call[]): string {
   return callTypes
-    .map(
-      ({ Type, In, Out }) => `export type ${Type} = {
-  Type: '${Type}',
-  In: ${In},
-  Out: ${Out},
+    .map(callType => {
+      const { CallType, Type, In } = callType;
+      let out = '';
+      if (callType.CallType !== 'Subscribe') {
+        out = `
+    Out: ${callType.Out},`;
+      }
+      return `export type ${Type} = {
+    CallType: '${CallType}';
+    Type: '${Type}',
+    In: ${In},${out}
 };
-`,
-    )
+  `;
+    })
     .join('')
     .trim();
 }
@@ -207,19 +215,19 @@ export function genCallTypeCode(args: {
   callTypeName: string;
   queryTypeName: string;
   commandTypeName: string;
-  mixedTypeName: string;
+  subscribeTypeName: string;
 }) {
   const {
     queryTypeName,
     commandTypeName,
-    mixedTypeName,
+    subscribeTypeName,
     callTypeName,
     callTypes,
   } = args;
   const callTypesMap = groupBy(t => t.CallType, callTypes);
   const queryTypes = callTypesMap.get('Query') || [];
   const commandTypes = callTypesMap.get('Command') || [];
-  const mixedTypes = callTypesMap.get('Mixed') || [];
+  const subscribeTypes = callTypesMap.get('Subscribe') || [];
   const code = `
 import { checkCallType } from 'cqrs-exp';
 
@@ -235,13 +243,13 @@ export type ${commandTypeName} = ${commandTypes
     .map(({ Type }) => Type)
     .join(' | ') || 'never'};
 
-${genCallTypesCode(mixedTypes)}
+${genCallTypesCode(subscribeTypes)}
 
-export type ${mixedTypeName} = ${mixedTypes
+export type ${subscribeTypeName} = ${subscribeTypes
     .map(({ Type }) => Type)
     .join(' | ') || 'never'};
 
-export type ${callTypeName} = ${queryTypeName} | ${commandTypeName} | ${mixedTypeName};
+export type ${callTypeName} = ${queryTypeName} | ${commandTypeName} | ${subscribeTypeName};
 
 checkCallType({} as ${callTypeName});
 `;

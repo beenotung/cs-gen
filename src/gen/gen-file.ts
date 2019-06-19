@@ -115,7 +115,7 @@ async function genTypeFile(args: {
   callTypeName: string;
   queryTypeName: string;
   commandTypeName: string;
-  mixedTypeName: string;
+  subscribeTypeName: string;
 }) {
   const code = genCallTypeCode(args);
 
@@ -177,11 +177,6 @@ async function updateMainFile(args: { projectDirname: string }) {
   const mainPath = path.join(srcPath, 'main.ts');
   const originalMainCode = (await readFile(mainPath)).toString();
   const newMainCode = genMainCode(originalMainCode);
-  console.log({
-    mainPath,
-    originalMainCode,
-    newMainCode,
-  });
   if (originalMainCode.trim() !== newMainCode.trim()) {
     await writeFile(mainPath, newMainCode);
   }
@@ -338,7 +333,7 @@ export const defaultGenProjectArgs = {
   callTypeName: 'Call',
   queryTypeName: 'Query',
   commandTypeName: 'Command',
-  mixedTypeName: 'Mixed',
+  subscribeTypeName: 'Subscribe',
   moduleDirname: 'core',
   moduleFilename: 'core.module.ts',
   moduleClassName: 'CoreModule',
@@ -362,7 +357,7 @@ export async function genProject(_args: {
   callTypeName?: string;
   queryTypeName?: string;
   commandTypeName?: string;
-  mixedTypeName?: string;
+  subscribeTypeName?: string;
   moduleDirname?: string;
   serviceFilename?: string;
   serviceClassName?: string;

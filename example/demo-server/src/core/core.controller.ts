@@ -48,7 +48,7 @@ export class CoreController {
       return
     }
     */
-    const keys = this.logService.getKeysSync();
+    const keys = await this.logService.getKeys();
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });

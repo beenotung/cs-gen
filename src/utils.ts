@@ -1,4 +1,4 @@
-import { Call, CallType, Result } from './types';
+import { Call, Result } from './types';
 
 export function checkCallType(t: Call) {
   /* static type check only */
@@ -24,19 +24,28 @@ export interface PartialCall<
   Out: Out;
 }
 
-const Command: CallType = 'Command';
-const Query: CallType = 'Query';
-const Mixed: CallType = 'Mixed';
+export interface PartialSubscribeCall<Type extends string = string, In = any> {
+  Type: Type;
+  In: In;
+}
 
 export function flattenCallTypes(args: {
   commandTypes?: PartialCall[];
   queryTypes?: PartialCall[];
-  mixedTypes?: PartialCall[];
+  subscribeTypes?: PartialSubscribeCall[];
 }): Call[] {
-  const { commandTypes, queryTypes, mixedTypes } = args;
-  return [
-    ...(commandTypes || []).map(t => ({ ...t, CallType: Command })),
-    ...(queryTypes || []).map(t => ({ ...t, CallType: Query })),
-    ...(mixedTypes || []).map(t => ({ ...t, CallType: Mixed })),
-  ];
+  const { commandTypes, queryTypes, subscribeTypes } = args;
+  const calls: Call[] = [];
+  if (commandTypes) {
+    commandTypes.forEach(call => calls.push({ CallType: 'Command', ...call }));
+  }
+  if (queryTypes) {
+    queryTypes.forEach(call => calls.push({ CallType: 'Query', ...call }));
+  }
+  if (subscribeTypes) {
+    subscribeTypes.forEach(call =>
+      calls.push({ CallType: 'Subscribe', ...call }),
+    );
+  }
+  return calls;
 }
