@@ -179,7 +179,7 @@ import { ${callTypeName} } from ${getTypeFileImportPath(args)};
 import { CallInput, LogService } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
-import { primus } from '../main';
+import { usePrimus } from '../main';
 import { ok } from 'nestlib';
 
 @Controller('${serviceApiPath}')
@@ -192,16 +192,6 @@ export class ${controllerClassName} {
   ) {
     this.logService = new LogService(path.join('data', 'log'));
     this.ready = this.restore();
-    primus.on('${callApiPath}', async (data: CallInput<${callTypeName}>, ack) => {
-      try {
-        await this.ready;
-        const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(data);
-        ack(out);
-      } catch (e) {
-        console.error(e);
-        ack({ Error: e.toString() });
-      }
-    });
   }
 
   async restore() {
@@ -216,6 +206,23 @@ export class ${controllerClassName} {
       bar.increment(1);
     }
     bar.stop();
+    usePrimus(primus => {
+      primus.on('${callApiPath}', async (data: CallInput<${callTypeName}>, ack) => {
+        try {
+          await this.ready;
+          const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(data);
+          ack(out);
+        } catch (e) {
+          console.error(e);
+          ack({
+            error: e.toString(),
+            response: e.response,
+            status: e.status,
+            message: e.message,
+          });
+        }
+      });
+    });
   }
 
   @Post('${callApiPath}')
@@ -315,6 +322,16 @@ export function genMainCode(originalCode: string): string {
 const Primus = require('primus');
 export let primus;
 
+let pfs: Array<(primus) => void> = [];
+
+export function usePrimus(f: (primus) => void): void {
+  if (primus) {
+    f(primus);
+    return;
+  }
+  pfs.push(f);
+}
+
 function attachServer(server: Server) {
   const primus_options = {
     pathname: '/primus',
@@ -324,14 +341,12 @@ function attachServer(server: Server) {
   };
 
   primus = new Primus(server, primus_options);
+  pfs.forEach(f => f(primus));
 
   // /*
   primus.on('connection', spark => {
     console.log(spark.id, 'connected');
-    spark.write('hi from server');
-    spark.on('data', data => {
-      console.log('client data:', data);
-    });
+    // spark.send('connection', 'ready');
   });
   // */
 }
