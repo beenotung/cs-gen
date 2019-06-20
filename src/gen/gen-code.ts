@@ -87,6 +87,7 @@ import {
 import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(
     logicProcessorFilename,
   )}';
+import { CallInput } from 'cqrs-exp';
 
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
@@ -96,7 +97,8 @@ function not_impl(name: string): any {
 export class ${serviceClassName} {
   impl = new ${logicProcessorClassName}();
 
-  ${callTypeName}<C extends ${callTypeName}>(Type: C['Type']): (In: C['In']) => C['Out'] {
+  ${callTypeName}<C extends ${callTypeName}>(args: CallInput): C['Out'] {
+    const { CallType, Type, In } = args;
     const _type = Type as ${callTypeName}['Type'];
     let method: (In: C['In']) => C['Out'];
     switch (_type) {
@@ -116,20 +118,18 @@ export class ${serviceClassName} {
         throw new HttpException('not implemented call type:' + x, HttpStatus.NOT_IMPLEMENTED);
     }
     method = method.bind(this);
-    return (In: C['In']): C['Out'] => {
-      // TODO validate input
-      const res = method(In);
-      ${
-        /**
-         * TODO auto save result
-         * for Command, store the output to event table
-         * for Query, count the query type and timestamp
-         * for Subscribe, store the id to a session manager (or do nothing?)
-         * */
-        `// TODO save the result`
-      }
-      return res;
-    };
+    // TODO validate input
+    const res = method(In);
+    ${
+      /**
+       * TODO auto save result
+       * for Command, store the output to event table
+       * for Query, count the query type and timestamp
+       * for Subscribe, store the id to a session manager (or do nothing?)
+       * */
+      `// TODO save the result`
+    }
+    return res;
   }
 
   ${callTypes
@@ -174,11 +174,13 @@ export function genControllerCode(args: {
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
   return `
 import * as path from 'path';
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Res } from '@nestjs/common';
 import { ${callTypeName} } from ${getTypeFileImportPath(args)};
-import { LogService } from 'cqrs-exp';
+import { CallInput, LogService } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
+import { primus } from '../main';
+import { ok } from 'nestlib';
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
@@ -190,6 +192,16 @@ export class ${controllerClassName} {
   ) {
     this.logService = new LogService(path.join('data', 'log'));
     this.ready = this.restore();
+    primus.on('${callApiPath}', async (data: CallInput<${callTypeName}>, ack) => {
+      try {
+        await this.ready;
+        const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(data);
+        ack(out);
+      } catch (e) {
+        console.error(e);
+        ack({ Error: e.toString() });
+      }
+    });
   }
 
   async restore() {
@@ -200,21 +212,22 @@ export class ${controllerClassName} {
     bar.start(keys.length, 0);
     for (const key of keys) {
       const call = await this.logService.getObject<${callTypeName}>(key);
-      this.coreService.Call(call.Type)(call.In);
+      this.${serviceObjectName}.${callTypeName}(call);
       bar.increment(1);
     }
     bar.stop();
   }
 
-  /*
   @Post('${callApiPath}')
-  async call<C extends ${callTypeName}>(@Body()body: { Type: C['Type'], In: C['In'] }): Promise<{ Out: C['Out'] }> {
+  async ${callApiPath}<C extends ${callTypeName}>(
+    @Res() res,
+    @Body() body: CallInput,
+  ): Promise<C['Out']> {
     await this.ready;
     this.logService.storeObject(body);
-    const out = this.coreService.Call(body.Type)(body.In);
-    return Promise.resolve(out).then(Out => ({ Out }));
+    const out = this.${serviceObjectName}.${callTypeName}(body);
+    return ok(res, out);
   }
-  */
 }
 `.trim();
 }

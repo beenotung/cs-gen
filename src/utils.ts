@@ -14,14 +14,16 @@ export function then<T, R>(x: Result<T>, f: (x: T) => Result<R>): Result<R> {
   return f(x as T);
 }
 
-export interface PartialCall<
-  Type extends string = string,
-  In = any,
-  Out = any
-> {
-  Type: Type;
-  In: In;
-  Out: Out;
+export interface PartialCall<C extends Call = Call> {
+  Type: C['Type'];
+  In: C['In'];
+  Out: C['Out'];
+}
+
+export interface CallInput<C extends Call = Call> {
+  CallType: C['CallType'];
+  Type: C['Type'];
+  In: C['In'];
 }
 
 export let defaultTypeName = {

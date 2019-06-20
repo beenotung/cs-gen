@@ -346,7 +346,7 @@ export const defaultGenProjectArgs = {
   controllerFilename: 'core.controller.ts',
   controllerClassName: 'CoreController',
   serviceApiPath: 'core',
-  callApiPath: 'call',
+  callApiPath: 'Call',
   logicProcessorDirname: 'domain',
   logicProcessorFilename: 'logic-processor.ts',
   logicProcessorClassName: 'LogicProcessor',
