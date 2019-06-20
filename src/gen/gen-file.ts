@@ -8,6 +8,7 @@ import {
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
+import { defaultTypeName } from '../utils';
 import {
   genCallTypeCode,
   genControllerCode,
@@ -72,8 +73,11 @@ async function genServiceFile(args: {
   serviceClassName: string;
   typeDirname: string;
   typeFilename: string;
-  typeNames: string[];
+  callTypes: Call[];
   callTypeName: string;
+  commandTypeName: string;
+  queryTypeName: string;
+  subscribeTypeName: string;
   logicProcessorDirname: string;
   logicProcessorFilename: string;
   logicProcessorClassName: string;
@@ -331,9 +335,9 @@ export const defaultGenProjectArgs = {
   typeDirname: 'domain',
   typeFilename: 'types.ts',
   callTypeName: 'Call',
-  queryTypeName: 'Query',
-  commandTypeName: 'Command',
-  subscribeTypeName: 'Subscribe',
+  queryTypeName: defaultTypeName.queryTypeName,
+  commandTypeName: defaultTypeName.commandTypeName,
+  subscribeTypeName: defaultTypeName.subscribeTypeName,
   moduleDirname: 'core',
   moduleFilename: 'core.module.ts',
   moduleClassName: 'CoreModule',
@@ -355,8 +359,8 @@ export async function genProject(_args: {
   typeFilename?: string;
   callTypes: Call[];
   callTypeName?: string;
-  queryTypeName?: string;
   commandTypeName?: string;
+  queryTypeName?: string;
   subscribeTypeName?: string;
   moduleDirname?: string;
   serviceFilename?: string;
@@ -378,7 +382,6 @@ export async function genProject(_args: {
     projectName,
     typeDirname,
     logicProcessorDirname,
-    callTypes,
   } = __args;
   await mkdirp(outDirname);
   const projectDirname = path.join(outDirname, projectName);
@@ -415,7 +418,6 @@ export async function genProject(_args: {
     genServiceFile({
       ...args,
       logicProcessorCode,
-      typeNames: callTypes.map(t => t.Type),
     }),
     genControllerFile(args),
   ]);

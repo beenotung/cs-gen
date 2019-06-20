@@ -24,28 +24,33 @@ export interface PartialCall<
   Out: Out;
 }
 
-export interface PartialSubscribeCall<Type extends string = string, In = any> {
-  Type: Type;
-  In: In;
-}
+export let defaultTypeName = {
+  queryTypeName: 'Query',
+  commandTypeName: 'Command',
+  subscribeTypeName: 'Subscribe',
+};
 
-export function flattenCallTypes(args: {
+export function flattenCallTypes<_Call extends Call = Call>(args: {
+  commandTypeName?: _Call['CallType'];
+  queryTypeName?: _Call['CallType'];
+  subscribeTypeName?: _Call['CallType'];
+
   commandTypes?: PartialCall[];
   queryTypes?: PartialCall[];
-  subscribeTypes?: PartialSubscribeCall[];
+  subscribeTypes?: PartialCall[];
 }): Call[] {
-  const { commandTypes, queryTypes, subscribeTypes } = args;
-  const calls: Call[] = [];
-  if (commandTypes) {
-    commandTypes.forEach(call => calls.push({ CallType: 'Command', ...call }));
-  }
-  if (queryTypes) {
-    queryTypes.forEach(call => calls.push({ CallType: 'Query', ...call }));
-  }
-  if (subscribeTypes) {
-    subscribeTypes.forEach(call =>
-      calls.push({ CallType: 'Subscribe', ...call }),
-    );
-  }
-  return calls;
+  args = Object.assign({}, defaultTypeName, args);
+  const {
+    commandTypeName,
+    queryTypeName,
+    subscribeTypeName,
+    commandTypes,
+    queryTypes,
+    subscribeTypes,
+  } = args;
+  return [
+    ...commandTypes.map(call => ({ CallType: commandTypeName, ...call })),
+    ...queryTypes.map(call => ({ CallType: queryTypeName, ...call })),
+    ...subscribeTypes.map(call => ({ CallType: subscribeTypeName, ...call })),
+  ];
 }

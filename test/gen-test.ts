@@ -16,6 +16,7 @@ async function test() {
   const userType = '{ UserId: string, UserName: string }';
   const successType =
     '({ Success: true } | { Success: false; Reason: string })';
+  const subscribeOutType = '{ id: string }';
 
   console.log('generating project...');
   await genProject({
@@ -39,7 +40,9 @@ async function test() {
         { Type: 'GetProfile', In: userIdType, Out: userType },
         { Type: 'GetUserList', In: 'void', Out: `Array<${userType}>` },
       ],
-      subscribeTypes: [{ Type: 'SubscribeItems', In: 'void' }],
+      subscribeTypes: [
+        { Type: 'SubscribeItems', In: 'void', Out: subscribeOutType },
+      ],
     }),
   });
 

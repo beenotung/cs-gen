@@ -50,8 +50,11 @@ export function genServiceCode(args: {
   serviceClassName: string;
   typeDirname: string;
   typeFilename: string;
-  typeNames: string[];
+  callTypes: Call[];
   callTypeName: string;
+  commandTypeName: string;
+  queryTypeName: string;
+  subscribeTypeName: string;
   logicProcessorDirname: string;
   logicProcessorFilename: string;
   logicProcessorClassName: string;
@@ -59,18 +62,28 @@ export function genServiceCode(args: {
 }) {
   const {
     callTypeName,
+    commandTypeName,
+    queryTypeName,
+    subscribeTypeName,
     serviceClassName,
     logicProcessorDirname,
     logicProcessorFilename,
     logicProcessorClassName,
     logicProcessorCode,
-    typeNames,
+    callTypes,
   } = args;
   const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ${[callTypeName, ...typeNames]
-    .sort()
-    .join(', ')} } from ${getTypeFileImportPath(args)};
+import {
+  ${[
+    callTypeName,
+    commandTypeName,
+    queryTypeName,
+    subscribeTypeName,
+    ...callTypes.map(call => call.Type),
+  ].sort().join(`,
+  `)}
+} from ${getTypeFileImportPath(args)};
 import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(
     logicProcessorFilename,
   )}';
@@ -83,14 +96,15 @@ function not_impl(name: string): any {
 export class ${serviceClassName} {
   impl = new ${logicProcessorClassName}();
 
-  Call<C extends Call>(Type: C['Type']): (In: C['In']) => C['Out'] {
-    const _type = Type as Call['Type'];
-    let res: (In: C['In']) => C['Out'];
+  ${callTypeName}<C extends ${callTypeName}>(Type: C['Type']): (In: C['In']) => C['Out'] {
+    const _type = Type as ${callTypeName}['Type'];
+    let method: (In: C['In']) => C['Out'];
     switch (_type) {
-      ${typeNames
+      ${callTypes
+        .map(({ Type }) => Type)
         .map(
           s => `case '${s}':
-        res = this.${s};
+        method = this.${s};
         break;
       `,
         )
@@ -101,10 +115,25 @@ export class ${serviceClassName} {
         console.log('not implemented call type:', x);
         throw new HttpException('not implemented call type:' + x, HttpStatus.NOT_IMPLEMENTED);
     }
-    return res.bind(this);
+    method = method.bind(this);
+    return (In: C['In']): C['Out'] => {
+      // TODO validate input
+      const res = method(In);
+      ${
+        /**
+         * TODO auto save result
+         * for Command, store the output to event table
+         * for Query, count the query type and timestamp
+         * for Subscribe, store the id to a session manager (or do nothing?)
+         * */
+        `// TODO save the result`
+      }
+      return res;
+    };
   }
 
-  ${typeNames
+  ${callTypes
+    .map(call => call.Type)
     .map(
       s => `${s}(In: ${s}['In']): ${s}['Out'] {
     ${
@@ -190,26 +219,6 @@ export class ${controllerClassName} {
 `.trim();
 }
 
-function genCallTypesCode(callTypes: Call[]): string {
-  return callTypes
-    .map(callType => {
-      const { CallType, Type, In } = callType;
-      let out = '';
-      if (callType.CallType !== 'Subscribe') {
-        out = `
-    Out: ${callType.Out},`;
-      }
-      return `export type ${Type} = {
-    CallType: '${CallType}';
-    Type: '${Type}',
-    In: ${In},${out}
-};
-  `;
-    })
-    .join('')
-    .trim();
-}
-
 export function genCallTypeCode(args: {
   callTypes: Call[];
   callTypeName: string;
@@ -230,25 +239,29 @@ export function genCallTypeCode(args: {
   const subscribeTypes = callTypesMap.get('Subscribe') || [];
   const code = `
 import { checkCallType } from 'cqrs-exp';
+${[
+  { typeName: commandTypeName, types: commandTypes },
+  { typeName: queryTypeName, types: queryTypes },
+  { typeName: subscribeTypeName, types: subscribeTypes },
+]
+  .map(
+    ({ typeName, types }) => `${types
+      .map(
+        ({ CallType, Type, In, Out }) => `
+export type ${Type} = {
+  CallType: '${CallType}';
+  Type: '${Type}',
+  In: ${In},
+  Out: ${Out},
+};`,
+      )
+      .join('')}
 
-${genCallTypesCode(commandTypes)}
-
-export type ${commandTypeName} = ${commandTypes
-    .map(({ Type }) => Type)
-    .join(' | ') || 'never'};
-
-${genCallTypesCode(queryTypes)}
-
-export type ${queryTypeName} = ${queryTypes
-    .map(({ Type }) => Type)
-    .join(' | ') || 'never'};
-
-${genCallTypesCode(subscribeTypes)}
-
-export type ${subscribeTypeName} = ${subscribeTypes
-    .map(({ Type }) => Type)
-    .join(' | ') || 'never'};
-
+export type ${typeName} = ${types.map(({ Type }) => Type).join(' | ') ||
+      'never'};
+`,
+  )
+  .join('')}
 export type ${callTypeName} = ${commandTypeName} | ${queryTypeName} | ${subscribeTypeName};
 
 checkCallType({} as ${callTypeName});

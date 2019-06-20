@@ -1,17 +1,21 @@
 export type CallType = 'Command' | 'Query' | 'Subscribe';
 
-export type Call<Type extends string = string, In = any, Out = any> =
-  | {
-      CallType: 'Command' | 'Query';
-      Type: Type;
-      In: In;
-      Out: Out;
-    }
-  | {
-      CallType: 'Subscribe';
-      Type: Type;
-      In: In;
-    };
+/**
+ * for Command, Out is list of created events
+ * for Query, Out is the one-time query result
+ * for Subscribe, Out is an channel-id to listen / cancel the subscription
+ * */
+export interface Call<
+  _CallType = CallType,
+  Type extends string = string,
+  In = any,
+  Out = any
+> {
+  CallType: _CallType;
+  Type: Type;
+  In: In;
+  Out: Out;
+}
 
 export type Result<T> = T | Promise<T>;
 
