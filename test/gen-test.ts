@@ -21,7 +21,8 @@ async function test() {
   console.log('generating project...');
   await genProject({
     outDirname,
-    projectName: 'demo-server',
+    serverProjectName: 'demo-server',
+    clientProjectName: 'demo-client',
     callTypes: flattenCallTypes({
       commandTypes: [
         { Type: 'CreateUser', In: userType, Out: successType },

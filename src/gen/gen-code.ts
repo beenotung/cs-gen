@@ -103,15 +103,15 @@ export class ${serviceClassName} {
     let method: (In: C['In']) => C['Out'];
     switch (_type) {
       ${callTypes
-        .map(({ Type }) => Type)
-        .map(
-          s => `case '${s}':
+    .map(({ Type }) => Type)
+    .map(
+      s => `case '${s}':
         method = this.${s};
         break;
       `,
-        )
-        .join('')
-        .trim()}
+    )
+    .join('')
+    .trim()}
       default:
         const x: never = _type;
         console.log('not implemented call type:', x);
@@ -121,13 +121,13 @@ export class ${serviceClassName} {
     // TODO validate input
     const res = method(In);
     ${
-      /**
-       * TODO auto save result
-       * for Command, store the output to event table
-       * for Query, count the query type and timestamp
-       * for Subscribe, store the id to a session manager (or do nothing?)
-       * */
-      `// TODO save the result`
+    /**
+     * TODO auto save result
+     * for Command, store the output to event table
+     * for Query, count the query type and timestamp
+     * for Subscribe, store the id to a session manager (or do nothing?)
+     * */
+    `// TODO save the result`
     }
     return res;
   }
@@ -137,10 +137,10 @@ export class ${serviceClassName} {
     .map(
       s => `${s}(In: ${s}['In']): ${s}['Out'] {
     ${
-      logicProcessorCode.indexOf(s) === -1
-        ? `return not_impl('${s}');`
-        : `return this.impl.${s}(In);`
-    }
+        logicProcessorCode.indexOf(s) === -1
+          ? `return not_impl('${s}');`
+          : `return this.impl.${s}(In);`
+        }
   }
 
   `,
@@ -260,28 +260,28 @@ export function genCallTypeCode(args: {
   const code = `
 import { checkCallType } from 'cqrs-exp';
 ${[
-  { typeName: commandTypeName, types: commandTypes },
-  { typeName: queryTypeName, types: queryTypes },
-  { typeName: subscribeTypeName, types: subscribeTypes },
-]
-  .map(
-    ({ typeName, types }) => `${types
-      .map(
-        ({ CallType, Type, In, Out }) => `
+    { typeName: commandTypeName, types: commandTypes },
+    { typeName: queryTypeName, types: queryTypes },
+    { typeName: subscribeTypeName, types: subscribeTypes },
+  ]
+    .map(
+      ({ typeName, types }) => `${types
+        .map(
+          ({ CallType, Type, In, Out }) => `
 export type ${Type} = {
   CallType: '${CallType}';
   Type: '${Type}',
   In: ${In},
   Out: ${Out},
 };`,
-      )
-      .join('')}
+        )
+        .join('')}
 
 export type ${typeName} = ${types.map(({ Type }) => Type).join(' | ') ||
       'never'};
 `,
-  )
-  .join('')}
+    )
+    .join('')}
 export type ${callTypeName} = ${commandTypeName} | ${queryTypeName} | ${subscribeTypeName};
 
 checkCallType({} as ${callTypeName});
@@ -359,5 +359,110 @@ function attachServer(server: Server) {
     `attachServer(app.getHttpServer());
   `,
   );
-  return newCode;
+  return newCode.trim();
+}
+
+export function genClientLibCode(args: {
+  serverProjectName: string;
+  typeDirname: string
+  typeFilename: string
+  serviceApiPath:string,
+  callApiPath: string,
+  callTypeName: string,
+  callTypes: Call[];
+}): string {
+  const {
+    serverProjectName,
+    typeDirname,
+    typeFilename,
+    serviceApiPath,
+    callApiPath,
+    callTypeName,
+    callTypes,
+  } = args;
+  const typeFilePath = `'../../${serverProjectName}/src/${typeDirname}/${removeTsExtname(typeFilename)}'`;
+  const code = `
+export * from ${typeFilePath};
+import {
+  ${
+    [callTypeName,...callTypes.map(call => call.Type)]
+  .sort().join(`,
+  `)}
+} from ${typeFilePath};
+import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
+import { CallInput } from 'cqrs-exp/dist/utils';
+
+let primus;
+let pfs: Array<(primus) => void> = [];
+
+export function usePrimus(f: (primus) => void): void {
+  if (primus) {
+    f(primus);
+    return;
+  }
+  pfs.push(f);
+}
+
+let coreService: CoreService;
+
+@Controller('${serviceApiPath}')
+export class CoreService {
+  constructor(baseUrl: string) {
+    setBaseUrl(baseUrl);
+    injectNestClient(this);
+  }
+
+  @Post('${callApiPath}')
+  async ${callApiPath}<C extends ${callTypeName}>(
+    @Body() body: CallInput,
+  ): Promise<C['Out']> {
+    return undefined;
+  }
+}
+
+export function startPrimus(baseUrl: string) {
+  if (typeof window === 'undefined') {
+    coreService = new CoreService(baseUrl);
+    return;
+  }
+  const w = window as any;
+  const primus = new w.Primus(baseUrl);
+  
+  pfs.forEach(f => f(primus));
+  pfs = [];
+
+  primus.on('close', () => {
+    console.log('disconnected with server');
+  });
+  primus.on('open', () => {
+    console.log('connected with server');
+  });
+
+  return primus;
+}
+${callTypes.map(({CallType,Type})=>`
+export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
+  const callInput: CallInput<${Type}> = {
+    CallType: '${CallType}',
+    Type: '${Type}',
+    In,
+  };
+  if (coreService) {
+    return coreService.${callApiPath}<${Type}>(callInput);
+  }
+  return new Promise((resolve, reject) => {
+    usePrimus(primus => {
+      primus.send('${CallType}', callInput, data => {
+        if ('error' in data) {
+          reject(data);
+          return;
+        }
+        resolve(data);
+      });
+    });
+  });
+}
+`).join('')}
+`;
+  return code.trim();
 }

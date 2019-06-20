@@ -1,21 +1,11 @@
 import { exec } from '@beenotung/tslib/child_process';
 import { compare } from '@beenotung/tslib/compare';
-import {
-  hasFile,
-  readFile,
-  writeFile as _writeFile,
-} from '@beenotung/tslib/fs';
+import { hasFile, readFile, writeFile as _writeFile } from '@beenotung/tslib/fs';
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
 import { defaultTypeName } from '../utils';
-import {
-  genCallTypeCode,
-  genControllerCode,
-  genMainCode,
-  genModuleCode,
-  genServiceCode,
-} from './gen-code';
+import { genCallTypeCode, genClientLibCode, genControllerCode, genMainCode, genModuleCode, genServiceCode } from './gen-code';
 
 async function writeFile(filename: string, code: string) {
   code = code.trim();
@@ -197,6 +187,25 @@ async function updateGitIgnore(args: { projectDirname: string }) {
   await writeFile(filePath, text);
 }
 
+async function genClientLibFile(args: {
+  outDirname: string;
+  typeDirname: string
+  typeFilename: string
+  serverProjectName: string;
+  clientProjectName: string;
+  serviceApiPath:string,
+  callApiPath: string,
+  callTypeName: string,
+  callTypes: Call[];
+}) {
+  const { outDirname, serverProjectName, clientProjectName } = args;
+  const dirPath = path.join(outDirname, clientProjectName, 'src');
+  await mkdirp(dirPath);
+  const filePath = path.join(dirPath, 'lib.ts');
+  let code = genClientLibCode(args);
+  await writeFile(filePath, code);
+}
+
 async function setTslint(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const filename = path.join(projectDirname, 'tslint.json');
@@ -354,7 +363,8 @@ export const defaultGenProjectArgs = {
 
 export async function genProject(_args: {
   outDirname?: string;
-  projectName: string;
+  serverProjectName: string;
+  clientProjectName: string;
   typeDirname?: string;
   typeFilename?: string;
   callTypes: Call[];
@@ -379,27 +389,30 @@ export async function genProject(_args: {
   };
   const {
     outDirname,
-    projectName,
+    serverProjectName,
+    clientProjectName,
     typeDirname,
     logicProcessorDirname,
   } = __args;
   await mkdirp(outDirname);
-  const projectDirname = path.join(outDirname, projectName);
+  const serverProjectDirname = path.join(outDirname, serverProjectName);
+  const clientProjectDirname = path.join(outDirname, clientProjectName);
   const args = {
     ...__args,
-    projectDirname,
+    projectDirname: serverProjectDirname,
   };
 
   if (!(await hasNestProject(args))) {
     await runNestCommand({
       cwd: outDirname,
-      cmd: `nest new --skip-install ${projectName}`,
+      cmd: `nest new --skip-install ${serverProjectName}`,
       errorMsg: `Failed to create nest project`,
     });
   }
   const srcDirname = getSrcDirname(args);
   await Promise.all([
-    mkdirp(path.join(projectDirname, '.idea')),
+    mkdirp(path.join(serverProjectDirname, '.idea')),
+    mkdirp(path.join(clientProjectDirname, '.idea')),
     mkdirp(path.join(srcDirname, typeDirname)),
     mkdirp(path.join(srcDirname, logicProcessorDirname)),
   ]);
@@ -407,11 +420,19 @@ export async function genProject(_args: {
     genLogicProcessorFile(args),
     setTslint(args),
     setPackage(args),
-    setIdeaConfig({ projectDirname, projectName }),
+    setIdeaConfig({
+      projectDirname: serverProjectDirname,
+      projectName: serverProjectName,
+    }),
+    setIdeaConfig({
+      projectDirname: clientProjectDirname,
+      projectName: clientProjectName,
+    }),
     setEditorConfig(args),
     genTypeFile(args),
     updateMainFile(args),
     updateGitIgnore(args),
+    genClientLibFile(args),
   ]);
   await genModuleFile(args);
   await Promise.all([
