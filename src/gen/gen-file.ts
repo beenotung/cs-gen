@@ -49,10 +49,6 @@ async function genLogicProcessorFile(args: {
     logicProcessorFilename,
     logicProcessorClassName,
   } = args;
-  const code = `
-export class ${logicProcessorClassName} {
-}
-`;
   const filename = path.join(
     getSrcDirname(args),
     logicProcessorDirname,
@@ -61,6 +57,10 @@ export class ${logicProcessorClassName} {
   if (await hasFile(filename)) {
     return { logicProcessorCode: (await readFile(filename)).toString() };
   }
+  const code = `
+export class ${logicProcessorClassName} {
+}
+`;
   await writeFile(filename, code);
   return { logicProcessorCode: code };
 }
