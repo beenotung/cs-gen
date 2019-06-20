@@ -49,11 +49,11 @@ export class LogService {
     }
   }
 
-  storeObject(value: any): void {
+  async storeObject(value: any) {
     const key = this.nextKey();
     // return this.fsPool.run(() => this.store.setObject(key, value));
     // this.store.setObject(key, value);
-    writeFile(this.keyToPath(key), JSON.stringify(value));
+    return writeFile(this.keyToPath(key), JSON.stringify(value));
   }
 
   // getObject<T>(key: string): Result<T | null> {
