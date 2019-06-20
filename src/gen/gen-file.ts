@@ -187,8 +187,8 @@ async function updateMainFile(args: { projectDirname: string }) {
 }
 
 async function updateGitIgnore(args: { projectDirname: string }) {
-  const srcPath = getSrcDirname(args);
-  const filePath = path.join(srcPath, 'main.ts');
+  const { projectDirname } = args;
+  const filePath = path.join(projectDirname, '.gitignore');
   let text = (await readFile(filePath)).toString();
   text = text
     .split('\n')
