@@ -1,6 +1,18 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Call, CreateUser, GetProfile, GetUserList, RenameUser } from '../domain/types';
+import {
+  Call,
+  Command,
+  CreateItem,
+  CreateUser,
+  GetProfile,
+  GetUserList,
+  Query,
+  RenameUser,
+  Subscribe,
+  SubscribeItems
+} from '../domain/types';
 import { LogicProcessor } from '../domain/logic-processor';
+import { CallInput } from 'cqrs-exp';
 
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
@@ -10,28 +22,51 @@ function not_impl(name: string): any {
 export class CoreService {
   impl = new LogicProcessor();
 
-  Call<C extends Call>(Type: C['Type']): (In: C['In']) => C['Out'] {
+  Call<C extends Call>(args: CallInput): C['Out'] {
+    const { CallType, Type, In } = args;
     const _type = Type as Call['Type'];
-    let res: (In: C['In']) => C['Out'];
+    let method: (In: C['In']) => C['Out'];
     switch (_type) {
-      case 'GetProfile':
-        res = this.GetProfile;
-        break;
-      case 'GetUserList':
-        res = this.GetUserList;
-        break;
       case 'CreateUser':
-        res = this.CreateUser;
+        method = this.CreateUser;
         break;
       case 'RenameUser':
-        res = this.RenameUser;
+        method = this.RenameUser;
+        break;
+      case 'CreateItem':
+        method = this.CreateItem;
+        break;
+      case 'GetProfile':
+        method = this.GetProfile;
+        break;
+      case 'GetUserList':
+        method = this.GetUserList;
+        break;
+      case 'SubscribeItems':
+        method = this.SubscribeItems;
         break;
       default:
         const x: never = _type;
         console.log('not implemented call type:', x);
         throw new HttpException('not implemented call type:' + x, HttpStatus.NOT_IMPLEMENTED);
     }
-    return res.bind(this);
+    method = method.bind(this);
+    // TODO validate input
+    const res = method(In);
+    // TODO save the result
+    return res;
+  }
+
+  CreateUser(In: CreateUser['In']): CreateUser['Out'] {
+    return this.impl.CreateUser(In);
+  }
+
+  RenameUser(In: RenameUser['In']): RenameUser['Out'] {
+    return not_impl('RenameUser');
+  }
+
+  CreateItem(In: CreateItem['In']): CreateItem['Out'] {
+    return not_impl('CreateItem');
   }
 
   GetProfile(In: GetProfile['In']): GetProfile['Out'] {
@@ -42,11 +77,7 @@ export class CoreService {
     return not_impl('GetUserList');
   }
 
-  CreateUser(In: CreateUser['In']): CreateUser['Out'] {
-    return this.impl.CreateUser(In);
-  }
-
-  RenameUser(In: RenameUser['In']): RenameUser['Out'] {
-    return not_impl('RenameUser');
+  SubscribeItems(In: SubscribeItems['In']): SubscribeItems['Out'] {
+    return not_impl('SubscribeItems');
   }
 }

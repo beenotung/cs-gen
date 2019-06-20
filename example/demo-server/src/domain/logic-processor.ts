@@ -1,7 +1,7 @@
 import { CreateUser } from 'src/domain/types';
 
 export class LogicProcessor {
-  users: Array<{ UserId: string, UserName: string }> = [];
+  users: Array<{ UserId: string; UserName: string }> = [];
 
   CreateUser(In: CreateUser['In']): CreateUser['Out'] {
     if (this.users.find(x => x.UserId === In.UserId)) {

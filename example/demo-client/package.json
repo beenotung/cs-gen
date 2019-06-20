@@ -12,7 +12,9 @@
   "license": "ISC",
   "dependencies": {
     "@beenotung/tslib": "^14.11.0",
-    "nest-client": "^0.4.3"
+    "cqrs-exp": "file:../..",
+    "nest-client": "^0.4.3",
+    "primus": "^7.3.3"
   },
   "devDependencies": {
     "prettier": "^1.17.0",

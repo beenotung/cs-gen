@@ -1,17 +1,18 @@
-import { Body, Controller, injectNestClient, Post } from 'nest-client';
-import { Call } from './lib';
-
+import { Call } from '../../demo-server/src/domain/types';
+import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
+import { CallInput } from 'cqrs-exp/dist/utils';
 
 @Controller('core')
-export class CoreProvider {
-  constructor() {
-    injectNestClient(this, {
-      baseUrl: 'http://localhost:3000',
-    });
+export class CoreService {
+  constructor(baseUrl: string) {
+    setBaseUrl(baseUrl);
+    injectNestClient(this);
   }
 
-  @Post('call')
-  async call<C extends Call>(@Body()body: { Type: C['Type'], In: C['In'] }): Promise<{ Out: C['Out'] }> {
+  @Post('Call')
+  async Call<C extends Call>(
+    @Body() body: CallInput,
+  ): Promise<C['Out']> {
     return undefined;
   }
 }
