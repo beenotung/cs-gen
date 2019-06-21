@@ -6,6 +6,7 @@ import { CoreService } from './core.service';
 import { Bar } from 'cli-progress';
 import { usePrimus } from '../main';
 import { ok } from 'nestlib';
+import { closeConnection, newConnection } from './connection';
 
 @Controller('core')
 export class CoreController {
@@ -32,20 +33,24 @@ export class CoreController {
     }
     bar.stop();
     usePrimus(primus => {
-      primus.on('Call', async (data: CallInput<Call>, ack) => {
-        try {
-          await this.ready;
-          const out = this.coreService.Call<Call>(data);
-          ack(out);
-        } catch (e) {
-          console.error(e);
-          ack({
-            error: e.toString(),
-            response: e.response,
-            status: e.status,
-            message: e.message,
-          });
-        }
+      primus.on('connection', spark => {
+        newConnection(spark);
+        spark.on('end', () => closeConnection(spark));
+        spark.on('Call', async (data: CallInput<Call>, ack) => {
+          try {
+            await this.ready;
+            const out = this.coreService.Call<Call>(data);
+            ack(out);
+          } catch (e) {
+            console.error(e);
+            ack({
+              error: e.toString(),
+              response: e.response,
+              status: e.status,
+              message: e.message,
+            });
+          }
+        });
       });
     });
   }

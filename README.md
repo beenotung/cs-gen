@@ -1,6 +1,17 @@
 ## TODO
-- [ ] gen typed methods for client side, not just generic call()
+inject into project,
+instead of overwriting entire project
 
-because otherwise, may need to type cast every time,
-e.g. `l.call<T>({Type:'T',In:...})`
-into `l.T(...)`
+e.g. below file `types.ts`:
+```typescript
+// some custom types
+export type id = string;
+
+// inject command type below
+// injected command type above
+
+// some other custom code
+```
+
+This approach allow larger flexibility.
+Otherwise need to commit the files everytime before regenerate, then use meld to compare and restore unwanted parts.

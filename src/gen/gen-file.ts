@@ -17,6 +17,7 @@ import {
   genModuleCode,
   genServiceCode,
 } from './gen-code';
+import { scanProject } from './scanner';
 
 async function writeFile(filename: string, code: string) {
   code = code.trim();
@@ -64,6 +65,32 @@ export class ${logicProcessorClassName} {
 `;
   await writeFile(filename, code);
   return { logicProcessorCode: code };
+}
+
+async function genConnectionFile(args: {
+  outDirname: string;
+  projectDirname: string;
+  moduleDirname: string;
+}): Promise<any> {
+  const filename = path.join(getModuleDirname(args), 'connection.ts');
+  const code = `
+export type Spark = any;
+
+export interface Session {
+  spark: Spark
+}
+
+export let sessions = new Map<string, Spark>();
+
+export function newConnection(spark) {
+  sessions.set(spark.id, spark);
+}
+
+export function closeConnection(spark) {
+  sessions.delete(spark.id);
+}
+`.trim();
+  await writeFile(filename, code);
 }
 
 async function genServiceFile(args: {
@@ -428,6 +455,10 @@ export async function genProject(_args: {
     mkdirp(path.join(srcDirname, typeDirname)),
     mkdirp(path.join(srcDirname, logicProcessorDirname)),
   ]);
+  if (!'dev') {
+    await scanProject(args);
+    return;
+  }
   const [{ logicProcessorCode }] = await Promise.all([
     genLogicProcessorFile(args),
     setTslint(args),
@@ -443,6 +474,7 @@ export async function genProject(_args: {
     setEditorConfig(args),
     genTypeFile(args),
     updateMainFile(args),
+    genConnectionFile(args),
     updateGitIgnore(args),
     genClientLibFile(args),
   ]);

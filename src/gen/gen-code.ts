@@ -181,6 +181,7 @@ import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
 import { usePrimus } from '../main';
 import { ok } from 'nestlib';
+import { closeConnection, newConnection } from './connection';
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
@@ -207,20 +208,24 @@ export class ${controllerClassName} {
     }
     bar.stop();
     usePrimus(primus => {
-      primus.on('${callApiPath}', async (data: CallInput<${callTypeName}>, ack) => {
-        try {
-          await this.ready;
-          const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(data);
-          ack(out);
-        } catch (e) {
-          console.error(e);
-          ack({
-            error: e.toString(),
-            response: e.response,
-            status: e.status,
-            message: e.message,
-          });
-        }
+      primus.on('connection', spark => {
+        newConnection(spark);
+        spark.on('end', () => closeConnection(spark));
+        spark.on('${callApiPath}', async (data: CallInput<${callTypeName}>, ack) => {
+          try {
+            await this.ready;
+            const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(data);
+            ack(out);
+          } catch (e) {
+            console.error(e);
+            ack({
+              error: e.toString(),
+              response: e.response,
+              status: e.status,
+              message: e.message,
+            });
+          }
+        });
       });
     });
   }
@@ -239,6 +244,28 @@ export class ${controllerClassName} {
 `.trim();
 }
 
+export function genCallTypeCode2(args: {
+  callTypes: Call[];
+  callTypeName: string;
+}): string {
+  const { callTypeName } = args;
+  let { callTypes } = args;
+  callTypes = callTypes.filter(c => c.CallType === callTypeName);
+  return `
+${callTypes.map(({ CallType, Type, In, Out }) =>
+  `
+export interface ${Type} {
+  CallType: '${CallType}';
+  Type: '${Type}';
+  In: ${In};
+  Out: ${Out};
+}
+`.trim(),
+).join(`
+`)}
+export type ${callTypeName} = ${callTypes.map(({ Type }) => Type).join(' | ')};
+`.trim();
+}
 export function genCallTypeCode(args: {
   callTypes: Call[];
   callTypeName: string;
