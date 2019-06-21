@@ -202,7 +202,10 @@ export class ${controllerClassName} {
     });
     bar.start(keys.length, 0);
     for (const key of keys) {
-      const call = await this.logService.getObject<${callTypeName}>(key);
+      const call: CallInput<Call> = await this.logService.getObject<Call>(key);
+      if(call.CallType !== 'Command'){
+        continue;
+      }
       this.${serviceObjectName}.${callTypeName}(call);
       bar.increment(1);
     }

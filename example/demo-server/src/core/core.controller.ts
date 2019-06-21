@@ -27,7 +27,10 @@ export class CoreController {
     });
     bar.start(keys.length, 0);
     for (const key of keys) {
-      const call = await this.logService.getObject<Call>(key);
+      const call: CallInput<Call> = await this.logService.getObject<Call>(key);
+      if(call.CallType !== 'Command'){
+        continue;
+      }
       this.coreService.Call(call);
       bar.increment(1);
     }
