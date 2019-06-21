@@ -1,11 +1,22 @@
 import { exec } from '@beenotung/tslib/child_process';
 import { compare } from '@beenotung/tslib/compare';
-import { hasFile, readFile, writeFile as _writeFile } from '@beenotung/tslib/fs';
+import {
+  hasFile,
+  readFile,
+  writeFile as _writeFile,
+} from '@beenotung/tslib/fs';
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
 import { defaultTypeName } from '../utils';
-import { genCallTypeCode, genClientLibCode, genControllerCode, genMainCode, genModuleCode, genServiceCode } from './gen-code';
+import {
+  genCallTypeCode,
+  genClientLibCode,
+  genControllerCode,
+  genMainCode,
+  genModuleCode,
+  genServiceCode,
+} from './gen-code';
 
 async function writeFile(filename: string, code: string) {
   code = code.trim();
@@ -189,20 +200,20 @@ async function updateGitIgnore(args: { projectDirname: string }) {
 
 async function genClientLibFile(args: {
   outDirname: string;
-  typeDirname: string
-  typeFilename: string
+  typeDirname: string;
+  typeFilename: string;
   serverProjectName: string;
   clientProjectName: string;
-  serviceApiPath:string,
-  callApiPath: string,
-  callTypeName: string,
+  serviceApiPath: string;
+  callApiPath: string;
+  callTypeName: string;
   callTypes: Call[];
 }) {
-  const { outDirname, serverProjectName, clientProjectName } = args;
+  const { outDirname, clientProjectName } = args;
   const dirPath = path.join(outDirname, clientProjectName, 'src');
   await mkdirp(dirPath);
   const filePath = path.join(dirPath, 'lib.ts');
-  let code = genClientLibCode(args);
+  const code = genClientLibCode(args);
   await writeFile(filePath, code);
 }
 

@@ -1,4 +1,6 @@
 export * from '../../demo-server/src/domain/types';
+import { CallInput } from 'cqrs-exp/dist/utils';
+import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {
   Call,
   CreateItem,
@@ -6,10 +8,8 @@ import {
   GetProfile,
   GetUserList,
   RenameUser,
-  SubscribeItems
+  SubscribeItems,
 } from '../../demo-server/src/domain/types';
-import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
-import { CallInput } from 'cqrs-exp/dist/utils';
 
 let primus;
 let pfs: Array<(primus) => void> = [];
@@ -46,7 +46,7 @@ export function startPrimus(baseUrl: string) {
   }
   const w = window as any;
   const primus = new w.Primus(baseUrl);
-  
+
   pfs.forEach(f => f(primus));
   pfs = [];
 
