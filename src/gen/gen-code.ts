@@ -285,7 +285,6 @@ export function genCallTypeCode(args: {
   const commandTypes = callTypesMap.get('Command') || [];
   const subscribeTypes = callTypesMap.get('Subscribe') || [];
   const code = `
-import { checkCallType } from 'cqrs-exp';
 ${[
   { typeName: commandTypeName, types: commandTypes },
   { typeName: queryTypeName, types: queryTypes },
@@ -310,6 +309,15 @@ export type ${typeName} = ${types.map(({ Type }) => Type).join(' | ') ||
   )
   .join('')}
 export type ${callTypeName} = ${commandTypeName} | ${queryTypeName} | ${subscribeTypeName};
+
+function checkCallType(t: {
+  CallType: '${commandTypeName}' | '${queryTypeName}' | '${subscribeTypeName}';
+  Type: string;
+  In: any;
+  Out: any;
+}) {
+    /* static type check only */
+}
 
 checkCallType({} as ${callTypeName});
 `;
@@ -390,28 +398,35 @@ function attachServer(server: Server) {
 }
 
 export function genClientLibCode(args: {
-  serverProjectName: string;
   typeDirname: string;
   typeFilename: string;
+  apiDirname: string;
+  apiFilename: string;
   serviceApiPath: string;
   callApiPath: string;
   callTypeName: string;
   callTypes: Call[];
 }): string {
   const {
-    serverProjectName,
     typeDirname,
     typeFilename,
+    apiDirname,
     serviceApiPath,
     callApiPath,
     callTypeName,
     callTypes,
   } = args;
-  const typeFilePath = `'../../${serverProjectName}/src/${typeDirname}/${removeTsExtname(
-    typeFilename,
-  )}'`;
+  const relativeDir =
+    apiDirname === typeDirname
+      ? '.'
+      : './' +
+        apiDirname
+          .split('/')
+          .map(s => (s === '.' || s === '..' ? s : '..'))
+          .join('/') +
+        `/${typeDirname}`;
+  const typeFilePath = `'${relativeDir}/${removeTsExtname(typeFilename)}'`;
   const code = `
-export * from ${typeFilePath};
 import { CallInput } from 'cqrs-exp/dist/utils';
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {

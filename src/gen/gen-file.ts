@@ -45,11 +45,13 @@ async function genLogicProcessorFile(args: {
   logicProcessorDirname: string;
   logicProcessorFilename: string;
   logicProcessorClassName: string;
-}): Promise<{ logicProcessorCode: string }> {
+  dataWrapper: { logicProcessorCode: string };
+}): Promise<void> {
   const {
     logicProcessorDirname,
     logicProcessorFilename,
     logicProcessorClassName,
+    dataWrapper,
   } = args;
   const filename = path.join(
     getSrcDirname(args),
@@ -57,21 +59,22 @@ async function genLogicProcessorFile(args: {
     logicProcessorFilename,
   );
   if (await hasFile(filename)) {
-    return { logicProcessorCode: (await readFile(filename)).toString() };
+    dataWrapper.logicProcessorCode = (await readFile(filename)).toString();
+    return;
   }
   const code = `
 export class ${logicProcessorClassName} {
 }
 `;
   await writeFile(filename, code);
-  return { logicProcessorCode: code };
+  dataWrapper.logicProcessorCode = code;
 }
 
 async function genConnectionFile(args: {
   outDirname: string;
   projectDirname: string;
   moduleDirname: string;
-}): Promise<any> {
+}): Promise<void> {
   const filename = path.join(getModuleDirname(args), 'connection.ts');
   const code = `
 export type Spark = any;
@@ -229,6 +232,8 @@ async function genClientLibFile(args: {
   outDirname: string;
   typeDirname: string;
   typeFilename: string;
+  apiDirname: string;
+  apiFilename: string;
   serverProjectName: string;
   clientProjectName: string;
   serviceApiPath: string;
@@ -236,10 +241,10 @@ async function genClientLibFile(args: {
   callTypeName: string;
   callTypes: Call[];
 }) {
-  const { outDirname, clientProjectName } = args;
-  const dirPath = path.join(outDirname, clientProjectName, 'src');
+  const { outDirname, clientProjectName, apiDirname, apiFilename } = args;
+  const dirPath = path.join(outDirname, clientProjectName, 'src', apiDirname);
   await mkdirp(dirPath);
-  const filePath = path.join(dirPath, 'lib.ts');
+  const filePath = path.join(dirPath, apiFilename);
   const code = genClientLibCode(args);
   await writeFile(filePath, code);
 }
@@ -396,6 +401,8 @@ export const defaultGenProjectArgs = {
   serviceApiPath: 'core',
   callApiPath: 'Call',
   logicProcessorDirname: 'domain',
+  apiDirname: 'domain',
+  apiFilename: 'api.ts',
   logicProcessorFilename: 'logic-processor.ts',
   logicProcessorClassName: 'LogicProcessor',
 };
@@ -421,6 +428,8 @@ export async function genProject(_args: {
   logicProcessorDirname?: string;
   logicProcessorFilename?: string;
   logicProcessorClassName?: string;
+  apiDirname?: string;
+  apiFilename?: string;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
@@ -459,8 +468,9 @@ export async function genProject(_args: {
     await scanProject(args);
     return;
   }
-  const [{ logicProcessorCode }] = await Promise.all([
-    genLogicProcessorFile(args),
+  const dataWrapper: { logicProcessorCode: string } = {} as any;
+  await Promise.all([
+    genLogicProcessorFile({ ...args, dataWrapper }),
     setTslint(args),
     setPackage(args),
     setIdeaConfig({
@@ -472,17 +482,24 @@ export async function genProject(_args: {
       projectName: clientProjectName,
     }),
     setEditorConfig(args),
-    genTypeFile(args),
+    genTypeFile({
+      ...args,
+      projectDirname: serverProjectDirname,
+    }),
+    genTypeFile({
+      ...args,
+      projectDirname: clientProjectDirname,
+    }),
     updateMainFile(args),
-    genConnectionFile(args),
     updateGitIgnore(args),
     genClientLibFile(args),
   ]);
   await genModuleFile(args);
   await Promise.all([
+    genConnectionFile(args),
     genServiceFile({
       ...args,
-      logicProcessorCode,
+      logicProcessorCode: dataWrapper.logicProcessorCode,
     }),
     genControllerFile(args),
   ]);
