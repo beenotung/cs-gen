@@ -1,4 +1,5 @@
 ## TODO
+### Change from overwrite to inject
 inject into project,
 instead of overwriting entire project
 
@@ -14,4 +15,7 @@ export type id = string;
 ```
 
 This approach allow larger flexibility.
-Otherwise need to commit the files everytime before regenerate, then use meld to compare and restore unwanted parts.
+Otherwise need to commit the files every time before regenerate, then use meld to compare and restore unwanted parts.
+
+### Automate npm setup
+Currently require manually setup tsconfig, tslint, and npm script to do formatting

@@ -427,7 +427,6 @@ export function genClientLibCode(args: {
         `/${typeDirname}`;
   const typeFilePath = `'${relativeDir}/${removeTsExtname(typeFilename)}'`;
   const code = `
-import { CallInput } from 'cqrs-exp/dist/utils';
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {
   ${[callTypeName, ...callTypes.map(call => call.Type)].sort().join(`,
@@ -443,6 +442,12 @@ export function usePrimus(f: (primus) => void): void {
     return;
   }
   pfs.push(f);
+}
+
+export interface CallInput {
+  CallType: ${callTypeName}['CallType'];
+  Type: ${callTypeName}['Type'];
+  In: ${callTypeName}['In'];
 }
 
 let coreService: CoreService;
@@ -468,7 +473,7 @@ export function startPrimus(baseUrl: string) {
     return;
   }
   const w = window as any;
-  const primus = new w.Primus(baseUrl);
+  primus = new w.Primus(baseUrl);
 
   pfs.forEach(f => f(primus));
   pfs = [];
