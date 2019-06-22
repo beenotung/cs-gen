@@ -1,5 +1,5 @@
 import { catchMain } from '@beenotung/tslib/node';
-import { CreateUser, startPrimus } from '../src/lib';
+import { CreateUser, startPrimus } from '../src/domain/api';
 
 let primus = startPrimus('http://localhost:3000');
 

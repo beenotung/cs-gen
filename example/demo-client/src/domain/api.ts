@@ -1,5 +1,3 @@
-export * from '../../demo-server/src/domain/types';
-import { CallInput } from 'cqrs-exp/dist/utils';
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {
   Call,
@@ -9,7 +7,7 @@ import {
   GetUserList,
   RenameUser,
   SubscribeItems,
-} from '../../demo-server/src/domain/types';
+} from './types';
 
 let primus;
 let pfs: Array<(primus) => void> = [];
@@ -20,6 +18,12 @@ export function usePrimus(f: (primus) => void): void {
     return;
   }
   pfs.push(f);
+}
+
+export interface CallInput<C extends Call> {
+  CallType: C['CallType'];
+  Type: C['Type'];
+  In: C['In'];
 }
 
 let coreService: CoreService;
@@ -33,7 +37,7 @@ export class CoreService {
 
   @Post('Call')
   async Call<C extends Call>(
-    @Body() body: CallInput,
+    @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
     return undefined;
   }
@@ -45,7 +49,7 @@ export function startPrimus(baseUrl: string) {
     return;
   }
   const w = window as any;
-  const primus = new w.Primus(baseUrl);
+  primus = new w.Primus(baseUrl);
 
   pfs.forEach(f => f(primus));
   pfs = [];

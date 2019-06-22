@@ -1,6 +1,6 @@
 import { catchMain } from '@beenotung/tslib/node';
 import { CreateUser } from '../../demo-server/src/domain/types';
-import { CoreService } from '../src/lib';
+import { CoreService } from '../src/domain/api';
 
 const l = new CoreService('http://localhost:3000');
 
