@@ -181,7 +181,7 @@ import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
 import { usePrimus } from '../main';
 import { ok } from 'nestlib';
-import { closeConnection, newConnection } from './connection';
+import { closeConnection, endSparkCall, newConnection, startSparkCall } from './connection';
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
@@ -211,10 +211,11 @@ export class ${controllerClassName} {
       primus.on('connection', spark => {
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
-        spark.on('${callApiPath}', async (data: CallInput<${callTypeName}>, ack) => {
+        spark.on('${callApiPath}', async (call: CallInput<${callTypeName}>, ack) => {
+          startSparkCall(spark.id, call);
           try {
             await this.ready;
-            const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(data);
+            const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
             ack(out);
           } catch (e) {
             console.error(e);
@@ -224,6 +225,8 @@ export class ${controllerClassName} {
               status: e.status,
               message: e.message,
             });
+          } finally {
+            endSparkCall(spark.id, call);
           }
         });
       });
@@ -266,6 +269,7 @@ export interface ${Type} {
 export type ${callTypeName} = ${callTypes.map(({ Type }) => Type).join(' | ')};
 `.trim();
 }
+
 export function genCallTypeCode(args: {
   callTypes: Call[];
   callTypeName: string;
@@ -516,4 +520,50 @@ export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
   .join('')}
 `;
   return code.trim();
+}
+
+export function genConnectionCode(): string {
+  return `
+import { CallInput } from 'cqrs-exp';
+
+export type Spark = {
+  id: string
+  on: (event: string, cb: (data: any, ack?: (data: any) => void) => void) => void
+} & any;
+
+export interface Session {
+  spark: Spark
+  calls: CallInput[]
+}
+
+export let sessions: Map<string, Session> = new Map();
+
+export function newConnection(spark: Spark) {
+  sessions.set(spark.id, { spark, calls: [] });
+}
+
+export function closeConnection(spark: Spark) {
+  sessions.delete(spark.id);
+}
+
+export function startSparkCall(sparkId: string, call: CallInput) {
+  sessions.get(sparkId).calls.push(call);
+}
+
+/**
+ * @remark inplace update
+ * @return original array
+ * */
+function remove<A>(xs: A[], x: A): void {
+  const idx = xs.indexOf(x);
+  if (idx !== -1) {
+    xs.splice(idx, 1);
+  }
+}
+
+export function endSparkCall(sparkId: string, call: CallInput) {
+  const session = sessions.get(sparkId);
+  remove(session.calls, call);
+}
+`.trim();
 }

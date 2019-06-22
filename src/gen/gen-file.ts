@@ -12,6 +12,7 @@ import { defaultTypeName } from '../utils';
 import {
   genCallTypeCode,
   genClientLibCode,
+  genConnectionCode,
   genControllerCode,
   genMainCode,
   genModuleCode,
@@ -76,23 +77,7 @@ async function genConnectionFile(args: {
   moduleDirname: string;
 }): Promise<void> {
   const filename = path.join(getModuleDirname(args), 'connection.ts');
-  const code = `
-export type Spark = any;
-
-export interface Session {
-  spark: Spark
-}
-
-export let sessions = new Map<string, Spark>();
-
-export function newConnection(spark) {
-  sessions.set(spark.id, spark);
-}
-
-export function closeConnection(spark) {
-  sessions.delete(spark.id);
-}
-`.trim();
+  const code = genConnectionCode();
   await writeFile(filename, code);
 }
 
