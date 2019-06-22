@@ -448,10 +448,10 @@ export function usePrimus(f: (primus) => void): void {
   pfs.push(f);
 }
 
-export interface CallInput {
-  CallType: ${callTypeName}['CallType'];
-  Type: ${callTypeName}['Type'];
-  In: ${callTypeName}['In'];
+export interface CallInput<C extends ${callTypeName}> {
+  CallType: C['CallType'];
+  Type: C['Type'];
+  In: C['In'];
 }
 
 let coreService: CoreService;
@@ -465,7 +465,7 @@ export class CoreService {
 
   @Post('${callApiPath}')
   async ${callApiPath}<C extends ${callTypeName}>(
-    @Body() body: CallInput,
+    @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
     return undefined;
   }
