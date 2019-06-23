@@ -273,21 +273,23 @@ export type ${callTypeName} = ${callTypes.map(({ Type }) => Type).join(' | ')};
 export function genCallTypeCode(args: {
   callTypes: Call[];
   callTypeName: string;
-  queryTypeName: string;
   commandTypeName: string;
+  queryTypeName: string;
   subscribeTypeName: string;
-}) {
+}): string {
   const {
-    queryTypeName,
     commandTypeName,
+    queryTypeName,
     subscribeTypeName,
     callTypeName,
     callTypes,
   } = args;
   const callTypesMap = groupBy(t => t.CallType, callTypes);
-  const queryTypes = callTypesMap.get('Query') || [];
-  const commandTypes = callTypesMap.get('Command') || [];
-  const subscribeTypes = callTypesMap.get('Subscribe') || [];
+  const commandTypes =
+    callTypesMap.get(commandTypeName as Call['CallType']) || [];
+  const queryTypes = callTypesMap.get(queryTypeName as Call['CallType']) || [];
+  const subscribeTypes =
+    callTypesMap.get(subscribeTypeName as Call['CallType']) || [];
   const code = `
 ${[
   { typeName: commandTypeName, types: commandTypes },
