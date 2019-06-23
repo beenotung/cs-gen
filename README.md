@@ -1,5 +1,13 @@
 ## TODO
 
+### manage subscribe consumer
+Currently, client need to use primus.on(id) manually.
+And the emitted data is not typed.
+
+### auto re-subscribe when reconnect
+Currently, if the device is disconnected,
+client need to manually subscribe again when back to online.
+
 ### Use Dispatcher
 Move common logic of persistent and routing
 into dispatcher
