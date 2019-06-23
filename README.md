@@ -1,4 +1,13 @@
 ## TODO
+
+### Use Dispatcher
+Move common logic of persistent and routing
+into dispatcher
+instead of controller and service.
+
+The new approach is less dependent to nest.js
+and allow less duplication in nest and primus parts.
+
 ### Change from overwrite to inject
 inject into project,
 instead of overwriting entire project
