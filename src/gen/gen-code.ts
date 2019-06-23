@@ -411,6 +411,7 @@ export function genClientLibCode(args: {
   serviceApiPath: string;
   callApiPath: string;
   callTypeName: string;
+  subscribeTypeName: string;
   callTypes: Call[];
 }): string {
   const {
@@ -420,6 +421,7 @@ export function genClientLibCode(args: {
     serviceApiPath,
     callApiPath,
     callTypeName,
+    subscribeTypeName,
     callTypes,
   } = args;
   const relativeDir =
@@ -435,7 +437,11 @@ export function genClientLibCode(args: {
   const code = `
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {
-  ${[callTypeName, ...callTypes.map(call => call.Type)].sort().join(`,
+  ${[
+    callTypeName,
+    subscribeTypeName,
+    ...callTypes.map(call => call.Type),
+  ].sort().join(`,
   `)},
 } from ${typeFilePath};
 
@@ -494,6 +500,7 @@ export function startPrimus(baseUrl: string) {
   return primus;
 }
 ${callTypes
+  .filter(c => c.CallType !== subscribeTypeName)
   .map(
     ({ CallType, Type }) => `
 export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
@@ -507,7 +514,7 @@ export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
-      primus.send('${CallType}', callInput, data => {
+      primus.send('${callTypeName}', callInput, data => {
         if ('error' in data) {
           reject(data);
           return;
@@ -518,6 +525,63 @@ export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
   });
 }
 `,
+  )
+  .join('')}
+
+export interface SubscribeOptions<T> {
+  onError: (err) => void
+  onEach: (Out: T) => void
+}
+
+export interface SubscribeResult {
+  cancel: () => void
+}
+
+export function ${subscribeTypeName}<C extends ${subscribeTypeName}>(
+  Type: C['Type'],
+  In: C['In'],
+  options: SubscribeOptions<C['Out']>,
+): SubscribeResult {
+  if (coreService) {
+    throw new Error('${subscribeTypeName} is not supported on node.js client yet');
+  }
+  const callInput: CallInput<C> = {
+    CallType: '${subscribeTypeName}',
+    Type,
+    In,
+  };
+  let cancelled = false;
+  let res: SubscribeResult = { cancel: () => cancelled = true };
+  usePrimus(primus => {
+    primus.send('${callTypeName}', callInput, data => {
+      if ('error' in data) {
+        options.onError(data);
+        return;
+      }
+      if (cancelled) {
+        return;
+      }
+      const { id } = data;
+      primus.on(id, data => {
+        if (!cancelled) {
+          options.onEach(data);
+        }
+      });
+      res.cancel = () => {
+        cancelled = true;
+        primus.send('CancelSubscribe', { id });
+      };
+    });
+  });
+  return res;
+}
+${callTypes
+  .filter(({ CallType }) => CallType === subscribeTypeName)
+  .map(
+    ({ Type }) => `
+export function ${Type}(In: ${Type}['In'], options: SubscribeOptions<${Type}['Out']>): SubscribeResult {
+  return ${subscribeTypeName}<${Type}>('${Type}', In, options);
+}`,
   )
   .join('')}
 `;

@@ -224,6 +224,7 @@ async function genClientLibFile(args: {
   serviceApiPath: string;
   callApiPath: string;
   callTypeName: string;
+  subscribeTypeName: string;
   callTypes: Call[];
 }) {
   const { outDirname, clientProjectName, apiDirname, apiFilename } = args;

@@ -1,6 +1,6 @@
 ## TODO
 
-### manage subscribe consumer
+### [done] manage subscribe consumer
 Currently, client need to use primus.on(id) manually.
 And the emitted data is not typed.
 
