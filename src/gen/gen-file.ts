@@ -8,7 +8,7 @@ import {
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { Call } from '../types';
-import { defaultTypeName } from '../utils';
+import { defaultTypeName, PartialCall } from '../utils';
 import {
   genCallTypeCode,
   genClientLibCode,
@@ -370,6 +370,45 @@ function hasNestProject(args: { projectDirname: string }): Promise<boolean> {
   return hasFile(filename);
 }
 
+export function injectTimestampField(args: {
+  call: PartialCall;
+  timestampFieldName: string;
+}): void {
+  const { call, timestampFieldName } = args;
+  let { In } = call;
+  if (In.toLowerCase().includes(timestampFieldName)) {
+    return;
+  }
+  In = In.trim();
+  if (In === '{}' || In === 'void' || In === 'null' || In === 'undefined') {
+    In = `{ ${timestampFieldName}: number }`;
+  } else if (
+    In.startsWith('{') &&
+    In.endsWith('}') &&
+    In.split('{').length === 2 &&
+    In.split('}').length === 2
+  ) {
+    let head = In.substring(0, In.length - 1).trimRight();
+    if (!head.endsWith(',')) {
+      head += ',';
+    }
+    if (In.includes('\n')) {
+      // has newline
+      In =
+        head +
+        `
+  ${timestampFieldName}: number,
+}`;
+    } else {
+      // no newline
+      In = head + ` ${timestampFieldName}: number }`;
+    }
+  } else {
+    In = `(${In}) & { ${timestampFieldName}: number }`;
+  }
+  call.In = In;
+}
+
 export const defaultGenProjectArgs = {
   outDirname: 'out',
   typeDirname: 'domain',
@@ -392,6 +431,8 @@ export const defaultGenProjectArgs = {
   apiFilename: 'api.ts',
   logicProcessorFilename: 'logic-processor.ts',
   logicProcessorClassName: 'LogicProcessor',
+  timestampFieldName: 'Timestamp',
+  injectTimestamp: true,
 };
 
 export async function genProject(_args: {
@@ -417,6 +458,8 @@ export async function genProject(_args: {
   logicProcessorClassName?: string;
   apiDirname?: string;
   apiFilename?: string;
+  timestampFieldName?: string;
+  injectTimestamp?: boolean;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
@@ -428,6 +471,9 @@ export async function genProject(_args: {
     clientProjectName,
     typeDirname,
     logicProcessorDirname,
+    injectTimestamp,
+    timestampFieldName,
+    callTypes,
   } = __args;
   await mkdirp(outDirname);
   const serverProjectDirname = path.join(outDirname, serverProjectName);
@@ -436,6 +482,12 @@ export async function genProject(_args: {
     ...__args,
     projectDirname: serverProjectDirname,
   };
+
+  if (injectTimestamp) {
+    callTypes.forEach(call =>
+      injectTimestampField({ call, timestampFieldName }),
+    );
+  }
 
   if (!(await hasNestProject(args))) {
     await runNestCommand({
