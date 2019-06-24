@@ -48,6 +48,7 @@ export class Db {
     await conn.close();
   }
 
+  /**@deprecated*/
   storeCommand<C extends ICommand>(command: C) {
     return this.run(tables.command.insert(command));
   }

@@ -32,15 +32,15 @@ export let defaultTypeName = {
   subscribeTypeName: 'Subscribe',
 };
 
-export function flattenCallTypes<_Call extends Call = Call>(args: {
-  commandTypeName?: _Call['CallType'];
-  queryTypeName?: _Call['CallType'];
-  subscribeTypeName?: _Call['CallType'];
+export function flattenCallTypes<C extends Call = Call>(args: {
+  commandTypeName?: C['CallType'];
+  queryTypeName?: C['CallType'];
+  subscribeTypeName?: C['CallType'];
 
   commandTypes?: PartialCall[];
   queryTypes?: PartialCall[];
   subscribeTypes?: PartialCall[];
-}): Call[] {
+}): C[] {
   args = Object.assign({}, defaultTypeName, args);
   const {
     commandTypeName,
@@ -50,9 +50,10 @@ export function flattenCallTypes<_Call extends Call = Call>(args: {
     queryTypes,
     subscribeTypes,
   } = args;
-  return [
+  const calls: Call[] = [
     ...commandTypes.map(call => ({ CallType: commandTypeName, ...call })),
     ...queryTypes.map(call => ({ CallType: queryTypeName, ...call })),
     ...subscribeTypes.map(call => ({ CallType: subscribeTypeName, ...call })),
   ];
+  return calls as C[];
 }

@@ -181,7 +181,7 @@ import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
 import { usePrimus } from '../main';
 import { ok } from 'nestlib';
-import { closeConnection, newConnection } from './connection';
+import { closeConnection, endSparkCall, newConnection, startSparkCall } from './connection';
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
@@ -214,10 +214,11 @@ export class ${controllerClassName} {
       primus.on('connection', spark => {
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
-        spark.on('${callApiPath}', async (data: CallInput<${callTypeName}>, ack) => {
+        spark.on('${callApiPath}', async (call: CallInput<${callTypeName}>, ack) => {
+          startSparkCall(spark.id, call);
           try {
             await this.ready;
-            const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(data);
+            const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
             ack(out);
           } catch (e) {
             console.error(e);
@@ -227,6 +228,8 @@ export class ${controllerClassName} {
               status: e.status,
               message: e.message,
             });
+          } finally {
+            endSparkCall(spark.id, call);
           }
         });
       });
@@ -269,26 +272,28 @@ export interface ${Type} {
 export type ${callTypeName} = ${callTypes.map(({ Type }) => Type).join(' | ')};
 `.trim();
 }
+
 export function genCallTypeCode(args: {
   callTypes: Call[];
   callTypeName: string;
-  queryTypeName: string;
   commandTypeName: string;
+  queryTypeName: string;
   subscribeTypeName: string;
-}) {
+}): string {
   const {
-    queryTypeName,
     commandTypeName,
+    queryTypeName,
     subscribeTypeName,
     callTypeName,
     callTypes,
   } = args;
   const callTypesMap = groupBy(t => t.CallType, callTypes);
-  const queryTypes = callTypesMap.get('Query') || [];
-  const commandTypes = callTypesMap.get('Command') || [];
-  const subscribeTypes = callTypesMap.get('Subscribe') || [];
+  const commandTypes =
+    callTypesMap.get(commandTypeName as Call['CallType']) || [];
+  const queryTypes = callTypesMap.get(queryTypeName as Call['CallType']) || [];
+  const subscribeTypes =
+    callTypesMap.get(subscribeTypeName as Call['CallType']) || [];
   const code = `
-import { checkCallType } from 'cqrs-exp';
 ${[
   { typeName: commandTypeName, types: commandTypes },
   { typeName: queryTypeName, types: queryTypes },
@@ -313,6 +318,15 @@ export type ${typeName} = ${types.map(({ Type }) => Type).join(' | ') ||
   )
   .join('')}
 export type ${callTypeName} = ${commandTypeName} | ${queryTypeName} | ${subscribeTypeName};
+
+function checkCallType(t: {
+  CallType: '${commandTypeName}' | '${queryTypeName}' | '${subscribeTypeName}';
+  Type: string;
+  In: any;
+  Out: any;
+}) {
+    /* static type check only */
+}
 
 checkCallType({} as ${callTypeName});
 `;
@@ -393,32 +407,44 @@ function attachServer(server: Server) {
 }
 
 export function genClientLibCode(args: {
-  serverProjectName: string;
   typeDirname: string;
   typeFilename: string;
+  apiDirname: string;
+  apiFilename: string;
   serviceApiPath: string;
   callApiPath: string;
   callTypeName: string;
+  subscribeTypeName: string;
   callTypes: Call[];
 }): string {
   const {
-    serverProjectName,
     typeDirname,
     typeFilename,
+    apiDirname,
     serviceApiPath,
     callApiPath,
     callTypeName,
+    subscribeTypeName,
     callTypes,
   } = args;
-  const typeFilePath = `'../../${serverProjectName}/src/${typeDirname}/${removeTsExtname(
-    typeFilename,
-  )}'`;
+  const relativeDir =
+    apiDirname === typeDirname
+      ? '.'
+      : './' +
+        apiDirname
+          .split('/')
+          .map(s => (s === '.' || s === '..' ? s : '..'))
+          .join('/') +
+        `/${typeDirname}`;
+  const typeFilePath = `'${relativeDir}/${removeTsExtname(typeFilename)}'`;
   const code = `
-export * from ${typeFilePath};
-import { CallInput } from 'cqrs-exp/dist/utils';
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {
-  ${[callTypeName, ...callTypes.map(call => call.Type)].sort().join(`,
+  ${[
+    callTypeName,
+    subscribeTypeName,
+    ...callTypes.map(call => call.Type),
+  ].sort().join(`,
   `)},
 } from ${typeFilePath};
 
@@ -433,6 +459,12 @@ export function usePrimus(f: (primus) => void): void {
   pfs.push(f);
 }
 
+export interface CallInput<C extends ${callTypeName}> {
+  CallType: C['CallType'];
+  Type: C['Type'];
+  In: C['In'];
+}
+
 let coreService: CoreService;
 
 @Controller('${serviceApiPath}')
@@ -444,7 +476,7 @@ export class CoreService {
 
   @Post('${callApiPath}')
   async ${callApiPath}<C extends ${callTypeName}>(
-    @Body() body: CallInput,
+    @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
     return undefined;
   }
@@ -456,7 +488,7 @@ export function startPrimus(baseUrl: string) {
     return;
   }
   const w = window as any;
-  const primus = new w.Primus(baseUrl);
+  primus = new w.Primus(baseUrl);
 
   pfs.forEach(f => f(primus));
   pfs = [];
@@ -471,6 +503,7 @@ export function startPrimus(baseUrl: string) {
   return primus;
 }
 ${callTypes
+  .filter(c => c.CallType !== subscribeTypeName)
   .map(
     ({ CallType, Type }) => `
 export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
@@ -484,7 +517,7 @@ export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
-      primus.send('${CallType}', callInput, data => {
+      primus.send('${callTypeName}', callInput, data => {
         if ('error' in data) {
           reject(data);
           return;
@@ -497,6 +530,109 @@ export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
 `,
   )
   .join('')}
+
+export interface SubscribeOptions<T> {
+  onError: (err) => void
+  onEach: (Out: T) => void
+}
+
+export interface SubscribeResult {
+  cancel: () => void
+}
+
+export function ${subscribeTypeName}<C extends ${subscribeTypeName}>(
+  Type: C['Type'],
+  In: C['In'],
+  options: SubscribeOptions<C['Out']>,
+): SubscribeResult {
+  if (coreService) {
+    throw new Error('${subscribeTypeName} is not supported on node.js client yet');
+  }
+  const callInput: CallInput<C> = {
+    CallType: '${subscribeTypeName}',
+    Type,
+    In,
+  };
+  let cancelled = false;
+  let res: SubscribeResult = { cancel: () => cancelled = true };
+  usePrimus(primus => {
+    primus.send('${callTypeName}', callInput, data => {
+      if ('error' in data) {
+        options.onError(data);
+        return;
+      }
+      if (cancelled) {
+        return;
+      }
+      const { id } = data;
+      primus.on(id, data => {
+        if (!cancelled) {
+          options.onEach(data);
+        }
+      });
+      res.cancel = () => {
+        cancelled = true;
+        primus.send('CancelSubscribe', { id });
+      };
+    });
+  });
+  return res;
+}
+${callTypes
+  .filter(({ CallType }) => CallType === subscribeTypeName)
+  .map(
+    ({ Type }) => `
+export function ${Type}(In: ${Type}['In'], options: SubscribeOptions<${Type}['Out']>): SubscribeResult {
+  return ${subscribeTypeName}<${Type}>('${Type}', In, options);
+}`,
+  )
+  .join('')}
 `;
   return code.trim();
+}
+
+export function genConnectionCode(): string {
+  return `
+import { CallInput } from 'cqrs-exp';
+
+export type Spark = {
+  id: string
+  on: (event: string, cb: (data: any, ack?: (data: any) => void) => void) => void
+} & any;
+
+export interface Session {
+  spark: Spark
+  calls: CallInput[]
+}
+
+export let sessions: Map<string, Session> = new Map();
+
+export function newConnection(spark: Spark) {
+  sessions.set(spark.id, { spark, calls: [] });
+}
+
+export function closeConnection(spark: Spark) {
+  sessions.delete(spark.id);
+}
+
+export function startSparkCall(sparkId: string, call: CallInput) {
+  sessions.get(sparkId).calls.push(call);
+}
+
+/**
+ * @remark inplace update
+ * @return original array
+ * */
+function remove<A>(xs: A[], x: A): void {
+  const idx = xs.indexOf(x);
+  if (idx !== -1) {
+    xs.splice(idx, 1);
+  }
+}
+
+export function endSparkCall(sparkId: string, call: CallInput) {
+  const session = sessions.get(sparkId);
+  remove(session.calls, call);
+}
+`.trim();
 }

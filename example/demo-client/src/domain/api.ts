@@ -1,5 +1,3 @@
-export * from '../../demo-server/src/domain/types';
-import { CallInput } from 'cqrs-exp/dist/utils';
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {
   Call,
@@ -8,8 +6,9 @@ import {
   GetProfile,
   GetUserList,
   RenameUser,
+  Subscribe,
   SubscribeItems,
-} from '../../demo-server/src/domain/types';
+} from './types';
 
 let primus;
 let pfs: Array<(primus) => void> = [];
@@ -20,6 +19,12 @@ export function usePrimus(f: (primus) => void): void {
     return;
   }
   pfs.push(f);
+}
+
+export interface CallInput<C extends Call> {
+  CallType: C['CallType'];
+  Type: C['Type'];
+  In: C['In'];
 }
 
 let coreService: CoreService;
@@ -33,7 +38,7 @@ export class CoreService {
 
   @Post('Call')
   async Call<C extends Call>(
-    @Body() body: CallInput,
+    @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
     return undefined;
   }
@@ -45,7 +50,7 @@ export function startPrimus(baseUrl: string) {
     return;
   }
   const w = window as any;
-  const primus = new w.Primus(baseUrl);
+  primus = new w.Primus(baseUrl);
 
   pfs.forEach(f => f(primus));
   pfs = [];
@@ -71,7 +76,7 @@ export function CreateUser(In: CreateUser['In']): Promise<CreateUser['Out']> {
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
-      primus.send('Command', callInput, data => {
+      primus.send('Call', callInput, data => {
         if ('error' in data) {
           reject(data);
           return;
@@ -93,7 +98,7 @@ export function RenameUser(In: RenameUser['In']): Promise<RenameUser['Out']> {
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
-      primus.send('Command', callInput, data => {
+      primus.send('Call', callInput, data => {
         if ('error' in data) {
           reject(data);
           return;
@@ -115,7 +120,7 @@ export function CreateItem(In: CreateItem['In']): Promise<CreateItem['Out']> {
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
-      primus.send('Command', callInput, data => {
+      primus.send('Call', callInput, data => {
         if ('error' in data) {
           reject(data);
           return;
@@ -137,7 +142,7 @@ export function GetProfile(In: GetProfile['In']): Promise<GetProfile['Out']> {
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
-      primus.send('Query', callInput, data => {
+      primus.send('Call', callInput, data => {
         if ('error' in data) {
           reject(data);
           return;
@@ -159,7 +164,7 @@ export function GetUserList(In: GetUserList['In']): Promise<GetUserList['Out']> 
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
-      primus.send('Query', callInput, data => {
+      primus.send('Call', callInput, data => {
         if ('error' in data) {
           reject(data);
           return;
@@ -170,24 +175,55 @@ export function GetUserList(In: GetUserList['In']): Promise<GetUserList['Out']> 
   });
 }
 
-export function SubscribeItems(In: SubscribeItems['In']): Promise<SubscribeItems['Out']> {
-  const callInput: CallInput<SubscribeItems> = {
+
+export interface SubscribeOptions<T> {
+  onError: (err) => void
+  onEach: (Out: T) => void
+}
+
+export interface SubscribeResult {
+  cancel: () => void
+}
+
+export function Subscribe<C extends Subscribe>(
+  Type: C['Type'],
+  In: C['In'],
+  options: SubscribeOptions<C['Out']>,
+): SubscribeResult {
+  if (coreService) {
+    throw new Error('Subscribe is not supported on node.js client yet');
+  }
+  const callInput: CallInput<C> = {
     CallType: 'Subscribe',
-    Type: 'SubscribeItems',
+    Type,
     In,
   };
-  if (coreService) {
-    return coreService.Call<SubscribeItems>(callInput);
-  }
-  return new Promise((resolve, reject) => {
-    usePrimus(primus => {
-      primus.send('Subscribe', callInput, data => {
-        if ('error' in data) {
-          reject(data);
-          return;
+  let cancelled = false;
+  let res: SubscribeResult = { cancel: () => cancelled = true };
+  usePrimus(primus => {
+    primus.send('Call', callInput, data => {
+      if ('error' in data) {
+        options.onError(data);
+        return;
+      }
+      if (cancelled) {
+        return;
+      }
+      const { id } = data;
+      primus.on(id, data => {
+        if (!cancelled) {
+          options.onEach(data);
         }
-        resolve(data);
       });
+      res.cancel = () => {
+        cancelled = true;
+        primus.send('CancelSubscribe', { id });
+      };
     });
   });
+  return res;
+}
+
+export function SubscribeItems(In: SubscribeItems['In'], options: SubscribeOptions<SubscribeItems['Out']>): SubscribeResult {
+  return Subscribe<SubscribeItems>('SubscribeItems', In, options);
 }

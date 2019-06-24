@@ -17,6 +17,37 @@ export interface Call<
   Out: Out;
 }
 
+/*
+export type Call<
+  // _CallType = CallType,
+  CommandType extends string = 'Command',
+  QueryType extends string = 'Query',
+  SubscribeType extends string = 'Subscribe',
+  Type extends string = string,
+  In = any,
+  Out = any
+> ={
+  // CallType: _CallType;
+  Type: Type;
+  // In: In;
+  // Out: Out;
+}&(
+  {
+    CallType: CommandType;
+    In: In & ICommand;
+    Out: Out&Array<IEvent>;
+  }|{
+  CallType: QueryType;
+  In: In & IQuery;
+  Out: Out;
+}|{
+  CallType: SubscribeType;
+  In: In & ISubscribe;
+  Out: Out;
+}
+  )
+*/
+
 export type Result<T> = T | Promise<T>;
 
 export interface ICommand {
