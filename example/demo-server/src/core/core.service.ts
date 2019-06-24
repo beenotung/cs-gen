@@ -22,7 +22,7 @@ function not_impl(name: string): any {
 export class CoreService {
   impl = new LogicProcessor();
 
-  Call<C extends Call>(args: CallInput): C['Out'] {
+  Call<C extends Call>(args: CallInput<C>): C['Out'] {
     const { CallType, Type, In } = args;
     const _type = Type as Call['Type'];
     let method: (In: C['In']) => C['Out'];

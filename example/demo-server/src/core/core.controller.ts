@@ -5,7 +5,7 @@ import { CallInput, LogService } from 'cqrs-exp';
 import { CoreService } from './core.service';
 import { Bar } from 'cli-progress';
 import { usePrimus } from '../main';
-import { ok } from 'nestlib';
+import { ok, rest_return } from 'nestlib';
 import { closeConnection, endSparkCall, newConnection, startSparkCall } from './connection';
 
 @Controller('core')
@@ -65,7 +65,7 @@ export class CoreController {
   @Post('Call')
   async Call<C extends Call>(
     @Res() res,
-    @Body() body: CallInput,
+    @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
     await this.logService.storeObject(body);
