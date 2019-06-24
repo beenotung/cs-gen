@@ -227,6 +227,7 @@ export class ${controllerClassName} {
           startSparkCall(spark.id, call);
           try {
             await this.ready;
+            await this.logService.storeObject(call);
             const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
             ack(out);
           } catch (e) {
@@ -251,9 +252,14 @@ export class ${controllerClassName} {
     @Body() body: CallInput,
   ): Promise<C['Out']> {
     await this.ready;
-    this.logService.storeObject(body);
-    const out = this.${serviceObjectName}.${callTypeName}(body);
-    return ok(res, out);
+    await this.logService.storeObject(body);
+    try {
+      const out = this.coreService.Call<C>(body);
+      ok(res, out);
+      return out;
+    } catch (e) {
+      return rest_return(res, Promise.reject(e));
+    }
   }
 }
 `.trim();
