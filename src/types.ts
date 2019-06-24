@@ -8,8 +8,8 @@ export type CallType = 'Command' | 'Query' | 'Subscribe';
 export interface Call<
   _CallType = CallType,
   Type extends string = string,
-  In = any,
-  Out = any
+  In extends string = string,
+  Out extends string = string
 > {
   CallType: _CallType;
   Type: Type;
