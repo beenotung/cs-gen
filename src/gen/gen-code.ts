@@ -156,6 +156,7 @@ export function genControllerCode(args: {
   typeDirname: string;
   typeFilename: string;
   callTypeName: string;
+  commandTypeName: string;
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
@@ -164,6 +165,7 @@ export function genControllerCode(args: {
 }) {
   const {
     callTypeName,
+    commandTypeName,
     serviceClassName,
     serviceFilename,
     serviceApiPath,
@@ -203,7 +205,7 @@ export class ${controllerClassName} {
     bar.start(keys.length, 0);
     for (const key of keys) {
       const call: CallInput<Call> = await this.logService.getObject<Call>(key);
-      if(call.CallType !== 'Command'){
+      if(call.CallType !== '${commandTypeName}'){
         continue;
       }
       this.${serviceObjectName}.${callTypeName}(call);

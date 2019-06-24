@@ -113,6 +113,7 @@ async function genControllerFile(args: {
   typeDirname: string;
   typeFilename: string;
   callTypeName: string;
+  commandTypeName: string;
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
