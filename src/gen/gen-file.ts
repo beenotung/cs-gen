@@ -378,7 +378,7 @@ export function injectTimestampField(args: {
 }): void {
   const { call, timestampFieldName } = args;
   let { In } = call;
-  if (In.toLowerCase().includes(timestampFieldName)) {
+  if (In.includes(timestampFieldName)) {
     return;
   }
   In = In.trim();
