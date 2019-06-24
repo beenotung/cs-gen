@@ -8,7 +8,7 @@ async function test() {
   const Out = await l.Call<CreateUser>({
     CallType: 'Command',
     Type: 'CreateUser',
-    In: { UserId: 'local-1', UserName: 'Local Alice' },
+    In: { UserId: 'local-1', UserName: 'Local Alice', Timestamp: Date.now() },
   });
   console.log({ Out });
 }

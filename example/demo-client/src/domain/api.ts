@@ -175,7 +175,6 @@ export function GetUserList(In: GetUserList['In']): Promise<GetUserList['Out']> 
   });
 }
 
-
 export interface SubscribeOptions<T> {
   onError: (err) => void
   onEach: (Out: T) => void
@@ -199,7 +198,7 @@ export function Subscribe<C extends Subscribe>(
     In,
   };
   let cancelled = false;
-  let res: SubscribeResult = { cancel: () => cancelled = true };
+  const res: SubscribeResult = { cancel: () => cancelled = true };
   usePrimus(primus => {
     primus.send('Call', callInput, data => {
       if ('error' in data) {
@@ -224,6 +223,9 @@ export function Subscribe<C extends Subscribe>(
   return res;
 }
 
-export function SubscribeItems(In: SubscribeItems['In'], options: SubscribeOptions<SubscribeItems['Out']>): SubscribeResult {
+export function SubscribeItems(
+  In: SubscribeItems['In'],
+  options: SubscribeOptions<SubscribeItems['Out']>,
+): SubscribeResult {
   return Subscribe<SubscribeItems>('SubscribeItems', In, options);
 }
