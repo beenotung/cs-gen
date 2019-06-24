@@ -97,7 +97,7 @@ function not_impl(name: string): any {
 export class ${serviceClassName} {
   impl = new ${logicProcessorClassName}();
 
-  ${callTypeName}<C extends ${callTypeName}>(args: CallInput): C['Out'] {
+  ${callTypeName}<C extends ${callTypeName}>(args: CallInput<C>): C['Out'] {
     const { CallType, Type, In } = args;
     const _type = Type as ${callTypeName}['Type'];
     let method: (In: C['In']) => C['Out'];
@@ -189,7 +189,7 @@ import { CallInput, LogService } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
 import { usePrimus } from '../main';
-import { ok } from 'nestlib';
+import { ok, rest_return } from 'nestlib';
 import { closeConnection, endSparkCall, newConnection, startSparkCall } from './connection';
 
 @Controller('${serviceApiPath}')
@@ -249,7 +249,7 @@ export class ${controllerClassName} {
   @Post('${callApiPath}')
   async ${callApiPath}<C extends ${callTypeName}>(
     @Res() res,
-    @Body() body: CallInput,
+    @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
     await this.logService.storeObject(body);
