@@ -42,9 +42,11 @@ export class CoreService {
       case 'GetUserList':
         method = this.GetUserList;
         break;
-      case 'SubscribeItems':
-        method = this.SubscribeItems;
+      case 'SubscribeItems': {
+        const m: (In: C['In']) => { id: string } = this.SubscribeItems;
+        method = m as any;
         break;
+      }
       default:
         const x: never = _type;
         console.log('not implemented call type:', x);
@@ -77,7 +79,7 @@ export class CoreService {
     return not_impl('GetUserList');
   }
 
-  SubscribeItems(In: SubscribeItems['In']): SubscribeItems['Out'] {
+  SubscribeItems(In: SubscribeItems['In']): { id: string } {
     return not_impl('SubscribeItems');
   }
 }
