@@ -103,10 +103,16 @@ export class ${serviceClassName} {
     let method: (In: C['In']) => C['Out'];
     switch (_type) {
       ${callTypes
-        .map(({ Type }) => Type)
-        .map(
-          s => `case '${s}':
-        method = this.${s};
+        .map(({ CallType, Type }) =>
+          CallType === subscribeTypeName
+            ? `case '${Type}': {
+        const m: (In: C['In']) => { id: string } = this.${Type};
+        method = m as any;
+        break;
+      }
+      `
+            : `case '${Type}':
+        method = this.${Type};
         break;
       `,
         )
@@ -133,13 +139,14 @@ export class ${serviceClassName} {
   }
 
   ${callTypes
-    .map(call => call.Type)
     .map(
-      s => `${s}(In: ${s}['In']): ${s}['Out'] {
+      ({ CallType, Type }) => `${Type}(In: ${Type}['In']): ${
+        CallType === subscribeTypeName ? '{ id: string }' : `${Type}['Out']`
+      } {
     ${
-      logicProcessorCode.indexOf(s) === -1
-        ? `return not_impl('${s}');`
-        : `return this.impl.${s}(In);`
+      logicProcessorCode.includes(Type)
+        ? `return this.impl.${Type}(In);`
+        : `return not_impl('${Type}');`
     }
   }
 
