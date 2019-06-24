@@ -1,4 +1,4 @@
-import { Call, Result } from './types';
+import { Call, CallMeta, Result } from './types';
 
 export function checkCallType(t: Call) {
   /* static type check only */
@@ -14,10 +14,10 @@ export function then<T, R>(x: Result<T>, f: (x: T) => Result<R>): Result<R> {
   return f(x as T);
 }
 
-export interface PartialCall<C extends Call = Call> {
-  Type: C['Type'];
-  In: C['In'];
-  Out: C['Out'];
+export interface PartialCallMeta {
+  Type: string;
+  In: string;
+  Out: string;
 }
 
 export interface CallInput<C extends Call = Call> {
@@ -32,15 +32,15 @@ export let defaultTypeName = {
   subscribeTypeName: 'Subscribe',
 };
 
-export function flattenCallTypes<C extends Call = Call>(args: {
-  commandTypeName?: C['CallType'];
-  queryTypeName?: C['CallType'];
-  subscribeTypeName?: C['CallType'];
+export function flattenCallMetas(args: {
+  commandTypeName?: string;
+  queryTypeName?: string;
+  subscribeTypeName?: string;
 
-  commandTypes?: PartialCall[];
-  queryTypes?: PartialCall[];
-  subscribeTypes?: PartialCall[];
-}): C[] {
+  commandTypes?: PartialCallMeta[];
+  queryTypes?: PartialCallMeta[];
+  subscribeTypes?: PartialCallMeta[];
+}): CallMeta[] {
   args = Object.assign({}, defaultTypeName, args);
   const {
     commandTypeName,
@@ -50,10 +50,9 @@ export function flattenCallTypes<C extends Call = Call>(args: {
     queryTypes,
     subscribeTypes,
   } = args;
-  const calls: Call[] = [
+  return [
     ...commandTypes.map(call => ({ CallType: commandTypeName, ...call })),
     ...queryTypes.map(call => ({ CallType: queryTypeName, ...call })),
     ...subscribeTypes.map(call => ({ CallType: subscribeTypeName, ...call })),
   ];
-  return calls as C[];
 }

@@ -7,8 +7,8 @@ import {
 } from '@beenotung/tslib/fs';
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
-import { Call } from '../types';
-import { defaultTypeName, PartialCall } from '../utils';
+import { CallMeta } from '../types';
+import { defaultTypeName, PartialCallMeta } from '../utils';
 import {
   genCallTypeCode,
   genClientLibCode,
@@ -89,7 +89,7 @@ async function genServiceFile(args: {
   serviceClassName: string;
   typeDirname: string;
   typeFilename: string;
-  callTypes: Call[];
+  callTypes: CallMeta[];
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
@@ -132,7 +132,7 @@ async function genTypeFile(args: {
   projectDirname: string;
   typeDirname: string;
   typeFilename: string;
-  callTypes: Call[];
+  callTypes: CallMeta[];
   callTypeName: string;
   queryTypeName: string;
   commandTypeName: string;
@@ -226,7 +226,7 @@ async function genClientLibFile(args: {
   callApiPath: string;
   callTypeName: string;
   subscribeTypeName: string;
-  callTypes: Call[];
+  callTypes: CallMeta[];
   timestampFieldName: string;
   injectTimestamp: boolean;
 }) {
@@ -373,7 +373,7 @@ function hasNestProject(args: { projectDirname: string }): Promise<boolean> {
 }
 
 export function injectTimestampField(args: {
-  call: PartialCall;
+  call: PartialCallMeta;
   timestampFieldName: string;
 }): void {
   const { call, timestampFieldName } = args;
@@ -443,7 +443,7 @@ export async function genProject(_args: {
   clientProjectName: string;
   typeDirname?: string;
   typeFilename?: string;
-  callTypes: Call[];
+  callTypes: CallMeta[];
   callTypeName?: string;
   commandTypeName?: string;
   queryTypeName?: string;

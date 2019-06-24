@@ -1,6 +1,6 @@
 import { groupBy } from '@beenotung/tslib/functional';
 import { genTsType } from 'gen-ts-type';
-import { Call } from '../types';
+import { CallMeta } from '../types';
 
 function removeTsExtname(s: string): string {
   return s.replace(/\.ts$/, '');
@@ -50,7 +50,7 @@ export function genServiceCode(args: {
   serviceClassName: string;
   typeDirname: string;
   typeFilename: string;
-  callTypes: Call[];
+  callTypes: CallMeta[];
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
@@ -253,7 +253,7 @@ export class ${controllerClassName} {
 }
 
 export function genCallTypeCode2(args: {
-  callTypes: Call[];
+  callTypes: CallMeta[];
   callTypeName: string;
 }): string {
   const { callTypeName } = args;
@@ -276,7 +276,7 @@ export type ${callTypeName} = ${callTypes.map(({ Type }) => Type).join(' | ')};
 }
 
 export function genCallTypeCode(args: {
-  callTypes: Call[];
+  callTypes: CallMeta[];
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
@@ -290,11 +290,9 @@ export function genCallTypeCode(args: {
     callTypes,
   } = args;
   const callTypesMap = groupBy(t => t.CallType, callTypes);
-  const commandTypes =
-    callTypesMap.get(commandTypeName as Call['CallType']) || [];
-  const queryTypes = callTypesMap.get(queryTypeName as Call['CallType']) || [];
-  const subscribeTypes =
-    callTypesMap.get(subscribeTypeName as Call['CallType']) || [];
+  const commandTypes = callTypesMap.get(commandTypeName) || [];
+  const queryTypes = callTypesMap.get(queryTypeName) || [];
+  const subscribeTypes = callTypesMap.get(subscribeTypeName) || [];
   const code = `
 ${[
   { typeName: commandTypeName, types: commandTypes },
@@ -417,7 +415,7 @@ export function genClientLibCode(args: {
   callApiPath: string;
   callTypeName: string;
   subscribeTypeName: string;
-  callTypes: Call[];
+  callTypes: CallMeta[];
   timestampFieldName: string;
   injectTimestamp: boolean;
 }): string {

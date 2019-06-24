@@ -1,6 +1,6 @@
 import { catchMain } from '@beenotung/tslib/node';
 import * as path from 'path';
-import { flattenCallTypes } from '../src';
+import { flattenCallMetas } from '../src';
 import { genProject } from '../src/gen/gen-file';
 
 const rimraf = require('rimraf');
@@ -9,7 +9,7 @@ const userIdType = '{ UserId: string }';
 const userType = '{ UserId: string, UserName: string }';
 const successType = '({ Success: true } | { Success: false; Reason: string })';
 const subscribeOutType = '{ id: string }';
-export let callTypes = flattenCallTypes({
+export let callTypes = flattenCallMetas({
   commandTypes: [
     { Type: 'CreateUser', In: userType, Out: successType },
     {

@@ -1,6 +1,8 @@
 import { readFile, scanRecursively, writeFile } from '@beenotung/tslib/fs';
-import { Call } from '../types';
+import { Call as _Call } from '../types';
 import { genCallTypeCode2 } from './gen-code';
+
+type Call = _Call<string, string, string, string>;
 
 function extractInjectNames(text: string): string[] {
   const matches = text.match(/\/\/ inject (.*)? below/g);
