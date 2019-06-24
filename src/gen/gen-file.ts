@@ -227,6 +227,8 @@ async function genClientLibFile(args: {
   callTypeName: string;
   subscribeTypeName: string;
   callTypes: Call[];
+  timestampFieldName: string;
+  injectTimestamp: boolean;
 }) {
   const { outDirname, clientProjectName, apiDirname, apiFilename } = args;
   const dirPath = path.join(outDirname, clientProjectName, 'src', apiDirname);
