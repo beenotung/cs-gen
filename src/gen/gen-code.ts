@@ -398,14 +398,13 @@ function attachServer(server: Server) {
   };
 
   primus = new Primus(server, primus_options);
+  primus.plugin('emitter', require('primus-emitter'));
+  // primus.save('primus.js');
   pfs.forEach(f => f(primus));
 
-  // /*
   primus.on('connection', spark => {
     console.log(spark.id, 'connected');
-    // spark.send('connection', 'ready');
   });
-  // */
 }
 
 `,
