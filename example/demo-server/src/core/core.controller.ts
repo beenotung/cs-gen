@@ -6,7 +6,13 @@ import { CoreService } from './core.service';
 import { Bar } from 'cli-progress';
 import { usePrimus } from '../main';
 import { ok, rest_return } from 'nestlib';
-import { closeConnection, endSparkCall, newConnection, startSparkCall } from './connection';
+import {
+  closeConnection,
+  endSparkCall,
+  newConnection,
+  startSparkCall,
+} from './connection';
+import { status } from './status';
 
 @Controller('core')
 export class CoreController {
@@ -25,8 +31,12 @@ export class CoreController {
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
+    status.isReplay = true;
     bar.start(keys.length, 0);
     for (const key of keys) {
+      if (!key.endsWith('-Command')) {
+        continue;
+      }
       const call: CallInput<Call> = await this.logService.getObject<Call>(key);
       if(call.CallType !== 'Command'){
         continue;
@@ -34,16 +44,17 @@ export class CoreController {
       this.coreService.Call(call);
       bar.increment(1);
     }
+    status.isReplay = false;
     bar.stop();
     usePrimus(primus => {
       primus.on('connection', spark => {
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
         spark.on('Call', async (call: CallInput<Call>, ack) => {
-          startSparkCall(spark.id, call);
+          startSparkCall(spark, call);
           try {
             await this.ready;
-            await this.logService.storeObject(call);
+            await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
             const out = this.coreService.Call<Call>(call);
             ack(out);
           } catch (e) {
@@ -55,7 +66,7 @@ export class CoreController {
               message: e.message,
             });
           } finally {
-            endSparkCall(spark.id, call);
+            endSparkCall(spark, call);
           }
         });
       });
@@ -65,12 +76,12 @@ export class CoreController {
   @Post('Call')
   async Call<C extends Call>(
     @Res() res,
-    @Body() body: CallInput<C>,
+    @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
-    await this.logService.storeObject(body);
+    await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
     try {
-      const out = this.coreService.Call<C>(body);
+      const out = this.coreService.Call<C>(call);
       ok(res, out);
       return out;
     } catch (e) {
