@@ -400,7 +400,7 @@ export function genMainCode(originalCode: string): string {
     `import { Server } from 'http';
 
 const Primus = require('primus');
-export let primus;
+let primus;
 
 let pfs: Array<(primus) => void> = [];
 
