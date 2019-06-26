@@ -17,6 +17,7 @@ import {
   genMainCode,
   genModuleCode,
   genServiceCode,
+  genStatusCode,
 } from './gen-code';
 import { scanProject } from './scanner';
 
@@ -106,6 +107,19 @@ async function genServiceFile(args: {
   return writeFile(filename, code);
 }
 
+async function genStatusFile(args: {
+  statusFilename: string;
+  statusName: string;
+  outDirname: string;
+  projectDirname: string;
+  moduleDirname: string;
+}) {
+  const { statusFilename } = args;
+  const filename = path.join(getModuleDirname(args), statusFilename);
+  const code = genStatusCode(args);
+  await writeFile(filename, code);
+}
+
 async function genControllerFile(args: {
   outDirname: string;
   projectDirname: string;
@@ -120,12 +134,14 @@ async function genControllerFile(args: {
   serviceApiPath: string;
   callApiPath: string;
   controllerFilename: string;
+  statusFilename: string;
+  statusName: string;
 }) {
   const { controllerFilename } = args;
   const code = genControllerCode(args);
   const filename = path.join(getModuleDirname(args), controllerFilename);
 
-  return writeFile(filename, code);
+  await writeFile(filename, code);
 }
 
 async function genTypeFile(args: {
@@ -427,6 +443,8 @@ export const defaultGenProjectArgs = {
   serviceClassName: 'CoreService',
   controllerFilename: 'core.controller.ts',
   controllerClassName: 'CoreController',
+  statusFilename: 'status.ts',
+  statusName: 'status',
   serviceApiPath: 'core',
   callApiPath: 'Call',
   logicProcessorDirname: 'domain',
@@ -454,6 +472,8 @@ export async function genProject(_args: {
   serviceClassName?: string;
   controllerFilename?: string;
   controllerClassName?: string;
+  statusFilename?: string;
+  statusName?: string;
   serviceAPIPath?: string;
   callApiPath?: string;
   logicProcessorDirname?: string;
@@ -543,6 +563,7 @@ export async function genProject(_args: {
       ...args,
       logicProcessorCode: dataWrapper.logicProcessorCode,
     }),
+    genStatusFile(args),
     genControllerFile(args),
   ]);
   // TODO refactor core controller to call logic processor

@@ -159,6 +159,14 @@ export class ${serviceClassName} {
   return code.trim();
 }
 
+export function genStatusCode(args: { statusName: string }) {
+  const { statusName } = args;
+  return `
+export let ${statusName} = {
+  isReplay: true,
+};
+`.trim();
+}
 export function genControllerCode(args: {
   typeDirname: string;
   typeFilename: string;
@@ -169,6 +177,8 @@ export function genControllerCode(args: {
   controllerClassName: string;
   serviceApiPath: string;
   callApiPath: string;
+  statusFilename: string;
+  statusName: string;
 }) {
   const {
     callTypeName,
@@ -178,6 +188,8 @@ export function genControllerCode(args: {
     serviceApiPath,
     callApiPath,
     controllerClassName,
+    statusName,
+    statusFilename,
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
@@ -190,7 +202,13 @@ import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
 import { usePrimus } from '../main';
 import { ok, rest_return } from 'nestlib';
-import { closeConnection, endSparkCall, newConnection, startSparkCall } from './connection';
+import {
+  closeConnection,
+  endSparkCall,
+  newConnection,
+  startSparkCall,
+} from './connection';
+import { ${statusName} } from './${removeTsExtname(statusFilename)}';
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
@@ -209,15 +227,20 @@ export class ${controllerClassName} {
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
+    ${statusName}.isReplay = true;
     bar.start(keys.length, 0);
     for (const key of keys) {
-      const call: CallInput<Call> = await this.logService.getObject<Call>(key);
+      if (!key.endsWith('-${commandTypeName}')) {
+        continue;
+      }
+      const call: CallInput<${callTypeName}> = await this.logService.getObject<${callTypeName}>(key);
       if(call.CallType !== '${commandTypeName}'){
         continue;
       }
       this.${serviceObjectName}.${callTypeName}(call);
       bar.increment(1);
     }
+    ${statusName}.isReplay = false;
     bar.stop();
     usePrimus(primus => {
       primus.on('connection', spark => {
@@ -227,7 +250,7 @@ export class ${controllerClassName} {
           startSparkCall(spark, call);
           try {
             await this.ready;
-            await this.logService.storeObject(call);
+            await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
             const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
             ack(out);
           } catch (e) {
@@ -249,12 +272,12 @@ export class ${controllerClassName} {
   @Post('${callApiPath}')
   async ${callApiPath}<C extends ${callTypeName}>(
     @Res() res,
-    @Body() body: CallInput<C>,
+    @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
-    await this.logService.storeObject(body);
+    await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
     try {
-      const out = this.coreService.Call<C>(body);
+      const out = this.coreService.Call<C>(call);
       ok(res, out);
       return out;
     } catch (e) {

@@ -49,8 +49,10 @@ export class LogService {
     }
   }
 
-  async storeObject(value: any) {
-    const key = this.nextKey();
+  /**
+   * key cannot contains dot '.'
+   * */
+  async storeObject(value: any, key = this.nextKey()) {
     // return this.fsPool.run(() => this.store.setObject(key, value));
     // this.store.setObject(key, value);
     return writeFile(this.keyToPath(key), JSON.stringify(value));
@@ -66,15 +68,7 @@ export class LogService {
     return JSON.parse(text);
   }
 
-  private keyToPath(key: string) {
-    return path.join(this.dataDirname, key);
-  }
-
-  private sortKeys(ss: string[]): string[] {
-    return ss.sort((a, b) => compare_string(a, b));
-  }
-
-  private nextKey(): string {
+  nextKey(): string {
     const now = Date.now();
     if (this.now === now) {
       this.acc++;
@@ -83,5 +77,13 @@ export class LogService {
       this.acc = 0;
     }
     return this.now + '-' + this.acc;
+  }
+
+  private keyToPath(key: string) {
+    return path.join(this.dataDirname, key);
+  }
+
+  private sortKeys(ss: string[]): string[] {
+    return ss.sort((a, b) => compare_string(a, b));
   }
 }
