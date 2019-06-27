@@ -233,10 +233,12 @@ export class ${controllerClassName} {
     bar.start(keys.length, 0);
     for (const key of keys) {
       if (!key.endsWith('-${commandTypeName}')) {
+        bar.increment(1);
         continue;
       }
       const call: CallInput<${callTypeName}> = await this.logService.getObject<${callTypeName}>(key);
       if(call.CallType !== '${commandTypeName}'){
+        bar.increment(1);
         continue;
       }
       this.${serviceObjectName}.${callTypeName}(call);
