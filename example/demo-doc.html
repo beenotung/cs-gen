@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>demo APIs</title>
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-tap-highlight" content="no">
+  <style>
+    #content {
+      display: flex;
+      flex-direction: row;
+    }
+    @media only screen
+    and (orientation: portrait) {
+      #content {
+        flex-direction: column;
+      }
+    }
+    #content > * {
+      flex-grow: 1;
+    }
+    code {
+      white-space: pre-wrap;
+      font-size: large;
+    }
+  </style>
+</head>
+<body>
+  <h1>demo APIs</h1>
+  <div id="content">
+    <nav>
+      <h2>Command APIs</h2>
+      <ul>
+        <li><a href="#CreateUser">CreateUser</a></li>
+        <li><a href="#RenameUser">RenameUser</a></li>
+        <li><a href="#CreateItem">CreateItem</a></li>
+      </ul>
+      <h2>Query APIs</h2>
+      <ul>
+        <li><a href="#GetProfile">GetProfile</a></li>
+        <li><a href="#GetUserList">GetUserList</a></li>
+      </ul>
+      <h2>Subscribe APIs</h2>
+      <ul>
+        <li><a href="#SubscribeItems">SubscribeItems</a></li>
+      </ul>
+    </nav>
+    <noscript><span style="color: red">Javascript is required to show type of In and Out<span></noscript>
+    <div>
+      <h3>In</h3>
+      <code id="in"></code>
+    </div>
+    <div>
+      <h3>Out</h3>
+      <code id="out"></code>
+    </div>
+  </div>
+<script>
+window.onhashchange=function(){
+  var Type = window.location.hash.substr(1);
+  switch (Type) {
+    case 'CreateUser': {
+      document.getElementById('in').textContent = "{ UserId: string, UserName: string, Timestamp: number }";
+      document.getElementById('out').textContent = "({ Success: true } | { Success: false; Reason: string })";
+      break;
+    }
+    case 'RenameUser': {
+      document.getElementById('in').textContent = "{ UserId: string, NewUsername: string, Timestamp: number }";
+      document.getElementById('out').textContent = "({ Success: true } | { Success: false; Reason: string })";
+      break;
+    }
+    case 'CreateItem': {
+      document.getElementById('in').textContent = "{ ItemName: string, UserId: string, Timestamp: number }";
+      document.getElementById('out').textContent = "({ Success: true } | { Success: false; Reason: string })";
+      break;
+    }
+    case 'GetProfile': {
+      document.getElementById('in').textContent = "{ UserId: string, Timestamp: number }";
+      document.getElementById('out').textContent = "{ UserId: string, UserName: string }";
+      break;
+    }
+    case 'GetUserList': {
+      document.getElementById('in').textContent = "{ Timestamp: number }";
+      document.getElementById('out').textContent = "Array<{ UserId: string, UserName: string }>";
+      break;
+    }
+    case 'SubscribeItems': {
+      document.getElementById('in').textContent = "{ Timestamp: number }";
+      document.getElementById('out').textContent = "{ id: string }";
+      break;
+    }
+    default:
+      console.error('unknown Type:', Type);
+  }
+};
+</script>
+</body>
+</html>
