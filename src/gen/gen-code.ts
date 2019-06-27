@@ -1,6 +1,7 @@
 import { groupBy } from '@beenotung/tslib/functional';
 import { genTsType } from 'gen-ts-type';
 import { CallMeta } from '../types';
+import { PartialCallMeta } from '../utils';
 
 function removeTsExtname(s: string): string {
   return s.replace(/\.ts$/, '');
@@ -167,6 +168,7 @@ export let ${statusName} = {
 };
 `.trim();
 }
+
 export function genControllerCode(args: {
   typeDirname: string;
   typeFilename: string;
@@ -719,5 +721,123 @@ export function endSparkCall(spark: Spark, call: CallInput) {
   remove(session.calls, call);
   in_session_map.delete(call.In);
 }
+`.trim();
+}
+
+export function genDocumentationHtmlCode(args: {
+  baseProjectName: string;
+  commandTypeName: string;
+  queryTypeName: string;
+  subscribeTypeName: string;
+  callTypes: CallMeta[];
+}) {
+  const {
+    baseProjectName,
+    callTypes,
+    commandTypeName,
+    queryTypeName,
+    subscribeTypeName,
+  } = args;
+
+  const commandTypes: PartialCallMeta[] = callTypes.filter(
+    x => x.CallType === commandTypeName,
+  );
+  const queryTypes: PartialCallMeta[] = callTypes.filter(
+    x => x.CallType === queryTypeName,
+  );
+  const subscribeTypes: PartialCallMeta[] = callTypes.filter(
+    x => x.CallType === subscribeTypeName,
+  );
+
+  const title = `${baseProjectName} APIs`;
+
+  const formatApis = (prefix: string, name: string, calls: PartialCallMeta[]) =>
+    `<h2>${name} APIs</h2>
+${prefix}<ul>${calls
+      .map(
+        call => `
+${prefix}  <li><a href="#${call.Type}">${call.Type}</a></li>`,
+      )
+      .join('')}
+${prefix}</ul>`;
+
+  return `
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>${title}</title>
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-tap-highlight" content="no">
+  <style>
+    #content {
+      display: flex;
+      flex-direction: row;
+    }
+    @media only screen
+    and (orientation: portrait) {
+      #content {
+        flex-direction: column;
+      }
+    }
+    #content > * {
+      flex-grow: 1;
+    }
+    code {
+      white-space: pre-wrap;
+      font-size: large;
+    }
+  </style>
+</head>
+<body>
+  <h1>${title}</h1>
+  <div id="content">
+    <nav>
+      ${formatApis('      ', commandTypeName, commandTypes)}
+      ${formatApis('      ', queryTypeName, queryTypes)}
+      ${formatApis('      ', subscribeTypeName, subscribeTypes)}
+    </nav>
+    <noscript><span style="color: red">Javascript is required to show type of In and Out<span></noscript>
+    <div>
+      <h3>In</h3>
+      <code id="in"></code>
+    </div>
+    <div>
+      <h3>Out</h3>
+      <code id="out"></code>
+    </div>
+  </div>
+<script>
+window.onhashchange=function(){
+  var Type = window.location.hash.substr(1);
+  switch (Type) {
+    ${callTypes
+      .map(
+        ({ Type, In, Out }) => `case '${Type}': {
+      document.getElementById('in').textContent = ${JSON.stringify(
+        In,
+        null,
+        2,
+      )};
+      document.getElementById('out').textContent = ${JSON.stringify(
+        Out,
+        null,
+        2,
+      )};
+      break;
+    }
+    `,
+      )
+      .join('')
+      .trim()}
+    default:
+      console.error('unknown Type:', Type);
+  }
+};
+</script>
+</body>
+</html>
 `.trim();
 }

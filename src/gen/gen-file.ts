@@ -14,6 +14,7 @@ import {
   genClientLibCode,
   genConnectionCode,
   genControllerCode,
+  genDocumentationHtmlCode,
   genMainCode,
   genModuleCode,
   genServiceCode,
@@ -428,8 +429,27 @@ export function injectTimestampField(args: {
   call.In = In;
 }
 
+async function genDocumentationHtmlFile(args: {
+  outDirname: string;
+  docDirname: string;
+  docFilename: string;
+  baseProjectName: string;
+  commandTypeName: string;
+  queryTypeName: string;
+  subscribeTypeName: string;
+  callTypes: CallMeta[];
+}) {
+  const { outDirname, docDirname, docFilename } = args;
+  const dirname = path.join(outDirname, docDirname);
+  await mkdirp(dirname);
+  const filename = path.join(dirname, docFilename);
+  const code = genDocumentationHtmlCode(args);
+  await writeFile(filename, code);
+}
+
 export const defaultGenProjectArgs = {
   outDirname: 'out',
+  docDirname: '',
   typeDirname: 'domain',
   typeFilename: 'types.ts',
   callTypeName: 'Call',
@@ -458,8 +478,11 @@ export const defaultGenProjectArgs = {
 
 export async function genProject(_args: {
   outDirname?: string;
-  serverProjectName: string;
-  clientProjectName: string;
+  docDirname?: string;
+  docFilename?: string;
+  baseProjectName: string;
+  serverProjectName?: string;
+  clientProjectName?: string;
   typeDirname?: string;
   typeFilename?: string;
   callTypes: CallMeta[];
@@ -487,6 +510,11 @@ export async function genProject(_args: {
   const __args = {
     ...defaultGenProjectArgs,
     ..._args,
+    serverProjectName:
+      _args.serverProjectName || _args.baseProjectName + '-server',
+    clientProjectName:
+      _args.clientProjectName || _args.baseProjectName + '-client',
+    docFilename: _args.docFilename || _args.baseProjectName + '-doc.html',
   };
   const {
     outDirname,
@@ -532,6 +560,7 @@ export async function genProject(_args: {
   }
   const dataWrapper: { logicProcessorCode: string } = {} as any;
   await Promise.all([
+    genDocumentationHtmlFile(args),
     genLogicProcessorFile({ ...args, dataWrapper }),
     setTslint(args),
     setPackage(args),

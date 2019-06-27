@@ -43,7 +43,10 @@ async function test() {
 
   await genProject({
     outDirname,
+    baseProjectName: 'demo',
+    // optional
     serverProjectName: 'demo-server',
+    // optional
     clientProjectName: 'demo-client',
     callTypes: callTypes,
   });
