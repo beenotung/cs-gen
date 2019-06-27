@@ -24,6 +24,10 @@ export interface Session {
 let sparkId_session_map: Map<string, Session> = new Map();
 let in_session_map = new Map<any, Session>();
 
+export function getAllSession() {
+  return sparkId_session_map.values();
+}
+
 export function newConnection(spark: Spark) {
   sparkId_session_map.set(spark.id, {
     spark,
