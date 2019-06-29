@@ -306,6 +306,12 @@ async function setPackage(args: { projectDirname: string }) {
     '@types/cli-progress',
     '^1.8.1',
   );
+  setPackageDependency(
+    json,
+    'devDependencies',
+    'express-serve-static-core',
+    '^0.1.1',
+  );
   const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
 }
