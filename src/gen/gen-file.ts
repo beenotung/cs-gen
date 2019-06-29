@@ -295,6 +295,7 @@ async function setPackage(args: { projectDirname: string }) {
   const text = bin.toString();
   const json = JSON.parse(text);
   setPackageDependency(json, 'dependencies', 'cli-progress', '^2.1.1');
+  setPackageDependency(json, 'dependencies', 'nestlib', '^0.3.1');
   setPackageDependency(json, 'dependencies', 'engine.io', '^3.3.2');
   setPackageDependency(json, 'dependencies', 'engine.io-client', '^3.3.2');
   setPackageDependency(json, 'dependencies', 'primus', '^7.3.3');
