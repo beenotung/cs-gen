@@ -13,7 +13,7 @@ async function test() {
   for (let i = 0; i < n; i++) {
     const UserId = 'u-' + i;
     const UserName = 'user-' + i;
-    let body: CallInput<CreateUser> = { CallType: 'Command', Type: 'CreateUser', In: { UserId, UserName } };
+    let body: CallInput<CreateUser> = { CallType: 'Command', Type: 'CreateUser', In: { UserId, UserName, Timestamp: Date.now() } };
     await logService.storeObject(body);
     bar.increment(1);
   }
