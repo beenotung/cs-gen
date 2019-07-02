@@ -65,14 +65,18 @@ export function startPrimus(baseUrl: string) {
   return primus;
 }
 
-export function CreateUser(In: Omit<CreateUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<CreateUser['Out']> {
-  const callInput: CallInput<CreateUser> = {
-    CallType: 'Command',
-    Type: 'CreateUser',
+export function Call<C extends Call>(
+  CallType: C['CallType'],
+  Type: C['Type'],
+  In: Omit<C['In'], 'Timestamp'> & { Timestamp?: number },
+): Promise<C['Out']> {
+  const callInput: CallInput<C> = {
+    CallType,
+    Type,
     In: { ...In, Timestamp: In.Timestamp || Date.now() },
   };
   if (coreService) {
-    return coreService.Call<CreateUser>(callInput);
+    return coreService.Call<C>(callInput);
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
@@ -85,94 +89,26 @@ export function CreateUser(In: Omit<CreateUser['In'], 'Timestamp'> & { Timestamp
       });
     });
   });
+}
+
+export function CreateUser(In: Omit<CreateUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<CreateUser['Out']> {
+  return Call<CreateUser>('Command', 'CreateUser', In);
 }
 
 export function RenameUser(In: Omit<RenameUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<RenameUser['Out']> {
-  const callInput: CallInput<RenameUser> = {
-    CallType: 'Command',
-    Type: 'RenameUser',
-    In: { ...In, Timestamp: In.Timestamp || Date.now() },
-  };
-  if (coreService) {
-    return coreService.Call<RenameUser>(callInput);
-  }
-  return new Promise((resolve, reject) => {
-    usePrimus(primus => {
-      primus.send('Call', callInput, data => {
-        if ('error' in data) {
-          reject(data);
-          return;
-        }
-        resolve(data);
-      });
-    });
-  });
+  return Call<RenameUser>('Command', 'RenameUser', In);
 }
 
 export function CreateItem(In: Omit<CreateItem['In'], 'Timestamp'> & { Timestamp?: number }): Promise<CreateItem['Out']> {
-  const callInput: CallInput<CreateItem> = {
-    CallType: 'Command',
-    Type: 'CreateItem',
-    In: { ...In, Timestamp: In.Timestamp || Date.now() },
-  };
-  if (coreService) {
-    return coreService.Call<CreateItem>(callInput);
-  }
-  return new Promise((resolve, reject) => {
-    usePrimus(primus => {
-      primus.send('Call', callInput, data => {
-        if ('error' in data) {
-          reject(data);
-          return;
-        }
-        resolve(data);
-      });
-    });
-  });
+  return Call<CreateItem>('Command', 'CreateItem', In);
 }
 
 export function GetProfile(In: Omit<GetProfile['In'], 'Timestamp'> & { Timestamp?: number }): Promise<GetProfile['Out']> {
-  const callInput: CallInput<GetProfile> = {
-    CallType: 'Query',
-    Type: 'GetProfile',
-    In: { ...In, Timestamp: In.Timestamp || Date.now() },
-  };
-  if (coreService) {
-    return coreService.Call<GetProfile>(callInput);
-  }
-  return new Promise((resolve, reject) => {
-    usePrimus(primus => {
-      primus.send('Call', callInput, data => {
-        if ('error' in data) {
-          reject(data);
-          return;
-        }
-        resolve(data);
-      });
-    });
-  });
+  return Call<GetProfile>('Query', 'GetProfile', In);
 }
 
 export function GetUserList(In: Omit<GetUserList['In'], 'Timestamp'> & { Timestamp?: number }): Promise<GetUserList['Out']> {
-  const callInput: CallInput<GetUserList> = {
-    CallType: 'Query',
-    Type: 'GetUserList',
-    In: { ...In, Timestamp: In.Timestamp || Date.now() },
-  };
-  if (coreService) {
-    return coreService.Call<GetUserList>(callInput);
-  }
-  return new Promise((resolve, reject) => {
-    usePrimus(primus => {
-      primus.send('Call', callInput, data => {
-        if ('error' in data) {
-          reject(data);
-          return;
-        }
-        resolve(data);
-      });
-    });
-  });
+  return Call<GetUserList>('Query', 'GetUserList', In);
 }
 
 export interface SubscribeOptions<T> {
