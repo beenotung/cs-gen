@@ -35,13 +35,19 @@ export class CoreController {
     bar.start(keys.length, 0);
     for (const key of keys) {
       if (!key.endsWith('-Command')) {
+        bar.increment(1);
         continue;
       }
       const call: CallInput<Call> = await this.logService.getObject<Call>(key);
-      if(call.CallType !== 'Command'){
+      if (call.CallType !== 'Command') {
+        bar.increment(1);
         continue;
       }
-      this.coreService.Call(call);
+      try {
+        this.coreService.Call(call);
+      } catch (e) {
+        console.error(`failed when call '${call.CallType}' '${call.Type}':`, e);
+      }
       bar.increment(1);
     }
     status.isReplay = false;
