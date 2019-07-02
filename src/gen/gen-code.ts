@@ -241,7 +241,11 @@ export class ${controllerClassName} {
         bar.increment(1);
         continue;
       }
-      this.${serviceObjectName}.${callTypeName}(call);
+      try {
+        this.${serviceObjectName}.${callTypeName}(call);
+      } catch (e) {
+        console.error(\`failed when call '\${call.CallType}' '\${call.Type}':\`, e);
+      }
       bar.increment(1);
     }
     ${statusName}.isReplay = false;
