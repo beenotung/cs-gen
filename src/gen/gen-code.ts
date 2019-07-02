@@ -237,7 +237,7 @@ export class ${controllerClassName} {
         continue;
       }
       const call: CallInput<${callTypeName}> = await this.logService.getObject<${callTypeName}>(key);
-      if(call.CallType !== '${commandTypeName}'){
+      if (call.CallType !== '${commandTypeName}') {
         bar.increment(1);
         continue;
       }
