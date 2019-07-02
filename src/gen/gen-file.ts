@@ -240,6 +240,7 @@ async function genClientLibFile(args: {
   serverProjectName: string;
   clientProjectName: string;
   serviceApiPath: string;
+  serviceClassName: string;
   callApiPath: string;
   callTypeName: string;
   subscribeTypeName: string;

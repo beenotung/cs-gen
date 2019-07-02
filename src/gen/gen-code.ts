@@ -449,12 +449,20 @@ function attachServer(server: Server) {
   return newCode.trim();
 }
 
+function firstCharToLowerCase(s: string): string {
+  if (s.length < 1) {
+    throw new Error('expect non-empty string');
+  }
+  return s[0].toLowerCase() + s.substring(1);
+}
+
 export function genClientLibCode(args: {
   typeDirname: string;
   typeFilename: string;
   apiDirname: string;
   apiFilename: string;
   serviceApiPath: string;
+  serviceClassName: string;
   callApiPath: string;
   callTypeName: string;
   subscribeTypeName: string;
@@ -467,6 +475,7 @@ export function genClientLibCode(args: {
     typeFilename,
     apiDirname,
     serviceApiPath,
+    serviceClassName,
     callApiPath,
     callTypeName,
     subscribeTypeName,
@@ -474,6 +483,7 @@ export function genClientLibCode(args: {
     timestampFieldName,
     injectTimestamp,
   } = args;
+  const serviceObjectName = firstCharToLowerCase(serviceClassName);
 
   const relativeDir =
     apiDirname === typeDirname
@@ -523,10 +533,10 @@ export interface CallInput<C extends ${callTypeName}> {
   In: C['In'];
 }
 
-let coreService: CoreService;
+let ${serviceObjectName}: ${serviceClassName};
 
 @Controller('${serviceApiPath}')
-export class CoreService {
+export class ${serviceClassName} {
   constructor(baseUrl: string) {
     setBaseUrl(baseUrl);
     injectNestClient(this);
@@ -542,7 +552,7 @@ export class CoreService {
 
 export function startPrimus(baseUrl: string) {
   if (typeof window === 'undefined') {
-    coreService = new CoreService(baseUrl);
+    ${serviceObjectName} = new ${serviceClassName}(baseUrl);
     return;
   }
   const w = window as any;
@@ -560,22 +570,23 @@ export function startPrimus(baseUrl: string) {
 
   return primus;
 }
-${callTypes
-  .filter(c => c.CallType !== subscribeTypeName)
-  .map(
-    ({ CallType, Type }) => `
-export function ${Type}(In: ${wrapInType(Type)}): Promise<${Type}['Out']> {
-  const callInput: CallInput<${Type}> = {
-    CallType: '${CallType}',
-    Type: '${Type}',
+
+export function ${callTypeName}<C extends ${callTypeName}>(
+  CallType: C['CallType'],
+  Type: C['Type'],
+  In: ${wrapInType('C')},
+): Promise<C['Out']> {
+  const callInput: CallInput<C> = {
+    CallType,
+    Type,
     ${inPropCode},
   };
-  if (coreService) {
-    return coreService.${callApiPath}<${Type}>(callInput);
+  if (${serviceObjectName}) {
+    return ${serviceObjectName}.${callApiPath}<C>(callInput);
   }
   return new Promise((resolve, reject) => {
     usePrimus(primus => {
-      primus.send('${callTypeName}', callInput, data => {
+      primus.send('Call', callInput, data => {
         if ('error' in data) {
           reject(data);
           return;
@@ -584,6 +595,13 @@ export function ${Type}(In: ${wrapInType(Type)}): Promise<${Type}['Out']> {
       });
     });
   });
+}
+${callTypes
+  .filter(c => c.CallType !== subscribeTypeName)
+  .map(
+    ({ CallType, Type }) => `
+export function ${Type}(In: ${wrapInType(Type)}): Promise<${Type}['Out']> {
+  return Call<${Type}>('${CallType}', '${Type}', In);
 }
 `,
   )
