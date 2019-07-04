@@ -1,12 +1,12 @@
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {
-  Call,
+  Call as CallType,
   CreateItem,
   CreateUser,
   GetProfile,
   GetUserList,
   RenameUser,
-  Subscribe,
+  Subscribe as SubscribeType,
   SubscribeItems,
 } from './types';
 
@@ -21,7 +21,7 @@ export function usePrimus(f: (primus) => void): void {
   pfs.push(f);
 }
 
-export interface CallInput<C extends Call> {
+export interface CallInput<C extends CallType> {
   CallType: C['CallType'];
   Type: C['Type'];
   In: C['In'];
@@ -37,7 +37,7 @@ export class CoreService {
   }
 
   @Post('Call')
-  async Call<C extends Call>(
+  async Call<C extends CallType>(
     @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
     return undefined;
@@ -65,7 +65,7 @@ export function startPrimus(baseUrl: string) {
   return primus;
 }
 
-export function Call<C extends Call>(
+export function Call<C extends CallType>(
   CallType: C['CallType'],
   Type: C['Type'],
   In: Omit<C['In'], 'Timestamp'> & { Timestamp?: number },
@@ -120,7 +120,7 @@ export interface SubscribeResult {
   cancel: () => void
 }
 
-export function Subscribe<C extends Subscribe>(
+export function Subscribe<C extends SubscribeType>(
   Type: C['Type'],
   In: Omit<C['In'], 'Timestamp'> & { Timestamp?: number },
   options: SubscribeOptions<C['Out']>,

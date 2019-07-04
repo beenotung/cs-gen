@@ -509,8 +509,8 @@ export function genClientLibCode(args: {
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import {
   ${[
-    callTypeName,
-    subscribeTypeName,
+    `${callTypeName} as CallType`,
+    `${subscribeTypeName} as SubscribeType`,
     ...callTypes.map(call => call.Type),
   ].sort().join(`,
   `)},
@@ -527,7 +527,7 @@ export function usePrimus(f: (primus) => void): void {
   pfs.push(f);
 }
 
-export interface CallInput<C extends ${callTypeName}> {
+export interface CallInput<C extends CallType> {
   CallType: C['CallType'];
   Type: C['Type'];
   In: C['In'];
@@ -543,7 +543,7 @@ export class ${serviceClassName} {
   }
 
   @Post('${callApiPath}')
-  async ${callApiPath}<C extends ${callTypeName}>(
+  async ${callApiPath}<C extends CallType>(
     @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
     return undefined;
@@ -571,7 +571,7 @@ export function startPrimus(baseUrl: string) {
   return primus;
 }
 
-export function ${callTypeName}<C extends ${callTypeName}>(
+export function ${callTypeName}<C extends CallType>(
   CallType: C['CallType'],
   Type: C['Type'],
   In: ${wrapInType('C')},
@@ -615,7 +615,7 @@ export interface SubscribeResult {
   cancel: () => void
 }
 
-export function ${subscribeTypeName}<C extends ${subscribeTypeName}>(
+export function ${subscribeTypeName}<C extends SubscribeType>(
   Type: C['Type'],
   In: ${wrapInType('C')},
   options: SubscribeOptions<C['Out']>,
