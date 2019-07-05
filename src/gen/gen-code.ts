@@ -468,7 +468,7 @@ export function genClientLibCode(args: {
   subscribeTypeName: string;
   callTypes: CallMeta[];
   timestampFieldName: string;
-  injectTimestamp: boolean;
+  injectTimestampOnClient: boolean;
 }): string {
   const {
     typeDirname,
@@ -481,7 +481,7 @@ export function genClientLibCode(args: {
     subscribeTypeName,
     callTypes,
     timestampFieldName,
-    injectTimestamp,
+    injectTimestampOnClient,
   } = args;
   const serviceObjectName = firstCharToLowerCase(serviceClassName);
 
@@ -497,11 +497,11 @@ export function genClientLibCode(args: {
   const typeFilePath = `'${relativeDir}/${removeTsExtname(typeFilename)}'`;
 
   const wrapInType = (Type: string) =>
-    injectTimestamp
+    injectTimestampOnClient
       ? `Omit<${Type}['In'], '${timestampFieldName}'> & { ${timestampFieldName}?: number }`
       : `${Type}['In']`;
 
-  const inPropCode = injectTimestamp
+  const inPropCode = injectTimestampOnClient
     ? `In: { ...In, ${timestampFieldName}: In.${timestampFieldName} || Date.now() }`
     : 'In';
 

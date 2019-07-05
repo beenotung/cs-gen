@@ -246,7 +246,7 @@ async function genClientLibFile(args: {
   subscribeTypeName: string;
   callTypes: CallMeta[];
   timestampFieldName: string;
-  injectTimestamp: boolean;
+  injectTimestampOnClient: boolean;
 }) {
   const { outDirname, clientProjectName, apiDirname, apiFilename } = args;
   const dirPath = path.join(outDirname, clientProjectName, 'src', apiDirname);
@@ -398,7 +398,7 @@ function hasNestProject(args: { projectDirname: string }): Promise<boolean> {
   return hasFile(filename);
 }
 
-export function injectTimestampField(args: {
+export function injectTimestampFieldOnCall(args: {
   call: PartialCallMeta;
   timestampFieldName: string;
 }): void {
@@ -481,7 +481,8 @@ export const defaultGenProjectArgs = {
   logicProcessorFilename: 'logic-processor.ts',
   logicProcessorClassName: 'LogicProcessor',
   timestampFieldName: 'Timestamp',
-  injectTimestamp: true,
+  injectTimestampField: true,
+  injectTimestampOnClient: true,
 };
 
 export async function genProject(_args: {
@@ -513,7 +514,8 @@ export async function genProject(_args: {
   apiDirname?: string;
   apiFilename?: string;
   timestampFieldName?: string;
-  injectTimestamp?: boolean;
+  injectTimestampField?: boolean;
+  injectTimestampOnClient?: boolean;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
@@ -530,7 +532,7 @@ export async function genProject(_args: {
     clientProjectName,
     typeDirname,
     logicProcessorDirname,
-    injectTimestamp,
+    injectTimestampField,
     timestampFieldName,
     callTypes,
   } = __args;
@@ -542,9 +544,9 @@ export async function genProject(_args: {
     projectDirname: serverProjectDirname,
   };
 
-  if (injectTimestamp) {
+  if (injectTimestampField) {
     callTypes.forEach(call =>
-      injectTimestampField({ call, timestampFieldName }),
+      injectTimestampFieldOnCall({ call, timestampFieldName }),
     );
   }
 
