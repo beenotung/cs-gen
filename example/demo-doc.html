@@ -60,40 +60,44 @@
 <script>
 window.onhashchange=function(){
   var Type = window.location.hash.substr(1);
+  var In;
+  var Out;
   switch (Type) {
     case 'CreateUser': {
-      document.getElementById('in').textContent = "{ UserId: string, UserName: string, Timestamp: number }";
-      document.getElementById('out').textContent = "({ Success: true } | { Success: false; Reason: string })";
+      In = "{ UserId: string, UserName: string, Timestamp: number }";
+      Out = "({ Success: true } | { Success: false; Reason: string })";
       break;
     }
     case 'RenameUser': {
-      document.getElementById('in').textContent = "{ UserId: string, NewUsername: string, Timestamp: number }";
-      document.getElementById('out').textContent = "({ Success: true } | { Success: false; Reason: string })";
+      In = "{ UserId: string, NewUsername: string, Timestamp: number }";
+      Out = "({ Success: true } | { Success: false; Reason: string })";
       break;
     }
     case 'CreateItem': {
-      document.getElementById('in').textContent = "{ ItemName: string, UserId: string, Timestamp: number }";
-      document.getElementById('out').textContent = "({ Success: true } | { Success: false; Reason: string })";
+      In = "{ ItemName: string, UserId: string, Timestamp: number }";
+      Out = "({ Success: true } | { Success: false; Reason: string })";
       break;
     }
     case 'GetProfile': {
-      document.getElementById('in').textContent = "{ UserId: string, Timestamp: number }";
-      document.getElementById('out').textContent = "{ UserId: string, UserName: string }";
+      In = "{ UserId: string, Timestamp: number }";
+      Out = "{ UserId: string, UserName: string }";
       break;
     }
     case 'GetUserList': {
-      document.getElementById('in').textContent = "{ Timestamp: number }";
-      document.getElementById('out').textContent = "Array<{ UserId: string, UserName: string }>";
+      In = "{ Timestamp: number }";
+      Out = "Array<{ UserId: string, UserName: string }>";
       break;
     }
     case 'SubscribeItems': {
-      document.getElementById('in').textContent = "{ Timestamp: number }";
-      document.getElementById('out').textContent = "{ id: string }";
+      In = "{ Timestamp: number }";
+      Out = "{ id: string }";
       break;
     }
     default:
       console.error('unknown Type:', Type);
   }
+  document.getElementById('in').textContent = In;
+  document.getElementById('out').textContent = Out;
 };
 </script>
 </body>
