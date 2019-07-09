@@ -836,16 +836,18 @@ ${prefix}</ul>`;
 <script>
 window.onhashchange=function(){
   var Type = window.location.hash.substr(1);
+  var In;
+  var Out;
   switch (Type) {
     ${callTypes
       .map(
         ({ Type, In, Out }) => `case '${Type}': {
-      document.getElementById('in').textContent = ${JSON.stringify(
+      In = ${JSON.stringify(
         In,
         null,
         2,
       )};
-      document.getElementById('out').textContent = ${JSON.stringify(
+      Out = ${JSON.stringify(
         Out,
         null,
         2,
@@ -859,6 +861,8 @@ window.onhashchange=function(){
     default:
       console.error('unknown Type:', Type);
   }
+  document.getElementById('in').textContent = In;
+  document.getElementById('out').textContent = Out;
 };
 </script>
 </body>
