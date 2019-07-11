@@ -3,6 +3,10 @@ import { genTsType } from 'gen-ts-type';
 import { CallMeta } from '../types';
 import { PartialCallMeta } from '../utils';
 
+export function formatString(s: string): string {
+  return '`' + s.replace(/\\/g, '\\\\').replace(/`/g, '\\`') + '`';
+}
+
 function removeTsExtname(s: string): string {
   return s.replace(/\.ts$/, '');
 }
@@ -842,16 +846,8 @@ window.onhashchange=function(){
     ${callTypes
       .map(
         ({ Type, In, Out }) => `case '${Type}': {
-      In = ${JSON.stringify(
-        In,
-        null,
-        2,
-      )};
-      Out = ${JSON.stringify(
-        Out,
-        null,
-        2,
-      )};
+      In = ${formatString(In)};
+      Out = ${formatString(Out)};
       break;
     }
     `,
