@@ -16,8 +16,14 @@ export type CreateItem = {
   In: { ItemName: string, UserId: string, Timestamp: number },
   Out: ({ Success: true } | { Success: false; Reason: string }),
 };
+export type BlockUser = {
+  CallType: 'Command';
+  Type: 'BlockUser',
+  In: { UserId: string, Timestamp: number },
+  Out: ({ Success: true } | { Success: false; Reason: string }),
+};
 
-export type Command = CreateUser | RenameUser | CreateItem;
+export type Command = CreateUser | RenameUser | CreateItem | BlockUser;
 
 export type GetProfile = {
   CallType: 'Query';

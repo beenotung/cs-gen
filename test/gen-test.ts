@@ -22,6 +22,12 @@ export let callTypes = flattenCallMetas({
       In: '{ ItemName: string, UserId: string }',
       Out: successType,
     },
+    {
+      Type: 'BlockUser',
+      In: `{ UserId: string }`,
+      Out: successType,
+      Admin: true,
+    },
   ],
   queryTypes: [
     { Type: 'GetProfile', In: userIdType, Out: userType },

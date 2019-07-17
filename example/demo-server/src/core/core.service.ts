@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
+  BlockUser,
   Call,
   Command,
   CreateItem,
@@ -36,6 +37,9 @@ export class CoreService {
       case 'CreateItem':
         method = this.CreateItem;
         break;
+      case 'BlockUser':
+        method = this.BlockUser;
+        break;
       case 'GetProfile':
         method = this.GetProfile;
         break;
@@ -69,6 +73,10 @@ export class CoreService {
 
   CreateItem(In: CreateItem['In']): CreateItem['Out'] {
     return not_impl('CreateItem');
+  }
+
+  BlockUser(In: BlockUser['In']): BlockUser['Out'] {
+    return not_impl('BlockUser');
   }
 
   GetProfile(In: GetProfile['In']): GetProfile['Out'] {
