@@ -492,6 +492,7 @@ export async function genProject(_args: {
   baseProjectName: string;
   serverProjectName?: string;
   clientProjectName?: string;
+  adminProjectName?: string;
   typeDirname?: string;
   typeFilename?: string;
   callTypes: CallMeta[];
@@ -524,12 +525,15 @@ export async function genProject(_args: {
       _args.serverProjectName || _args.baseProjectName + '-server',
     clientProjectName:
       _args.clientProjectName || _args.baseProjectName + '-client',
+    adminProjectName:
+      _args.adminProjectName || _args.baseProjectName + '-admin',
     docFilename: _args.docFilename || _args.baseProjectName + '-doc.html',
   };
   const {
     outDirname,
     serverProjectName,
     clientProjectName,
+    adminProjectName,
     typeDirname,
     logicProcessorDirname,
     injectTimestampField,
@@ -539,6 +543,7 @@ export async function genProject(_args: {
   await mkdirp(outDirname);
   const serverProjectDirname = path.join(outDirname, serverProjectName);
   const clientProjectDirname = path.join(outDirname, clientProjectName);
+  const adminProjectDirname = path.join(outDirname, adminProjectName);
   const args = {
     ...__args,
     projectDirname: serverProjectDirname,
@@ -561,6 +566,7 @@ export async function genProject(_args: {
   await Promise.all([
     mkdirp(path.join(serverProjectDirname, '.idea')),
     mkdirp(path.join(clientProjectDirname, '.idea')),
+    mkdirp(path.join(adminProjectDirname, '.idea')),
     mkdirp(path.join(srcDirname, typeDirname)),
     mkdirp(path.join(srcDirname, logicProcessorDirname)),
   ]);
@@ -582,7 +588,13 @@ export async function genProject(_args: {
       projectDirname: clientProjectDirname,
       projectName: clientProjectName,
     }),
+    setIdeaConfig({
+      projectDirname: adminProjectDirname,
+      projectName: adminProjectName,
+    }),
     setEditorConfig(args),
+    updateMainFile(args),
+    updateGitIgnore(args),
     genTypeFile({
       ...args,
       projectDirname: serverProjectDirname,
@@ -590,10 +602,23 @@ export async function genProject(_args: {
     genTypeFile({
       ...args,
       projectDirname: clientProjectDirname,
+      callTypes: callTypes.filter(call => !call.Admin),
     }),
-    updateMainFile(args),
-    updateGitIgnore(args),
-    genClientLibFile(args),
+    genTypeFile({
+      ...args,
+      projectDirname: adminProjectDirname,
+      callTypes: callTypes.filter(call => call.Admin),
+    }),
+    genClientLibFile({
+      ...args,
+      clientProjectName: clientProjectDirname,
+      callTypes: callTypes.filter(call => !call.Admin),
+    }),
+    genClientLibFile({
+      ...args,
+      clientProjectName: adminProjectDirname,
+      callTypes: callTypes.filter(call => call.Admin),
+    }),
   ]);
   await genModuleFile(args);
   await Promise.all([

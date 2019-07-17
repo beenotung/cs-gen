@@ -17,7 +17,9 @@ export interface Call<
   Out: Out;
 }
 
-export type CallMeta = Call<string, string, string, string>;
+export type CallMeta = Call<string, string, string, string> & {
+  Admin?: boolean;
+};
 /*
 export type Call<
   // _CallType = CallType,
