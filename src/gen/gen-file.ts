@@ -611,12 +611,12 @@ export async function genProject(_args: {
     }),
     genClientLibFile({
       ...args,
-      clientProjectName: clientProjectDirname,
+      clientProjectName,
       callTypes: callTypes.filter(call => !call.Admin),
     }),
     genClientLibFile({
       ...args,
-      clientProjectName: adminProjectDirname,
+      clientProjectName: adminProjectName,
       callTypes: callTypes.filter(call => call.Admin),
     }),
   ]);
