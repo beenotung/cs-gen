@@ -259,6 +259,12 @@ async function genClientLibFile(args: {
 async function setTslint(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const filename = path.join(projectDirname, 'tslint.json');
+
+  if (!(await hasFile(filename))) {
+    // skip setup if the project is not using tslint
+    // e.g. client and admin don't have tslint by default
+    return;
+  }
   const bin = await readFile(filename);
   const text = bin.toString();
   const json = JSON.parse(text);
@@ -289,7 +295,7 @@ function setPackageDependency(
   json[depType] = newDep;
 }
 
-async function setPackage(args: { projectDirname: string }) {
+async function setServerPackage(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const filename = path.join(projectDirname, 'package.json');
   const bin = await readFile(filename);
@@ -313,6 +319,17 @@ async function setPackage(args: { projectDirname: string }) {
     'express-serve-static-core',
     '^0.1.1',
   );
+  const newText = JSON.stringify(json, null, 2);
+  await writeFile(filename, newText);
+}
+
+async function setClientPackage(args: { projectDirname: string }) {
+  const { projectDirname } = args;
+  const filename = path.join(projectDirname, 'package.json');
+  const bin = await readFile(filename);
+  const text = bin.toString();
+  const json = JSON.parse(text);
+  setPackageDependency(json, 'devDependencies', 'typescript-primus', '^1.0.0');
   const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
 }
@@ -578,8 +595,11 @@ export async function genProject(_args: {
   await Promise.all([
     genDocumentationHtmlFile(args),
     genLogicProcessorFile({ ...args, dataWrapper }),
-    setTslint(args),
-    setPackage(args),
+    setTslint({ projectDirname: serverProjectDirname }),
+    setTslint({ projectDirname: clientProjectDirname }),
+    setTslint({ projectDirname: adminProjectDirname }),
+    setServerPackage({ projectDirname: serverProjectDirname }),
+    setClientPackage({ projectDirname: clientProjectDirname }),
     setIdeaConfig({
       projectDirname: serverProjectDirname,
       projectName: serverProjectName,

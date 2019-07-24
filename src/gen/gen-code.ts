@@ -518,6 +518,7 @@ export function genClientLibCode(args: {
 
   const code = `
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
+import Primus from 'typescript-primus';
 import {
   ${[
     `${callTypeName} as CallType`,
@@ -527,10 +528,14 @@ import {
   `)},
 } from ${typeFilePath};
 
-let primus;
-let pfs: Array<(primus) => void> = [];
+interface IPrimus extends Primus {
+  send(command: string, data: any, cb?: (data: any) => void): void;
+}
 
-export function usePrimus(f: (primus) => void): void {
+let primus: IPrimus;
+let pfs: Array<(primus: IPrimus) => void> = [];
+
+export function usePrimus(f: (primus: IPrimus) => void): void {
   if (primus) {
     f(primus);
     return;
@@ -557,7 +562,7 @@ export class ${serviceClassName} {
   async ${callApiPath}<C extends CallType>(
     @Body() body: CallInput<C>,
   ): Promise<C['Out']> {
-    return undefined;
+    return undefined as any;
   }
 }
 
@@ -618,7 +623,7 @@ export function ${Type}(In: ${wrapInType(Type)}): Promise<${Type}['Out']> {
   )
   .join('')}
 export interface SubscribeOptions<T> {
-  onError: (err) => void
+  onError: (err: any) => void
   onEach: (Out: T) => void
 }
 
@@ -653,7 +658,7 @@ export function ${subscribeTypeName}<C extends SubscribeType>(
       const { id } = data;
       primus.on(id, data => {
         if (!cancelled) {
-          options.onEach(data);
+          options.onEach(data as any);
         }
       });
       res.cancel = () => {
