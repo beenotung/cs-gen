@@ -38,7 +38,7 @@ export class CoreService {
 
   @Post('Call')
   async Call<C extends CallType>(
-    @Body() body: CallInput<C>,
+    @Body() _body: CallInput<C>,
   ): Promise<C['Out']> {
     return undefined as any;
   }

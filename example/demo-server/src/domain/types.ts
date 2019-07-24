@@ -51,7 +51,7 @@ export type Subscribe = SubscribeItems;
 
 export type Call = Command | Query | Subscribe;
 
-function checkCallType(t: {
+function checkCallType(_t: {
   CallType: 'Command' | 'Query' | 'Subscribe';
   Type: string;
   In: any;
