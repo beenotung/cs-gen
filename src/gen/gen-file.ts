@@ -287,6 +287,9 @@ function setPackageDependency(
   name: string,
   version: string,
 ): void {
+  if (!json[depType]) {
+    json[depType] = {};
+  }
   json[depType][name] = version;
   const newDep = {};
   Object.entries(json[depType])
@@ -326,6 +329,9 @@ async function setServerPackage(args: { projectDirname: string }) {
 async function setClientPackage(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const filename = path.join(projectDirname, 'package.json');
+  if (!(await hasFile(filename))) {
+    await exec('npm init --yes', { cwd: projectDirname });
+  }
   const bin = await readFile(filename);
   const text = bin.toString();
   const json = JSON.parse(text);
@@ -600,6 +606,7 @@ export async function genProject(_args: {
     setTslint({ projectDirname: adminProjectDirname }),
     setServerPackage({ projectDirname: serverProjectDirname }),
     setClientPackage({ projectDirname: clientProjectDirname }),
+    setClientPackage({ projectDirname: adminProjectDirname }),
     setIdeaConfig({
       projectDirname: serverProjectDirname,
       projectName: serverProjectName,
