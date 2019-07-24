@@ -1,14 +1,9 @@
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
 import Primus from 'typescript-primus';
 import {
+  BlockUser,
   Call as CallType,
-  CreateItem,
-  CreateUser,
-  GetProfile,
-  GetUserList,
-  RenameUser,
   Subscribe as SubscribeType,
-  SubscribeItems,
 } from './types';
 
 interface IPrimus extends Primus {
@@ -96,24 +91,8 @@ export function Call<C extends CallType>(
   });
 }
 
-export function CreateUser(In: Omit<CreateUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<CreateUser['Out']> {
-  return Call<CreateUser>('Command', 'CreateUser', In);
-}
-
-export function RenameUser(In: Omit<RenameUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<RenameUser['Out']> {
-  return Call<RenameUser>('Command', 'RenameUser', In);
-}
-
-export function CreateItem(In: Omit<CreateItem['In'], 'Timestamp'> & { Timestamp?: number }): Promise<CreateItem['Out']> {
-  return Call<CreateItem>('Command', 'CreateItem', In);
-}
-
-export function GetProfile(In: Omit<GetProfile['In'], 'Timestamp'> & { Timestamp?: number }): Promise<GetProfile['Out']> {
-  return Call<GetProfile>('Query', 'GetProfile', In);
-}
-
-export function GetUserList(In: Omit<GetUserList['In'], 'Timestamp'> & { Timestamp?: number }): Promise<GetUserList['Out']> {
-  return Call<GetUserList>('Query', 'GetUserList', In);
+export function BlockUser(In: Omit<BlockUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<BlockUser['Out']> {
+  return Call<BlockUser>('Command', 'BlockUser', In);
 }
 
 export interface SubscribeOptions<T> {
@@ -162,11 +141,4 @@ export function Subscribe<C extends SubscribeType>(
     });
   });
   return res;
-}
-
-export function SubscribeItems(
-  In: Omit<SubscribeItems['In'], 'Timestamp'> & { Timestamp?: number },
-  options: SubscribeOptions<SubscribeItems['Out']>,
-): SubscribeResult {
-  return Subscribe<SubscribeItems>('SubscribeItems', In, options);
 }

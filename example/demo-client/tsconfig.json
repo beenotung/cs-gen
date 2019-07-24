@@ -6,11 +6,15 @@
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "strict": true,
+    "strictNullChecks": true,
     "noImplicitThis": true,
+    "noImplicitAny": true,
     "skipLibCheck": true,
     "lib": [
       "dom",
-      "es2015"
+      "es2015",
+      "es2018"
     ],
     "downlevelIteration": true,
     "module": "commonjs",
