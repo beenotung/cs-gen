@@ -7,6 +7,13 @@ export function formatString(s: string): string {
   return '`' + s.replace(/\\/g, '\\\\').replace(/`/g, '\\`') + '`';
 }
 
+export function removeTailingSpace(s: string): string {
+  return s
+    .split('\n')
+    .map(s => s.trimRight())
+    .join('\n');
+}
+
 function removeTsExtname(s: string): string {
   return s.replace(/\.ts$/, '');
 }
@@ -846,8 +853,8 @@ window.onhashchange=function(){
     ${callTypes
       .map(
         ({ Type, In, Out }) => `case '${Type}': {
-      In = ${formatString(In)};
-      Out = ${formatString(Out)};
+      In = ${removeTailingSpace(formatString(In))};
+      Out = ${removeTailingSpace(formatString(Out))};
       break;
     }
     `,
