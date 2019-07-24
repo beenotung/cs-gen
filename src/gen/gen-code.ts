@@ -374,7 +374,7 @@ export type ${typeName} = ${types.map(({ Type }) => Type).join(' | ') ||
   .join('')}
 export type ${callTypeName} = ${commandTypeName} | ${queryTypeName} | ${subscribeTypeName};
 
-function checkCallType(t: {
+function checkCallType(_t: {
   CallType: '${commandTypeName}' | '${queryTypeName}' | '${subscribeTypeName}';
   Type: string;
   In: any;
@@ -560,7 +560,7 @@ export class ${serviceClassName} {
 
   @Post('${callApiPath}')
   async ${callApiPath}<C extends CallType>(
-    @Body() body: CallInput<C>,
+    @Body() _body: CallInput<C>,
   ): Promise<C['Out']> {
     return undefined as any;
   }
