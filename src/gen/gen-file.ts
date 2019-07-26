@@ -335,6 +335,7 @@ async function setClientPackage(args: { projectDirname: string }) {
   const bin = await readFile(filename);
   const text = bin.toString();
   const json = JSON.parse(text);
+  setPackageDependency(json, 'dependencies', 'nest-client', '^0.5.0');
   setPackageDependency(json, 'devDependencies', 'typescript-primus', '^1.0.0');
   const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
