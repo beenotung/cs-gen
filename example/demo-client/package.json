@@ -13,7 +13,7 @@
   "dependencies": {
     "@beenotung/tslib": "^14.11.0",
     "cqrs-exp": "file:../..",
-    "nest-client": "^0.4.3",
+    "nest-client": "^0.5.0",
     "primus": "^7.3.3"
   },
   "devDependencies": {
