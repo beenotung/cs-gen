@@ -134,7 +134,7 @@ export class ${serviceClassName} {
         .trim()}
       default:
         const x: never = _type;
-        console.log('not implemented call type:', x);
+        console.log(\`not implemented, CallType: \${CallType}, Type: \${Type}\`);
         throw new HttpException('not implemented call type:' + x, HttpStatus.NOT_IMPLEMENTED);
     }
     method = method.bind(this);
