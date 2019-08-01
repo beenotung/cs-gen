@@ -55,6 +55,8 @@ async function test() {
     // optional
     clientProjectName: 'demo-client',
     callTypes: callTypes,
+    // injectTimestampOnClient: false,
+    // ws: false,
   });
 
   console.log('all passed.');

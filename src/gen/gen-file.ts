@@ -210,12 +210,20 @@ async function genModuleFile(args: {
   await writeFile(filename, code);
 }
 
-async function updateMainFile(args: { projectDirname: string }) {
+async function updateMainFile(args: {
+  projectDirname: string;
+  primusGlobalName: string;
+  primusPath: string;
+  ws: boolean;
+}) {
   const srcPath = getSrcDirname(args);
   const mainPath = path.join(srcPath, 'main.ts');
-  const originalMainCode = (await readFile(mainPath)).toString();
-  const newMainCode = genMainCode(originalMainCode);
-  if (originalMainCode.trim() !== newMainCode.trim()) {
+  const originalCode = (await readFile(mainPath)).toString();
+  const newMainCode = genMainCode({
+    ...args,
+    originalCode,
+  });
+  if (originalCode.trim() !== newMainCode.trim()) {
     await writeFile(mainPath, newMainCode);
   }
 }
@@ -247,6 +255,9 @@ async function genClientLibFile(args: {
   callTypes: CallMeta[];
   timestampFieldName: string;
   injectTimestampOnClient: boolean;
+  primusGlobalName: string;
+  primusPath: string;
+  ws: boolean;
 }) {
   const { outDirname, clientProjectName, apiDirname, apiFilename } = args;
   const dirPath = path.join(outDirname, clientProjectName, 'src', apiDirname);
@@ -507,6 +518,9 @@ export const defaultGenProjectArgs = {
   timestampFieldName: 'Timestamp',
   injectTimestampField: true,
   injectTimestampOnClient: true,
+  primusGlobalName: 'Primus',
+  primusPath: '/primus',
+  ws: true,
 };
 
 export async function genProject(_args: {
@@ -541,6 +555,9 @@ export async function genProject(_args: {
   timestampFieldName?: string;
   injectTimestampField?: boolean;
   injectTimestampOnClient?: boolean;
+  primusGlobalName?: string;
+  primusPath?: string;
+  ws?: boolean;
 }) {
   const __args = {
     ...defaultGenProjectArgs,

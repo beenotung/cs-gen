@@ -409,8 +409,20 @@ function insert(
   return content.substring(0, i) + insertContent + content.substring(i);
 }
 
-export function genMainCode(originalCode: string): string {
-  if (originalCode.includes('attachServer')) {
+export function genMainCode(args: {
+  originalCode: string;
+  primusGlobalName: string;
+  primusPath: string;
+  ws: boolean;
+}): string {
+  const { originalCode, primusGlobalName, primusPath, ws } = args;
+  if (!ws) {
+    return originalCode;
+  }
+  if (
+    originalCode.includes('Primus') ||
+    originalCode.includes('attachServer')
+  ) {
     return originalCode;
   }
   let newCode = insert(
@@ -433,7 +445,8 @@ export function usePrimus(f: (primus) => void): void {
 
 function attachServer(server: Server) {
   const primus_options = {
-    pathname: '/primus',
+    pathname: ${JSON.stringify(primusPath)},
+    global: ${JSON.stringify(primusGlobalName)},
     parser: 'JSON',
     compression: true,
     transformer: 'engine.io',
@@ -480,6 +493,8 @@ export function genClientLibCode(args: {
   callTypes: CallMeta[];
   timestampFieldName: string;
   injectTimestampOnClient: boolean;
+  primusGlobalName: string;
+  ws: boolean;
 }): string {
   const {
     typeDirname,
@@ -493,6 +508,8 @@ export function genClientLibCode(args: {
     callTypes,
     timestampFieldName,
     injectTimestampOnClient,
+    primusGlobalName,
+    ws,
   } = args;
   const serviceObjectName = firstCharToLowerCase(serviceClassName);
 
@@ -516,17 +533,25 @@ export function genClientLibCode(args: {
     ? `In: { ...In, ${timestampFieldName}: In.${timestampFieldName} || Date.now() }`
     : 'In';
 
-  const code = `
+  let code = `
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
-import Primus from 'typescript-primus';
 import {
   ${[
     `${callTypeName} as CallType`,
-    `${subscribeTypeName} as SubscribeType`,
-    ...callTypes.map(call => call.Type),
-  ].sort().join(`,
+    !ws ? '' : `${subscribeTypeName} as SubscribeType`,
+    ...callTypes
+      .filter(call => ws || call.CallType !== subscribeTypeName)
+      .map(call => call.Type),
+  ]
+    .filter(s => s)
+    .sort().join(`,
   `)},
 } from ${typeFilePath};
+${
+  !ws
+    ? ''
+    : `
+import Primus from 'typescript-primus';
 
 interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;
@@ -541,6 +566,8 @@ export function usePrimus(f: (primus: IPrimus) => void): void {
     return;
   }
   pfs.push(f);
+}
+`.trim()
 }
 
 export interface CallInput<C extends CallType> {
@@ -567,12 +594,15 @@ export class ${serviceClassName} {
 }
 
 export function startPrimus(baseUrl: string) {
+  ${
+    ws
+      ? `
   if (typeof window === 'undefined') {
     ${serviceObjectName} = new ${serviceClassName}(baseUrl);
     return;
   }
   const w = window as any;
-  primus = new w.Primus(baseUrl);
+  primus = new w.${primusGlobalName}(baseUrl);
 
   pfs.forEach(f => f(primus));
   pfs = [];
@@ -585,6 +615,11 @@ export function startPrimus(baseUrl: string) {
   });
 
   return primus;
+  `.trim()
+      : `
+  ${serviceObjectName} = new ${serviceClassName}(baseUrl);
+  `.trim()
+  }
 }
 
 export function ${callTypeName}<C extends CallType>(
@@ -597,6 +632,9 @@ export function ${callTypeName}<C extends CallType>(
     Type,
     ${inPropCode},
   };
+  ${
+    ws
+      ? `
   if (${serviceObjectName}) {
     return ${serviceObjectName}.${callApiPath}<C>(callInput);
   }
@@ -611,6 +649,11 @@ export function ${callTypeName}<C extends CallType>(
       });
     });
   });
+  `.trim()
+      : `
+  return ${serviceObjectName}.${callApiPath}<C>(callInput);
+  `.trim()
+  }
 }
 ${callTypes
   .filter(c => c.CallType !== subscribeTypeName)
@@ -621,7 +664,10 @@ export function ${Type}(In: ${wrapInType(Type)}): Promise<${Type}['Out']> {
 }
 `,
   )
-  .join('')}
+  .join('')}`;
+  code += !ws
+    ? ''
+    : `
 export interface SubscribeOptions<T> {
   onError: (err: any) => void
   onEach: (Out: T) => void
@@ -852,8 +898,8 @@ ${prefix}</ul>`;
 <script>
 window.onhashchange=function(){
   var Type = window.location.hash.substr(1);
-  var In;
-  var Out;
+  var In = 'unknown';
+  var Out = 'unknown';
   switch (Type) {
     ${callTypes
       .map(
