@@ -512,6 +512,8 @@ export function genClientLibCode(args: {
     ws,
   } = args;
   const serviceObjectName = firstCharToLowerCase(serviceClassName);
+  const hasSubscribe =
+    ws && callTypes.some(call => call.CallType === subscribeTypeName);
 
   const relativeDir =
     apiDirname === typeDirname
@@ -538,7 +540,7 @@ import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-clien
 import {
   ${[
     `${callTypeName} as CallType`,
-    !ws ? '' : `${subscribeTypeName} as SubscribeType`,
+    !hasSubscribe ? '' : `${subscribeTypeName} as SubscribeType`,
     ...callTypes
       .filter(call => ws || call.CallType !== subscribeTypeName)
       .map(call => call.Type),
@@ -665,7 +667,7 @@ export function ${Type}(In: ${wrapInType(Type)}): Promise<${Type}['Out']> {
 `,
   )
   .join('')}`;
-  code += !ws
+  code += !hasSubscribe
     ? ''
     : `
 export interface SubscribeOptions<T> {

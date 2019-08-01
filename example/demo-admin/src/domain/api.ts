@@ -2,7 +2,6 @@ import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-clien
 import {
   BlockUser,
   Call as CallType,
-  Subscribe as SubscribeType,
 } from './types';
 import Primus from 'typescript-primus';
 
@@ -93,52 +92,4 @@ export function Call<C extends CallType>(
 
 export function BlockUser(In: Omit<BlockUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<BlockUser['Out']> {
   return Call<BlockUser>('Command', 'BlockUser', In);
-}
-
-export interface SubscribeOptions<T> {
-  onError: (err: any) => void
-  onEach: (Out: T) => void
-}
-
-export interface SubscribeResult {
-  cancel: () => void
-}
-
-export function Subscribe<C extends SubscribeType>(
-  Type: C['Type'],
-  In: Omit<C['In'], 'Timestamp'> & { Timestamp?: number },
-  options: SubscribeOptions<C['Out']>,
-): SubscribeResult {
-  if (coreService) {
-    throw new Error('Subscribe is not supported on node.js client yet');
-  }
-  const callInput: CallInput<C> = {
-    CallType: 'Subscribe',
-    Type,
-    In: { ...In, Timestamp: In.Timestamp || Date.now() },
-  };
-  let cancelled = false;
-  const res: SubscribeResult = { cancel: () => cancelled = true };
-  usePrimus(primus => {
-    primus.send('Call', callInput, data => {
-      if ('error' in data) {
-        options.onError(data);
-        return;
-      }
-      if (cancelled) {
-        return;
-      }
-      const { id } = data;
-      primus.on(id, data => {
-        if (!cancelled) {
-          options.onEach(data as any);
-        }
-      });
-      res.cancel = () => {
-        cancelled = true;
-        primus.send('CancelSubscribe', { id });
-      };
-    });
-  });
-  return res;
 }
