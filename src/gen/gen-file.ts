@@ -137,6 +137,7 @@ async function genControllerFile(args: {
   controllerFilename: string;
   statusFilename: string;
   statusName: string;
+  ws: boolean;
 }) {
   const { controllerFilename } = args;
   const code = genControllerCode(args);

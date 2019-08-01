@@ -194,6 +194,7 @@ export function genControllerCode(args: {
   callApiPath: string;
   statusFilename: string;
   statusName: string;
+  ws: boolean;
 }) {
   const {
     callTypeName,
@@ -205,6 +206,7 @@ export function genControllerCode(args: {
     controllerClassName,
     statusName,
     statusFilename,
+    ws,
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
@@ -215,15 +217,22 @@ import { ${callTypeName} } from ${getTypeFileImportPath(args)};
 import { CallInput, LogService } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
-import { usePrimus } from '../main';
 import { ok, rest_return } from 'nestlib';
+import { ${statusName} } from './${removeTsExtname(statusFilename)}';
+import { Response } from 'express-serve-static-core';
+${
+  !ws
+    ? ''
+    : `
 import {
   closeConnection,
   endSparkCall,
   newConnection,
   startSparkCall,
 } from './connection';
-import { ${statusName} } from './${removeTsExtname(statusFilename)}';
+import { usePrimus } from '../main';
+`.trim()
+}
 
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {
@@ -249,7 +258,10 @@ export class ${controllerClassName} {
         bar.increment(1);
         continue;
       }
-      const call: CallInput<${callTypeName}> = await this.logService.getObject<${callTypeName}>(key);
+      const call = await this.logService.getObject<CallInput<${callTypeName}>>(key);
+      if (call === null) {
+        continue;
+      }
       if (call.CallType !== '${commandTypeName}') {
         bar.increment(1);
         continue;
@@ -262,7 +274,10 @@ export class ${controllerClassName} {
       bar.increment(1);
     }
     ${statusName}.isReplay = false;
-    bar.stop();
+    bar.stop();${
+      !ws
+        ? ''
+        : `
     usePrimus(primus => {
       primus.on('connection', spark => {
         newConnection(spark);
@@ -287,12 +302,13 @@ export class ${controllerClassName} {
           }
         });
       });
-    });
+    });`
+    }
   }
 
   @Post('${callApiPath}')
   async ${callApiPath}<C extends ${callTypeName}>(
-    @Res() res,
+    @Res() res: Response,
     @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
