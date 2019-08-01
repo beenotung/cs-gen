@@ -61,8 +61,8 @@
 <script>
 window.onhashchange=function(){
   var Type = window.location.hash.substr(1);
-  var In;
-  var Out;
+  var In = 'unknown';
+  var Out = 'unknown';
   switch (Type) {
     case 'CreateUser': {
       In = `{ UserId: string, UserName: string, Timestamp: number }`;

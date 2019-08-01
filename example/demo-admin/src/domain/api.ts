@@ -1,10 +1,10 @@
 import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
-import Primus from 'typescript-primus';
 import {
   BlockUser,
   Call as CallType,
   Subscribe as SubscribeType,
 } from './types';
+import Primus from 'typescript-primus';
 
 interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;

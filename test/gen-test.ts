@@ -56,6 +56,8 @@ async function test() {
     clientProjectName: 'demo-client',
     callTypes: callTypes,
     // injectTimestampOnClient: false,
+    // primusGlobalName: 'AppPrimus',
+    // primusPath: 'app-primus',
     // ws: false,
   });
 

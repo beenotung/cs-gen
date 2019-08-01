@@ -18,7 +18,8 @@ export function usePrimus(f: (primus) => void): void {
 
 function attachServer(server: Server) {
   const primus_options = {
-    pathname: '/primus',
+    pathname: "/primus",
+    global: "Primus",
     parser: 'JSON',
     compression: true,
     transformer: 'engine.io',
