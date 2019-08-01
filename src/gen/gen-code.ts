@@ -101,9 +101,11 @@ import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${remove
   )}';
 import { CallInput } from 'cqrs-exp';
 
+// tslint:disable:no-unused-variable
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
 }
+// tslint:enable:no-unused-variable
 
 @Injectable()
 export class ${serviceClassName} {
