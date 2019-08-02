@@ -866,8 +866,8 @@ export function genDocumentationHtmlCode(args: {
     `<h2>${name} APIs</h2>
 ${prefix}<ul>${calls
       .map(
-        call => `
-${prefix}  <li><a href="#${call.Type}">${call.Type}</a></li>`,
+        ({ Type, Admin }) => `
+${prefix}  <li><a href="#${Type}">${Type}${Admin ? ' (Admin)' : ''}</a></li>`,
       )
       .join('')}
 ${prefix}</ul>`;
