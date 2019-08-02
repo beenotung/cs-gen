@@ -320,7 +320,7 @@ async function setServerPackage(args: { projectDirname: string }) {
   setPackageDependency(json, 'dependencies', 'nestlib', '^0.3.1');
   setPackageDependency(json, 'dependencies', 'engine.io', '^3.3.2');
   setPackageDependency(json, 'dependencies', 'engine.io-client', '^3.3.2');
-  setPackageDependency(json, 'dependencies', 'primus', '^7.3.3');
+  setPackageDependency(json, 'dependencies', 'typestub-primus', '^1.1.0');
   setPackageDependency(json, 'dependencies', 'primus-emitter', '^3.1.1');
   setPackageDependency(
     json,
@@ -348,7 +348,7 @@ async function setClientPackage(args: { projectDirname: string }) {
   const text = bin.toString();
   const json = JSON.parse(text);
   setPackageDependency(json, 'dependencies', 'nest-client', '^0.5.0');
-  setPackageDependency(json, 'devDependencies', 'typescript-primus', '^1.0.0');
+  setPackageDependency(json, 'devDependencies', 'typestub-primus', '^1.0.0');
   const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
 }

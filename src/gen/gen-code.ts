@@ -230,8 +230,10 @@ import {
   closeConnection,
   endSparkCall,
   newConnection,
+  Spark,
   startSparkCall,
 } from './connection';
+import { ISpark } from 'typestub-primus';
 import { usePrimus } from '../main';
 `.trim()
 }
@@ -281,10 +283,11 @@ export class ${controllerClassName} {
         ? ''
         : `
     usePrimus(primus => {
-      primus.on('connection', spark => {
+      primus.on('connection', (_spark: ISpark) => {
+        const spark: Spark = _spark as any;
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
-        spark.on('${callApiPath}', async (call: CallInput<${callTypeName}>, ack) => {
+        spark.on('${callApiPath}', (async (call: CallInput<${callTypeName}>, ack: (data: any) => void) => {
           startSparkCall(spark, call);
           try {
             await this.ready;
@@ -302,7 +305,7 @@ export class ${controllerClassName} {
           } finally {
             endSparkCall(spark, call);
           }
-        });
+        }) as any);
       });
     });`
     }
@@ -573,9 +576,9 @@ ${
   !ws
     ? ''
     : `
-import Primus from 'typescript-primus';
+import Primus from 'typestub-primus';
 
-interface IPrimus extends Primus {
+export interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;
 }
 
