@@ -35,29 +35,33 @@ function getSrcDirname(args: { projectDirname: string }): string {
 
 function getModuleDirname(args: {
   outDirname: string;
-  projectDirname: string;
+  serverProjectDirname: string;
   moduleDirname: string;
 }): string {
-  const { moduleDirname } = args;
-  return path.join(getSrcDirname(args), moduleDirname);
+  const { moduleDirname, serverProjectDirname } = args;
+  return path.join(
+    getSrcDirname({ projectDirname: serverProjectDirname }),
+    moduleDirname,
+  );
 }
 
 async function genLogicProcessorFile(args: {
   outDirname: string;
-  projectDirname: string;
+  serverProjectDirname: string;
   logicProcessorDirname: string;
   logicProcessorFilename: string;
   logicProcessorClassName: string;
   dataWrapper: { logicProcessorCode: string };
 }): Promise<void> {
   const {
+    serverProjectDirname,
     logicProcessorDirname,
     logicProcessorFilename,
     logicProcessorClassName,
     dataWrapper,
   } = args;
   const filename = path.join(
-    getSrcDirname(args),
+    getSrcDirname({ projectDirname: serverProjectDirname }),
     logicProcessorDirname,
     logicProcessorFilename,
   );
@@ -75,7 +79,7 @@ export class ${logicProcessorClassName} {
 
 async function genConnectionFile(args: {
   outDirname: string;
-  projectDirname: string;
+  serverProjectDirname: string;
   moduleDirname: string;
 }): Promise<void> {
   const filename = path.join(getModuleDirname(args), 'connection.ts');
@@ -85,7 +89,7 @@ async function genConnectionFile(args: {
 
 async function genServiceFile(args: {
   outDirname: string;
-  projectDirname: string;
+  serverProjectDirname: string;
   moduleDirname: string;
   serviceFilename: string;
   serviceClassName: string;
@@ -112,7 +116,7 @@ async function genStatusFile(args: {
   statusFilename: string;
   statusName: string;
   outDirname: string;
-  projectDirname: string;
+  serverProjectDirname: string;
   moduleDirname: string;
 }) {
   const { statusFilename } = args;
@@ -123,7 +127,7 @@ async function genStatusFile(args: {
 
 async function genControllerFile(args: {
   outDirname: string;
-  projectDirname: string;
+  serverProjectDirname: string;
   moduleDirname: string;
   typeDirname: string;
   typeFilename: string;
@@ -189,7 +193,7 @@ async function runNestCommand(args: {
 
 async function genModuleFile(args: {
   outDirname: string;
-  projectDirname: string;
+  serverProjectDirname: string;
   moduleDirname: string;
   moduleFilename: string;
   moduleClassName: string;
@@ -198,12 +202,12 @@ async function genModuleFile(args: {
   controllerFilename: string;
   controllerClassName: string;
 }) {
-  const { projectDirname, moduleDirname, moduleFilename } = args;
+  const { serverProjectDirname, moduleDirname, moduleFilename } = args;
   const code = genModuleCode(args);
   const filename = path.join(getModuleDirname(args), moduleFilename);
   if (!(await hasFile(filename))) {
     await runNestCommand({
-      cwd: projectDirname,
+      cwd: serverProjectDirname,
       cmd: `nest g module ${moduleDirname}`,
       errorMsg: `Failed to create nest module`,
     });
@@ -310,9 +314,12 @@ function setPackageDependency(
   json[depType] = newDep;
 }
 
-async function setServerPackage(args: { projectDirname: string }) {
-  const { projectDirname } = args;
-  const filename = path.join(projectDirname, 'package.json');
+async function setServerPackage(args: {
+  serverProjectDirname: string;
+  ws: boolean;
+}) {
+  const { serverProjectDirname, ws } = args;
+  const filename = path.join(serverProjectDirname, 'package.json');
   const bin = await readFile(filename);
   const text = bin.toString();
   const json = JSON.parse(text);
@@ -320,8 +327,10 @@ async function setServerPackage(args: { projectDirname: string }) {
   setPackageDependency(json, 'dependencies', 'nestlib', '^0.3.1');
   setPackageDependency(json, 'dependencies', 'engine.io', '^3.3.2');
   setPackageDependency(json, 'dependencies', 'engine.io-client', '^3.3.2');
-  setPackageDependency(json, 'dependencies', 'typestub-primus', '^1.1.2');
-  setPackageDependency(json, 'dependencies', 'primus-emitter', '^3.1.1');
+  if (ws) {
+    setPackageDependency(json, 'dependencies', 'typestub-primus', '^1.1.2');
+    setPackageDependency(json, 'dependencies', 'primus-emitter', '^3.1.1');
+  }
   setPackageDependency(
     json,
     'devDependencies',
@@ -428,9 +437,11 @@ indent_size = 2
   await writeFile(filename, text);
 }
 
-function hasNestProject(args: { projectDirname: string }): Promise<boolean> {
-  const { projectDirname } = args;
-  const filename = path.join(projectDirname, 'nest-cli.json');
+function hasNestProject(args: {
+  serverProjectDirname: string;
+}): Promise<boolean> {
+  const { serverProjectDirname } = args;
+  const filename = path.join(serverProjectDirname, 'nest-cli.json');
   return hasFile(filename);
 }
 
@@ -588,7 +599,7 @@ export async function genProject(_args: {
   const adminProjectDirname = path.join(outDirname, adminProjectName);
   const args = {
     ...__args,
-    projectDirname: serverProjectDirname,
+    serverProjectDirname,
   };
 
   if (injectTimestampField) {
@@ -604,13 +615,15 @@ export async function genProject(_args: {
       errorMsg: `Failed to create nest project`,
     });
   }
-  const srcDirname = getSrcDirname(args);
+  const serverSrcDirname = getSrcDirname({
+    projectDirname: serverProjectDirname,
+  });
   await Promise.all([
     mkdirp(path.join(serverProjectDirname, '.idea')),
     mkdirp(path.join(clientProjectDirname, '.idea')),
     mkdirp(path.join(adminProjectDirname, '.idea')),
-    mkdirp(path.join(srcDirname, typeDirname)),
-    mkdirp(path.join(srcDirname, logicProcessorDirname)),
+    mkdirp(path.join(serverSrcDirname, typeDirname)),
+    mkdirp(path.join(serverSrcDirname, logicProcessorDirname)),
   ]);
   if (!'dev') {
     await scanProject(args);
@@ -619,11 +632,14 @@ export async function genProject(_args: {
   const dataWrapper: { logicProcessorCode: string } = {} as any;
   await Promise.all([
     genDocumentationHtmlFile(args),
-    genLogicProcessorFile({ ...args, dataWrapper }),
+    genLogicProcessorFile({
+      ...args,
+      dataWrapper,
+    }),
     setTslint({ projectDirname: serverProjectDirname }),
     setTslint({ projectDirname: clientProjectDirname }),
     setTslint({ projectDirname: adminProjectDirname }),
-    setServerPackage({ projectDirname: serverProjectDirname }),
+    setServerPackage(args),
     setClientPackage({ projectDirname: clientProjectDirname }),
     setClientPackage({ projectDirname: adminProjectDirname }),
     setIdeaConfig({
@@ -638,9 +654,11 @@ export async function genProject(_args: {
       projectDirname: adminProjectDirname,
       projectName: adminProjectName,
     }),
-    setEditorConfig(args),
-    updateMainFile(args),
-    updateGitIgnore(args),
+    setEditorConfig({ projectDirname: serverProjectDirname }),
+    setEditorConfig({ projectDirname: clientProjectDirname }),
+    setEditorConfig({ projectDirname: adminProjectDirname }),
+    updateMainFile({ ...args, projectDirname: serverProjectDirname }),
+    updateGitIgnore({ projectDirname: serverProjectDirname }),
     genTypeFile({
       ...args,
       projectDirname: serverProjectDirname,
