@@ -347,8 +347,8 @@ async function setServerPackage(args: {
   await writeFile(filename, newText);
 }
 
-async function setClientPackage(args: { projectDirname: string }) {
-  const { projectDirname } = args;
+async function setClientPackage(args: { projectDirname: string; ws: boolean }) {
+  const { projectDirname, ws } = args;
   const filename = path.join(projectDirname, 'package.json');
   if (!(await hasFile(filename))) {
     await exec('npm init --yes', { cwd: projectDirname });
@@ -357,7 +357,9 @@ async function setClientPackage(args: { projectDirname: string }) {
   const text = bin.toString();
   const json = JSON.parse(text);
   setPackageDependency(json, 'dependencies', 'nest-client', '^0.5.0');
-  setPackageDependency(json, 'devDependencies', 'typestub-primus', '^1.0.0');
+  if (ws) {
+    setPackageDependency(json, 'devDependencies', 'typestub-primus', '^1.0.0');
+  }
   const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
 }
@@ -592,6 +594,7 @@ export async function genProject(_args: {
     injectTimestampField,
     timestampFieldName,
     callTypes,
+    ws,
   } = __args;
   await mkdirp(outDirname);
   const serverProjectDirname = path.join(outDirname, serverProjectName);
@@ -640,8 +643,8 @@ export async function genProject(_args: {
     setTslint({ projectDirname: clientProjectDirname }),
     setTslint({ projectDirname: adminProjectDirname }),
     setServerPackage(args),
-    setClientPackage({ projectDirname: clientProjectDirname }),
-    setClientPackage({ projectDirname: adminProjectDirname }),
+    setClientPackage({ projectDirname: clientProjectDirname, ws }),
+    setClientPackage({ projectDirname: adminProjectDirname, ws }),
     setIdeaConfig({
       projectDirname: serverProjectDirname,
       projectName: serverProjectName,
