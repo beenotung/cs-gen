@@ -120,12 +120,14 @@ export class ${serviceClassName} {
         .map(({ CallType, Type }) =>
           CallType === subscribeTypeName
             ? `case '${Type}': {
+        // @ts-ignore
         const m: (In: C['In']) => { id: string } = this.${Type};
         method = m as any;
         break;
       }
       `
             : `case '${Type}':
+        // @ts-ignore
         method = this.${Type};
         break;
       `,
