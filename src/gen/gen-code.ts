@@ -452,13 +452,12 @@ export function genMainCode(args: {
     originalCode,
     'async function bootstrap',
     `import { Server } from 'http';
+import { Primus } from 'typestub-primus';
+let primus: Primus;
 
-const Primus = require('primus');
-let primus;
+let pfs: Array<(primus: Primus) => void> = [];
 
-let pfs: Array<(primus) => void> = [];
-
-export function usePrimus(f: (primus) => void): void {
+export function usePrimus(f: (primus: Primus) => void): void {
   if (primus) {
     f(primus);
     return;
@@ -467,15 +466,13 @@ export function usePrimus(f: (primus) => void): void {
 }
 
 function attachServer(server: Server) {
-  const primus_options = {
+  primus = new Primus(server, {
     pathname: ${JSON.stringify(primusPath)},
     global: ${JSON.stringify(primusGlobalName)},
     parser: 'JSON',
     compression: true,
     transformer: 'engine.io',
-  };
-
-  primus = new Primus(server, primus_options);
+  });
   primus.plugin('emitter', require('primus-emitter'));
   // primus.save('primus.js');
   pfs.forEach(f => f(primus));
