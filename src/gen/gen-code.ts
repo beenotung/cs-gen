@@ -64,8 +64,6 @@ export function genServiceCode(args: {
   typeFilename: string;
   callTypes: CallMeta[];
   callTypeName: string;
-  commandTypeName: string;
-  queryTypeName: string;
   subscribeTypeName: string;
   logicProcessorDirname: string;
   logicProcessorFilename: string;
@@ -74,8 +72,6 @@ export function genServiceCode(args: {
 }) {
   const {
     callTypeName,
-    commandTypeName,
-    queryTypeName,
     subscribeTypeName,
     serviceClassName,
     logicProcessorDirname,
@@ -89,9 +85,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   ${[
     callTypeName,
-    commandTypeName,
-    queryTypeName,
-    subscribeTypeName,
+    ...Array.from(new Set(callTypes.map(call => call.CallType))),
     ...callTypes.map(call => call.Type),
   ].sort().join(`,
   `)}

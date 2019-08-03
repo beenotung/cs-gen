@@ -97,8 +97,6 @@ async function genServiceFile(args: {
   typeFilename: string;
   callTypes: CallMeta[];
   callTypeName: string;
-  commandTypeName: string;
-  queryTypeName: string;
   subscribeTypeName: string;
   logicProcessorDirname: string;
   logicProcessorFilename: string;
