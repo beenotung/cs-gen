@@ -15,9 +15,11 @@ import {
 import { LogicProcessor } from '../domain/logic-processor';
 import { CallInput } from 'cqrs-exp';
 
+// tslint:disable:no-unused-variable
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
 }
+// tslint:enable:no-unused-variable
 
 @Injectable()
 export class CoreService {
@@ -29,31 +31,38 @@ export class CoreService {
     let method: (In: C['In']) => C['Out'];
     switch (_type) {
       case 'CreateUser':
+        // @ts-ignore
         method = this.CreateUser;
         break;
       case 'RenameUser':
+        // @ts-ignore
         method = this.RenameUser;
         break;
       case 'CreateItem':
+        // @ts-ignore
         method = this.CreateItem;
         break;
       case 'BlockUser':
+        // @ts-ignore
         method = this.BlockUser;
         break;
       case 'GetProfile':
+        // @ts-ignore
         method = this.GetProfile;
         break;
       case 'GetUserList':
+        // @ts-ignore
         method = this.GetUserList;
         break;
       case 'SubscribeItems': {
+        // @ts-ignore
         const m: (In: C['In']) => { id: string } = this.SubscribeItems;
         method = m as any;
         break;
       }
       default:
         const x: never = _type;
-        console.log('not implemented call type:', x);
+        console.log(`not implemented, CallType: ${CallType}, Type: ${Type}`);
         throw new HttpException('not implemented call type:' + x, HttpStatus.NOT_IMPLEMENTED);
     }
     method = method.bind(this);

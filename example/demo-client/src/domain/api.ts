@@ -9,9 +9,9 @@ import {
   Subscribe as SubscribeType,
   SubscribeItems,
 } from './types';
-import Primus from 'typescript-primus';
+import Primus from 'typestub-primus';
 
-interface IPrimus extends Primus {
+export interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;
 }
 

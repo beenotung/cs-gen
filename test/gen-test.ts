@@ -59,6 +59,7 @@ async function test() {
     // primusGlobalName: 'AppPrimus',
     // primusPath: 'app-primus',
     // ws: false,
+    // staticControllerReference:true,
   });
 
   console.log('all passed.');

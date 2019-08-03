@@ -22,6 +22,7 @@
     "tslint": "^5.16.0",
     "tslint-eslint-rules": "^5.4.0",
     "typescript": "^3.4.5",
-    "typescript-primus": "^1.0.0"
+    "typescript-primus": "^1.0.0",
+    "typestub-primus": "^1.0.0"
   }
 }

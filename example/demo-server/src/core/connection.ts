@@ -3,15 +3,15 @@ import { CallInput } from 'cqrs-exp';
 export interface Spark {
   id: string;
 
-  on(event: string, cb: (data: any, ack?: (data: any) => void) => void);
+  on(event: string, cb: (data: any, ack?: (data: any) => void) => void): void;
 
-  send(event: string, data?: any, ack?: (data: any) => void);
+  send(event: string, data?: any, ack?: (data: any) => void): void;
 }
 
 export interface Subscription {
   id: string;
 
-  close();
+  close(): void;
 }
 
 export interface Session {
@@ -38,21 +38,23 @@ export function newConnection(spark: Spark) {
 
 export function closeConnection(spark: Spark) {
   let session = sparkId_session_map.get(spark.id);
+  if(!session){return}
   session.subscriptions.forEach(sub => sub.close());
   sparkId_session_map.delete(spark.id);
 }
 
 export function startSparkCall(spark: Spark, call: CallInput) {
   let session = sparkId_session_map.get(spark.id);
+  if(!session){return}
   session.calls.push(call);
   in_session_map.set(call.In, session);
 }
 
-export function getSessionByIn(In): Session {
+export function getSessionByIn(In: any): Session | undefined {
   return in_session_map.get(In);
 }
 
-export function getSessionBySparkId(sparkId: string): Session {
+export function getSessionBySparkId(sparkId: string): Session | undefined {
   return sparkId_session_map.get(sparkId);
 }
 
@@ -69,6 +71,7 @@ function remove<A>(xs: A[], x: A): void {
 
 export function endSparkCall(spark: Spark, call: CallInput) {
   const session = sparkId_session_map.get(spark.id);
+  if(!session){return}
   remove(session.calls, call);
   in_session_map.delete(call.In);
 }

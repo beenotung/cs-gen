@@ -4,15 +4,18 @@ import { Call } from '../domain/types';
 import { CallInput, LogService } from 'cqrs-exp';
 import { CoreService } from './core.service';
 import { Bar } from 'cli-progress';
-import { usePrimus } from '../main';
 import { ok, rest_return } from 'nestlib';
+import { status } from './status';
+import { Response } from 'express-serve-static-core';
 import {
   closeConnection,
   endSparkCall,
   newConnection,
+  Spark,
   startSparkCall,
 } from './connection';
-import { status } from './status';
+import { ISpark } from 'typestub-primus';
+import { usePrimus } from '../main';
 
 @Controller('core')
 export class CoreController {
@@ -38,7 +41,10 @@ export class CoreController {
         bar.increment(1);
         continue;
       }
-      const call: CallInput<Call> = await this.logService.getObject<Call>(key);
+      const call = await this.logService.getObject<CallInput<Call>>(key);
+      if (call === null) {
+        continue;
+      }
       if (call.CallType !== 'Command') {
         bar.increment(1);
         continue;
@@ -53,10 +59,11 @@ export class CoreController {
     status.isReplay = false;
     bar.stop();
     usePrimus(primus => {
-      primus.on('connection', spark => {
+      primus.on('connection', (_spark: ISpark) => {
+        const spark: Spark = _spark as any;
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
-        spark.on('Call', async (call: CallInput<Call>, ack) => {
+        spark.on('Call', (async (call: CallInput<Call>, ack: (data: any) => void) => {
           startSparkCall(spark, call);
           try {
             await this.ready;
@@ -74,14 +81,14 @@ export class CoreController {
           } finally {
             endSparkCall(spark, call);
           }
-        });
+        }) as any);
       });
     });
   }
 
   @Post('Call')
   async Call<C extends Call>(
-    @Res() res,
+    @Res() res: Response,
     @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
