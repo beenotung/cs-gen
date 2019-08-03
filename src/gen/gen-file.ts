@@ -134,6 +134,7 @@ async function genControllerFile(args: {
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
+  staticControllerReference: boolean;
   serviceApiPath: string;
   callApiPath: string;
   controllerFilename: string;
@@ -518,6 +519,7 @@ export const defaultGenProjectArgs = {
   serviceClassName: 'CoreService',
   controllerFilename: 'core.controller.ts',
   controllerClassName: 'CoreController',
+  staticControllerReference: false,
   statusFilename: 'status.ts',
   statusName: 'status',
   serviceApiPath: 'core',
@@ -555,6 +557,7 @@ export async function genProject(_args: {
   serviceClassName?: string;
   controllerFilename?: string;
   controllerClassName?: string;
+  staticControllerReference?: boolean;
   statusFilename?: string;
   statusName?: string;
   serviceAPIPath?: string;

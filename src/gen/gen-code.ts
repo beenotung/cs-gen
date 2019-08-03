@@ -186,6 +186,7 @@ export function genControllerCode(args: {
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
+  staticControllerReference: boolean;
   serviceApiPath: string;
   callApiPath: string;
   statusFilename: string;
@@ -200,6 +201,7 @@ export function genControllerCode(args: {
     serviceApiPath,
     callApiPath,
     controllerClassName,
+    staticControllerReference,
     statusName,
     statusFilename,
     ws,
@@ -233,13 +235,23 @@ import { usePrimus } from '../main';
 }
 
 @Controller('${serviceApiPath}')
-export class ${controllerClassName} {
+export class ${controllerClassName} {${
+    !staticControllerReference
+      ? ''
+      : `
+  static instance: ${controllerClassName};`
+  }
   logService: LogService;
   ready: Promise<void>;
 
   constructor(
     public ${serviceObjectName}: ${serviceClassName},
-  ) {
+  ) {${
+    !staticControllerReference
+      ? ''
+      : `
+    ${controllerClassName}.instance = this;`
+  }
     this.logService = new LogService(path.join('data', 'log'));
     this.ready = this.restore();
   }
