@@ -317,15 +317,24 @@ export class ${controllerClassName} {${
     }
   }
 
+  storeAndCall<C extends ${callTypeName}>(
+    call: CallInput<C>,
+  ): C['Out'] {
+    this.logService.storeObjectSync(
+      call,
+      this.logService.nextKey() + '-' + call.CallType,
+    );
+    return this.coreService.${callTypeName}<C>(call);
+  }
+
   @Post('${callApiPath}')
   async ${callApiPath}<C extends ${callTypeName}>(
     @Res() res: Response,
     @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
-    await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
     try {
-      const out = this.coreService.Call<C>(call);
+      const out = this.storeAndCall<C>(call);
       ok(res, out);
       return out;
     } catch (e) {

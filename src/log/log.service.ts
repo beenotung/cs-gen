@@ -52,7 +52,14 @@ export class LogService {
   /**
    * key cannot contains dot '.'
    * */
-  async storeObject(value: any, key = this.nextKey()) {
+  storeObjectSync(value: any, key: string): void {
+    fs.writeFileSync(this.keyToPath(key), JSON.stringify(value));
+  }
+
+  /**
+   * key cannot contains dot '.'
+   * */
+  async storeObject(value: any, key: string): Promise<void> {
     // return this.fsPool.run(() => this.store.setObject(key, value));
     // this.store.setObject(key, value);
     return writeFile(this.keyToPath(key), JSON.stringify(value));
