@@ -60,6 +60,7 @@ async function test() {
     // primusPath: 'app-primus',
     // ws: false,
     // staticControllerReference:true,
+    // serverOrigin: 'https://api.example.com'
   });
 
   console.log('all passed.');

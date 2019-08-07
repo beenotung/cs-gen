@@ -262,6 +262,7 @@ async function genClientLibFile(args: {
   primusGlobalName: string;
   primusPath: string;
   ws: boolean;
+  serverOrigin?:string
 }) {
   const { outDirname, clientProjectName, apiDirname, apiFilename } = args;
   const dirPath = path.join(outDirname, clientProjectName, 'src', apiDirname);
@@ -573,6 +574,7 @@ export async function genProject(_args: {
   primusGlobalName?: string;
   primusPath?: string;
   ws?: boolean;
+  serverOrigin?:string
 }) {
   const __args = {
     ...defaultGenProjectArgs,

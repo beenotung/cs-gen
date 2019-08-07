@@ -530,6 +530,7 @@ export function genClientLibCode(args: {
   injectTimestampOnClient: boolean;
   primusGlobalName: string;
   ws: boolean;
+  serverOrigin?:string
 }): string {
   const {
     typeDirname,
@@ -545,6 +546,7 @@ export function genClientLibCode(args: {
     injectTimestampOnClient,
     primusGlobalName,
     ws,
+    serverOrigin,
   } = args;
   const serviceObjectName = firstCharToLowerCase(serviceClassName);
   const hasSubscribe =
@@ -630,7 +632,7 @@ export class ${serviceClassName} {
   }
 }
 
-export function startPrimus(baseUrl: string) {
+export function startPrimus(baseUrl: string${!serverOrigin?'':` = ${JSON.stringify(serverOrigin)}`}) {
   ${
     ws
       ? `
