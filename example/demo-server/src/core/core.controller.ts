@@ -86,15 +86,24 @@ export class CoreController {
     });
   }
 
+  storeAndCall<C extends Call>(
+    call: CallInput<C>,
+  ): C['Out'] {
+    this.logService.storeObjectSync(
+      call,
+      this.logService.nextKey() + '-' + call.CallType,
+    );
+    return this.coreService.Call<C>(call);
+  }
+
   @Post('Call')
   async Call<C extends Call>(
     @Res() res: Response,
     @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
-    await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
     try {
-      const out = this.coreService.Call<C>(call);
+      const out = this.storeAndCall<C>(call);
       ok(res, out);
       return out;
     } catch (e) {
