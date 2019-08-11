@@ -590,7 +590,7 @@ ${
   !ws
     ? ''
     : `
-import Primus from 'typestub-primus';
+import { Primus } from 'typestub-primus';
 
 export interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;
