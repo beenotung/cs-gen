@@ -210,14 +210,15 @@ export function genControllerCode(args: {
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
   return `
 import * as path from 'path';
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Request, Response } from 'express-serve-static-core';
 import { ${callTypeName} } from ${getTypeFileImportPath(args)};
 import { CallInput, LogService } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
 import { ok, rest_return } from 'nestlib';
 import { ${statusName} } from './${removeTsExtname(statusFilename)}';
-import { Response } from 'express-serve-static-core';
+import { endRestCall, startRestCall } from './connection';
 ${
   !ws
     ? ''
@@ -329,16 +330,20 @@ export class ${controllerClassName} {${
 
   @Post('${callApiPath}')
   async ${callApiPath}<C extends ${callTypeName}>(
+    @Req() req: Request,
     @Res() res: Response,
     @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
     try {
+      startRestCall(req, res, call);
       const out = this.storeAndCall<C>(call);
       ok(res, out);
       return out;
     } catch (e) {
       return rest_return(res, Promise.reject(e));
+    } finally {
+      endRestCall(call);
     }
   }
 }
@@ -773,6 +778,7 @@ export function ${Type}(
 export function genConnectionCode(): string {
   return `
 import { CallInput } from 'cqrs-exp';
+import { Request, Response } from 'express-serve-static-core';
 
 export interface Spark {
   id: string;
@@ -848,6 +854,25 @@ export function endSparkCall(spark: Spark, call: CallInput) {
   if(!session){return}
   remove(session.calls, call);
   in_session_map.delete(call.In);
+}
+
+export interface RestSession {
+  req: Request;
+  res: Response;
+}
+
+const in_rest_session_map = new Map<any, RestSession>();
+
+export function startRestCall(req: Request, res: Response, call: CallInput) {
+  in_rest_session_map.set(call.In, { req, res });
+}
+
+export function getResponseByIn(In: any): RestSession | undefined {
+  return in_rest_session_map.get(In);
+}
+
+export function endRestCall(call: CallInput) {
+  in_rest_session_map.delete(call.In);
 }
 `.trim();
 }
