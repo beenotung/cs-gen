@@ -340,8 +340,8 @@ async function setServerPackage(args: {
   setPackageDependency(
     json,
     'devDependencies',
-    'express-serve-static-core',
-    '^0.1.1',
+    '@types/express-serve-static-core',
+    '^4.16.7',
   );
   const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
