@@ -625,7 +625,6 @@ let ${serviceObjectName}: ${serviceClassName};
 @Controller('${serviceApiPath}')
 export class ${serviceClassName} {
   constructor(baseUrl: string) {
-    setBaseUrl(baseUrl);
     injectNestClient(this, {
       baseUrl,
     });
