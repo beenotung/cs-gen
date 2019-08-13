@@ -867,7 +867,7 @@ export function startRestCall(req: Request, res: Response, call: CallInput) {
   in_rest_session_map.set(call.In, { req, res });
 }
 
-export function getResponseByIn(In: any): RestSession | undefined {
+export function getRestSessionByIn(In: any): RestSession | undefined {
   return in_rest_session_map.get(In);
 }
 
