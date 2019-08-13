@@ -578,7 +578,7 @@ export function genClientLibCode(args: {
     : 'In';
 
   let code = `
-import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
+import { Body, Controller, injectNestClient, Post } from 'nest-client';
 import {
   ${[
     `${callTypeName} as CallType`,
@@ -626,7 +626,9 @@ let ${serviceObjectName}: ${serviceClassName};
 export class ${serviceClassName} {
   constructor(baseUrl: string) {
     setBaseUrl(baseUrl);
-    injectNestClient(this);
+    injectNestClient(this, {
+      baseUrl,
+    });
   }
 
   @Post('${callApiPath}')
