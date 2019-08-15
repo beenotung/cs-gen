@@ -386,6 +386,9 @@ function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
     format: tslib_package.scripts.format,
     postformat: tslib_package.scripts.postformat,
   };
+  if (json.scripts.test === 'echo "Error: no test specified" && exit 1') {
+    delete json.scripts.test;
+  }
   const devDep = json[devDependencies] || {};
   json[devDependencies] = devDep;
   const tslib_devDep = tslib_package[devDependencies];
