@@ -1,5 +1,4 @@
 import { exec } from '@beenotung/tslib/child_process';
-import { compare } from '@beenotung/tslib/compare';
 import {
   hasFile,
   readFile,
@@ -107,7 +106,7 @@ async function genServiceFile(args: {
   const code = genServiceCode(args);
   const filename = path.join(getModuleDirname(args), serviceFilename);
 
-  return writeFile(filename, code);
+  await writeFile(filename, code);
 }
 
 async function genStatusFile(args: {
@@ -168,7 +167,7 @@ async function genTypeFile(args: {
   await mkdirp(dirname);
   const pathname = path.join(dirname, typeFilename);
 
-  return writeFile(pathname, code);
+  await writeFile(pathname, code);
 }
 
 async function runNestCommand(args: {
@@ -262,7 +261,7 @@ async function genClientLibFile(args: {
   primusGlobalName: string;
   primusPath: string;
   ws: boolean;
-  serverOrigin?:string
+  serverOrigin?: string;
 }) {
   const { outDirname, clientProjectName, apiDirname, apiFilename } = args;
   const dirPath = path.join(outDirname, clientProjectName, 'src', apiDirname);
@@ -272,17 +271,73 @@ async function genClientLibFile(args: {
   await writeFile(filePath, code);
 }
 
-async function setTslint(args: { projectDirname: string }) {
-  const { projectDirname } = args;
-  const filename = path.join(projectDirname, 'tslint.json');
+interface Package {
+  scripts: { [name: string]: string };
+  devDependencies: { [name: string]: string };
+}
 
-  if (!(await hasFile(filename))) {
-    // skip setup if the project is not using tslint
-    // e.g. client and admin don't have tslint by default
+const tslib_dirname = path.join(
+  process.env.HOME,
+  'workspace',
+  'github.com',
+  'beenotung',
+  'tslib',
+);
+let tslib_tslint: string;
+let tslib_tsconfig: string;
+let tslib_package: Package;
+let tslib_editorconfig: string;
+let tslib_prettierrc: string;
+
+async function initTslib(args: { injectFormat: boolean }) {
+  const { injectFormat } = args;
+  if (!injectFormat) {
     return;
   }
-  const bin = await readFile(filename);
-  const text = bin.toString();
+  const tslint_file = path.join(tslib_dirname, 'tslint.json');
+  if (!(await hasFile(tslint_file))) {
+    const { stdout, stderr } = await exec(
+      'git clone https://github.com/beenotung/tslib.git',
+      {
+        cwd: path.join(tslib_dirname, '..'),
+      },
+    );
+    console.log(stdout);
+    console.error(stderr);
+  }
+  await Promise.all([
+    readFile(tslint_file).then(bin => (tslib_tslint = bin.toString())),
+    readFile(path.join(tslib_dirname, 'tsconfig.json')).then(
+      bin => (tslib_tsconfig = bin.toString()),
+    ),
+    readFile(path.join(tslib_dirname, 'package.json')).then(
+      bin => (tslib_package = JSON.parse(bin.toString())),
+    ),
+    readFile(path.join(tslib_dirname, '.editorconfig')).then(
+      bin => (tslib_editorconfig = bin.toString()),
+    ),
+    readFile(path.join(tslib_dirname, '.prettierrc')).then(
+      bin => (tslib_prettierrc = bin.toString()),
+    ),
+  ]);
+}
+
+async function setTslint(args: {
+  projectDirname: string;
+  injectFormat: boolean;
+}) {
+  const { projectDirname, injectFormat } = args;
+  const filename = path.join(projectDirname, 'tslint.json');
+
+  let text: string;
+  if (injectFormat) {
+    text = tslib_tslint;
+  } else {
+    if (!(await hasFile(filename))) {
+      return;
+    }
+    text = (await readFile(filename)).toString();
+  }
   const json = JSON.parse(text);
   /* move the key to the first slot */
   json.rules = {
@@ -292,9 +347,22 @@ async function setTslint(args: { projectDirname: string }) {
   /* override existing value */
   json.rules['interface-over-type-literal'] = false;
   const newText = JSON.stringify(json, null, 2);
-  // /* preserve compact formatting */
-  // const newText = text.replace('  "rules": {\n','  "rules": {\n    "interface-over-type-literal": false,\n');
   await writeFile(filename, newText);
+}
+
+async function setTsconfig(args: {
+  projectDirname: string;
+  injectFormat: boolean;
+}) {
+  const { projectDirname, injectFormat } = args;
+  if (!injectFormat) {
+    return;
+  }
+  const filename = path.join(projectDirname, 'tsconfig.json');
+  if (await hasFile(filename)) {
+    return;
+  }
+  await writeFile(filename, tslib_tsconfig);
 }
 
 const dependencies: 'dependencies' = 'dependencies';
@@ -308,22 +376,45 @@ function sortObjectKey<T extends object>(json: T): T {
   return res;
 }
 
-function setIfNotExist(json: object, key: string, value: any) {
-  if (!(key in json)) {
-    json[key] = value;
+function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
+  if (!args.injectFormat) {
+    return;
   }
-  return json[key];
+  const json = args.packageJson;
+  json.scripts = {
+    ...json.scripts,
+    format: tslib_package.scripts.format,
+    postformat: tslib_package.scripts.postformat,
+  };
+  const devDep = json[devDependencies] || {};
+  json[devDependencies] = devDep;
+  const tslib_devDep = tslib_package[devDependencies];
+  Object.keys(tslib_devDep)
+    .filter(name => {
+      switch (name) {
+        case '@types/node':
+        case 'tslint':
+        case 'typescript':
+        case 'prettier':
+          return true;
+        default:
+          return name.startsWith('tslint-');
+      }
+    })
+    .forEach(name => (devDep[name] = devDep[name] || tslib_devDep[name]));
 }
 
 async function setServerPackage(args: {
   serverProjectDirname: string;
   ws: boolean;
+  injectFormat: boolean;
 }) {
   const { serverProjectDirname, ws } = args;
   const filename = path.join(serverProjectDirname, 'package.json');
   const bin = await readFile(filename);
   const text = bin.toString();
   const json = JSON.parse(text);
+  setPackageJson({ ...args, packageJson: json });
   const dep = json[dependencies] || {};
   const devDep = json[devDependencies] || {};
   dep['cli-progress'] = '^2.1.1';
@@ -342,7 +433,11 @@ async function setServerPackage(args: {
   await writeFile(filename, newText);
 }
 
-async function setClientPackage(args: { projectDirname: string; ws: boolean }) {
+async function setClientPackage(args: {
+  projectDirname: string;
+  ws: boolean;
+  injectFormat: boolean;
+}) {
   const { projectDirname, ws } = args;
   const filename = path.join(projectDirname, 'package.json');
   if (!(await hasFile(filename))) {
@@ -351,12 +446,12 @@ async function setClientPackage(args: { projectDirname: string; ws: boolean }) {
   const bin = await readFile(filename);
   const text = bin.toString();
   const json = JSON.parse(text);
+  setPackageJson({ ...args, packageJson: json });
   const dep = json[dependencies] || {};
   const devDep = json[devDependencies] || {};
   dep['nest-client'] = '^0.5.0';
   if (ws) {
     devDep['typestub-primus'] = '^1.0.0';
-  }
   }
   json[dependencies] = sortObjectKey(dep);
   json[devDependencies] = sortObjectKey(devDep);
@@ -364,79 +459,128 @@ async function setClientPackage(args: { projectDirname: string; ws: boolean }) {
   await writeFile(filename, newText);
 }
 
-async function setIdeaConfig(args: {
-  projectDirname: string;
-  projectName: string;
+function genIdeaModuleIml(args: {
+  srcDirs?: string[];
+  testDirs?: string[];
+  excludeDirs?: string[];
 }) {
-  const { projectDirname, projectName } = args;
-
-  const projectFilename = path.join(
-    projectDirname,
-    '.idea',
-    projectName + '.iml',
-  );
-  const projectFileContent = `<?xml version="1.0" encoding="UTF-8"?>
+  const srcDirs = args.srcDirs || [];
+  const testDirs = args.testDirs || [];
+  const excludeDirs = args.excludeDirs || [];
+  return `
+<?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/data" />
+      ${srcDirs
+        .map(
+          dir =>
+            `<sourceFolder url="file://$MODULE_DIR$/${dir}" isTestSource="false" />`,
+        )
+        .join('\n      ')}
+      ${testDirs
+        .map(
+          dir =>
+            `<sourceFolder url="file://$MODULE_DIR$/${dir}" isTestSource="true" />`,
+        )
+        .join('\n      ')}
+      ${excludeDirs
+        .map(dir => `<excludeFolder url="file://$MODULE_DIR$/${dir}" />`)
+        .join('\n      ')}
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
-</module>`;
+</module>
+`
+    .split('\n')
+    .filter(s => s.trim())
+    .join('\n');
+}
 
-  const moduleFilename = path.join(projectDirname, '.idea', 'modules.xml');
-  const moduleFileContent = `<?xml version="1.0" encoding="UTF-8"?>
+function genIdeaModulesXml(projectName: string) {
+  return `
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/${projectName}.iml" filepath="$PROJECT_DIR$/.idea/${projectName}.iml" />
     </modules>
   </component>
-</project>`;
+</project>
+`.trim();
+}
 
+async function setBaseProjectIdeaConfig(args: {
+  baseProjectName: string;
+  serverProjectName: string;
+  clientProjectName: string;
+  adminProjectName: string;
+}) {
+  const {
+    baseProjectName,
+    serverProjectName,
+    clientProjectName,
+    adminProjectName,
+  } = args;
   await Promise.all([
-    writeFile(projectFilename, projectFileContent),
-    writeFile(moduleFilename, moduleFileContent),
+    writeFile(
+      path.join('.idea', baseProjectName + '.iml'),
+      genIdeaModuleIml({
+        excludeDirs: [serverProjectName, clientProjectName, adminProjectName],
+      }),
+    ),
+    writeFile(
+      path.join('.idea', 'modules.xml'),
+      genIdeaModulesXml(baseProjectName),
+    ),
   ]);
 }
 
-async function setEditorConfig(args: { projectDirname: string }) {
-  const { projectDirname } = args;
+async function setProjectIdeaConfig(args: {
+  projectDirname: string;
+  projectName: string;
+}) {
+  const { projectDirname, projectName } = args;
+  await Promise.all([
+    writeFile(
+      path.join(projectDirname, '.idea', projectName + '.iml'),
+      genIdeaModuleIml({
+        srcDirs: ['src'],
+        testDirs: ['test'],
+        excludeDirs: ['dist', 'data'],
+      }),
+    ),
+    writeFile(
+      path.join(projectDirname, '.idea', 'modules.xml'),
+      genIdeaModulesXml(projectName),
+    ),
+  ]);
+}
+
+async function setEditorConfig(args: {
+  projectDirname: string;
+  injectFormat: boolean;
+}) {
+  const { projectDirname, injectFormat } = args;
+  if (!injectFormat) {
+    return;
+  }
   const filename = path.join(projectDirname, '.editorconfig');
-  const text = `
-# EditorConfig helps developers define and maintain consistent coding styles between different editors and IDEs
-# http://editorconfig.org
+  await writeFile(filename, tslib_editorconfig);
+}
 
-root = true
-
-[*]
-indent_style = space
-indent_size = 2
-
-# We recommend you to keep these unchanged
-end_of_line = lf
-charset = utf-8
-trim_trailing_whitespace = true
-insert_final_newline = true
-
-[*.md]
-trim_trailing_whitespace = false
-
-[*.xml]
-indent_style = space
-indent_size = 4
-
-[*.json]
-indent_style = space
-indent_size = 2
-`;
-  await writeFile(filename, text);
+async function setPrettierrc(args: {
+  projectDirname: string;
+  injectFormat: boolean;
+}) {
+  const { projectDirname, injectFormat } = args;
+  if (!injectFormat) {
+    return;
+  }
+  const filename = path.join(projectDirname, '.prettierrc');
+  await writeFile(filename, tslib_prettierrc);
 }
 
 function hasNestProject(args: {
@@ -536,6 +680,7 @@ export const defaultGenProjectArgs = {
   primusGlobalName: 'Primus',
   primusPath: '/primus',
   ws: true,
+  injectFormat: true,
 };
 
 export async function genProject(_args: {
@@ -574,7 +719,8 @@ export async function genProject(_args: {
   primusGlobalName?: string;
   primusPath?: string;
   ws?: boolean;
-  serverOrigin?:string
+  serverOrigin?: string;
+  injectFormat?: boolean;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
@@ -597,7 +743,6 @@ export async function genProject(_args: {
     injectTimestampField,
     timestampFieldName,
     callTypes,
-    ws,
   } = __args;
   await mkdirp(outDirname);
   const serverProjectDirname = path.join(outDirname, serverProjectName);
@@ -642,27 +787,22 @@ export async function genProject(_args: {
       ...args,
       dataWrapper,
     }),
-    setTslint({ projectDirname: serverProjectDirname }),
-    setTslint({ projectDirname: clientProjectDirname }),
-    setTslint({ projectDirname: adminProjectDirname }),
-    setServerPackage(args),
-    setClientPackage({ projectDirname: clientProjectDirname, ws }),
-    setClientPackage({ projectDirname: adminProjectDirname, ws }),
-    setIdeaConfig({
+    initTslib(args).then(() => Promise.all([]) as any),
+    setProjectIdeaConfig({
       projectDirname: serverProjectDirname,
       projectName: serverProjectName,
     }),
-    setIdeaConfig({
+    setProjectIdeaConfig({
       projectDirname: clientProjectDirname,
       projectName: clientProjectName,
     }),
-    setIdeaConfig({
+    setProjectIdeaConfig({
       projectDirname: adminProjectDirname,
       projectName: adminProjectName,
     }),
-    setEditorConfig({ projectDirname: serverProjectDirname }),
-    setEditorConfig({ projectDirname: clientProjectDirname }),
-    setEditorConfig({ projectDirname: adminProjectDirname }),
+    setBaseProjectIdeaConfig({
+      ...args,
+    }),
     updateMainFile({ ...args, projectDirname: serverProjectDirname }),
     updateGitIgnore({ projectDirname: serverProjectDirname }),
     genTypeFile({
@@ -700,5 +840,21 @@ export async function genProject(_args: {
     genStatusFile(args),
     genControllerFile(args),
   ]);
-  // TODO refactor core controller to call logic processor
+  await initTslib(args);
+  await Promise.all([
+    setServerPackage(args),
+    setClientPackage({ ...args, projectDirname: clientProjectDirname }),
+    setClientPackage({ ...args, projectDirname: adminProjectDirname }),
+    ...[].concat.apply(
+      [],
+      [serverProjectDirname, clientProjectDirname, adminProjectDirname].map(
+        projectDirname => [
+          setTslint({ ...args, projectDirname }),
+          setTsconfig({ ...args, projectDirname }),
+          setEditorConfig({ ...args, projectDirname }),
+          setPrettierrc({ ...args, projectDirname }),
+        ],
+      ),
+    ),
+  ]);
 }
