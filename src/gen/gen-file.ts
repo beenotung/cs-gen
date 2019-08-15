@@ -297,21 +297,22 @@ async function setTslint(args: { projectDirname: string }) {
   await writeFile(filename, newText);
 }
 
-function setPackageDependency(
-  json: object,
-  depType: 'dependencies' | 'devDependencies',
-  name: string,
-  version: string,
-): void {
-  if (!json[depType]) {
-    json[depType] = {};
+const dependencies: 'dependencies' = 'dependencies';
+const devDependencies: 'devDependencies' = 'devDependencies';
+
+function sortObjectKey<T extends object>(json: T): T {
+  const res = {} as T;
+  Object.keys(json)
+    .sort()
+    .forEach(x => (res[x] = json[x]));
+  return res;
+}
+
+function setIfNotExist(json: object, key: string, value: any) {
+  if (!(key in json)) {
+    json[key] = value;
   }
-  json[depType][name] = version;
-  const newDep = {};
-  Object.entries(json[depType])
-    .sort(([k1, v1], [k2, v2]) => compare(k1, k2))
-    .forEach(([k, v]) => (newDep[k] = v));
-  json[depType] = newDep;
+  return json[key];
 }
 
 async function setServerPackage(args: {
@@ -323,26 +324,20 @@ async function setServerPackage(args: {
   const bin = await readFile(filename);
   const text = bin.toString();
   const json = JSON.parse(text);
-  setPackageDependency(json, 'dependencies', 'cli-progress', '^2.1.1');
-  setPackageDependency(json, 'dependencies', 'nestlib', '^0.3.1');
-  setPackageDependency(json, 'dependencies', 'engine.io', '^3.3.2');
-  setPackageDependency(json, 'dependencies', 'engine.io-client', '^3.3.2');
+  const dep = json[dependencies] || {};
+  const devDep = json[devDependencies] || {};
+  dep['cli-progress'] = '^2.1.1';
+  dep.nestlib = '^0.3.1';
+  dep['engine.io'] = '^3.3.2';
+  dep['engine.io-client'] = '^3.3.2';
   if (ws) {
-    setPackageDependency(json, 'dependencies', 'typestub-primus', '^1.1.2');
-    setPackageDependency(json, 'dependencies', 'primus-emitter', '^3.1.1');
+    dep['typestub-primus'] = '^1.1.2';
+    dep['primus-emitter'] = '^3.1.1';
   }
-  setPackageDependency(
-    json,
-    'devDependencies',
-    '@types/cli-progress',
-    '^1.8.1',
-  );
-  setPackageDependency(
-    json,
-    'devDependencies',
-    '@types/express-serve-static-core',
-    '^4.16.7',
-  );
+  devDep['@types/cli-progress'] = '^1.8.1';
+  devDep['@types/express-serve-static-core'] = '^4.16.7';
+  json[dependencies] = sortObjectKey(dep);
+  json[devDependencies] = sortObjectKey(devDep);
   const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
 }
@@ -356,10 +351,15 @@ async function setClientPackage(args: { projectDirname: string; ws: boolean }) {
   const bin = await readFile(filename);
   const text = bin.toString();
   const json = JSON.parse(text);
-  setPackageDependency(json, 'dependencies', 'nest-client', '^0.5.0');
+  const dep = json[dependencies] || {};
+  const devDep = json[devDependencies] || {};
+  dep['nest-client'] = '^0.5.0';
   if (ws) {
-    setPackageDependency(json, 'devDependencies', 'typestub-primus', '^1.0.0');
+    devDep['typestub-primus'] = '^1.0.0';
   }
+  }
+  json[dependencies] = sortObjectKey(dep);
+  json[devDependencies] = sortObjectKey(devDep);
   const newText = JSON.stringify(json, null, 2);
   await writeFile(filename, newText);
 }
