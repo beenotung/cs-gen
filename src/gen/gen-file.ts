@@ -427,7 +427,7 @@ async function setServerPackage(args: {
   dep['engine.io'] = '^3.3.2';
   dep['engine.io-client'] = '^3.3.2';
   if (ws) {
-    dep['typestub-primus'] = '^1.1.2';
+    dep['typestub-primus'] = '^1.1.3';
     dep['primus-emitter'] = '^3.1.1';
   }
   devDep['@types/cli-progress'] = '^1.8.1';
