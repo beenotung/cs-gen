@@ -69,6 +69,7 @@ export function genServiceCode(args: {
   logicProcessorFilename: string;
   logicProcessorClassName: string;
   logicProcessorCode: string;
+  asyncLogicProcessor: boolean;
 }) {
   const {
     callTypeName,
@@ -79,7 +80,11 @@ export function genServiceCode(args: {
     logicProcessorClassName,
     logicProcessorCode,
     callTypes,
+    asyncLogicProcessor,
   } = args;
+  const asyncLogicProcessor_Result = asyncLogicProcessor ? ', Result' : '';
+  const asyncLogicProcessor_type = (type: string) =>
+    asyncLogicProcessor ? `Result<${type}>` : type;
   const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
@@ -93,7 +98,7 @@ import {
 import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(
     logicProcessorFilename,
   )}';
-import { CallInput } from 'cqrs-exp';
+import { CallInput${asyncLogicProcessor_Result} } from 'cqrs-exp';
 
 // tslint:disable:no-unused-variable
 function not_impl(name: string): any {
@@ -105,7 +110,9 @@ function not_impl(name: string): any {
 export class ${serviceClassName} {
   impl = new ${logicProcessorClassName}();
 
-  ${callTypeName}<C extends ${callTypeName}>(args: CallInput<C>): C['Out'] {
+  ${callTypeName}<C extends ${callTypeName}>(args: CallInput<C>): ${asyncLogicProcessor_type(
+    `C['Out']`,
+  )} {
     const { CallType, Type, In } = args;
     const _type = Type as ${callTypeName}['Type'];
     let method: (In: C['In']) => C['Out'];
@@ -150,9 +157,12 @@ export class ${serviceClassName} {
 
   ${callTypes
     .map(
-      ({ CallType, Type }) => `${Type}(In: ${Type}['In']): ${
-        CallType === subscribeTypeName ? '{ id: string }' : `${Type}['Out']`
-      } {
+      ({
+        CallType,
+        Type,
+      }) => `${Type}(In: ${Type}['In']): ${asyncLogicProcessor_type(
+        CallType === subscribeTypeName ? '{ id: string }' : `${Type}['Out']`,
+      )} {
     ${
       logicProcessorCode.includes(Type)
         ? `return this.impl.${Type}(In);`
@@ -192,6 +202,7 @@ export function genControllerCode(args: {
   statusFilename: string;
   statusName: string;
   ws: boolean;
+  asyncLogicProcessor: boolean;
 }) {
   const {
     callTypeName,
@@ -205,15 +216,20 @@ export function genControllerCode(args: {
     statusName,
     statusFilename,
     ws,
+    asyncLogicProcessor,
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
+  const asyncLogicProcessor_Result = asyncLogicProcessor ? ', Result' : '';
+  const asyncLogicProcessor_await = asyncLogicProcessor ? 'await ' : '';
+  const asyncLogicProcessor_type = (type: string) =>
+    asyncLogicProcessor ? `Result<${type}>` : type;
   return `
 import * as path from 'path';
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express-serve-static-core';
 import { ${callTypeName} } from ${getTypeFileImportPath(args)};
-import { CallInput, LogService } from 'cqrs-exp';
+import { CallInput, LogService${asyncLogicProcessor_Result} } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
 import { ok, rest_return } from 'nestlib';
@@ -278,7 +294,7 @@ export class ${controllerClassName} {${
         continue;
       }
       try {
-        this.${serviceObjectName}.${callTypeName}(call);
+        ${asyncLogicProcessor_await}this.${serviceObjectName}.${callTypeName}(call);
       } catch (e) {
         console.error(\`failed when call '\${call.CallType}' '\${call.Type}':\`, e);
       }
@@ -299,7 +315,7 @@ export class ${controllerClassName} {${
           try {
             await this.ready;
             await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
-            const out = this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
+            const out = ${asyncLogicProcessor_await}this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
             ack(out);
           } catch (e) {
             console.error(e);
@@ -320,7 +336,7 @@ export class ${controllerClassName} {${
 
   storeAndCall<C extends ${callTypeName}>(
     call: CallInput<C>,
-  ): C['Out'] {
+  ): ${asyncLogicProcessor_type(`C['Out']`)} {
     this.logService.storeObjectSync(
       call,
       this.logService.nextKey() + '-' + call.CallType,
@@ -337,7 +353,7 @@ export class ${controllerClassName} {${
     await this.ready;
     try {
       startRestCall(req, res, call);
-      const out = this.storeAndCall<C>(call);
+      const out = ${asyncLogicProcessor_await}this.storeAndCall<C>(call);
       ok(res, out);
       return out;
     } catch (e) {

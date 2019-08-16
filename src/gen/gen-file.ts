@@ -101,6 +101,7 @@ async function genServiceFile(args: {
   logicProcessorFilename: string;
   logicProcessorClassName: string;
   logicProcessorCode: string;
+  asyncLogicProcessor: boolean;
 }) {
   const { serviceFilename } = args;
   const code = genServiceCode(args);
@@ -140,6 +141,7 @@ async function genControllerFile(args: {
   statusFilename: string;
   statusName: string;
   ws: boolean;
+  asyncLogicProcessor: boolean;
 }) {
   const { controllerFilename } = args;
   const code = genControllerCode(args);
@@ -684,6 +686,7 @@ export const defaultGenProjectArgs = {
   primusPath: '/primus',
   ws: true,
   injectFormat: true,
+  asyncLogicProcessor: false,
 };
 
 export async function genProject(_args: {
@@ -724,6 +727,7 @@ export async function genProject(_args: {
   ws?: boolean;
   serverOrigin?: string;
   injectFormat?: boolean;
+  asyncLogicProcessor?: boolean;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
