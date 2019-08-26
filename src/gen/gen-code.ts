@@ -193,6 +193,7 @@ export function genControllerCode(args: {
   typeFilename: string;
   callTypeName: string;
   commandTypeName: string;
+  queryTypeName: string;
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
@@ -203,10 +204,12 @@ export function genControllerCode(args: {
   statusName: string;
   ws: boolean;
   asyncLogicProcessor: boolean;
+  replayQuery: boolean;
 }) {
   const {
     callTypeName,
     commandTypeName,
+    queryTypeName,
     serviceClassName,
     serviceFilename,
     serviceApiPath,
@@ -217,6 +220,7 @@ export function genControllerCode(args: {
     statusFilename,
     ws,
     asyncLogicProcessor,
+    replayQuery,
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
@@ -281,7 +285,9 @@ export class ${controllerClassName} {${
     ${statusName}.isReplay = true;
     bar.start(keys.length, 0);
     for (const key of keys) {
-      if (!key.endsWith('-${commandTypeName}')) {
+      if (!key.endsWith('-${commandTypeName}')${
+    !replayQuery ? '' : ` && !key.endsWith('-${queryTypeName}')`
+  }) {
         bar.increment(1);
         continue;
       }
@@ -289,7 +295,9 @@ export class ${controllerClassName} {${
       if (call === null) {
         continue;
       }
-      if (call.CallType !== '${commandTypeName}') {
+      if (call.CallType !== '${commandTypeName}'${
+    !replayQuery ? '' : ` && call.CallType !== '${queryTypeName}'`
+  }) {
         bar.increment(1);
         continue;
       }

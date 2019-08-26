@@ -131,6 +131,7 @@ async function genControllerFile(args: {
   typeFilename: string;
   callTypeName: string;
   commandTypeName: string;
+  queryTypeName: string;
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
@@ -142,6 +143,7 @@ async function genControllerFile(args: {
   statusName: string;
   ws: boolean;
   asyncLogicProcessor: boolean;
+  replayQuery: boolean;
 }) {
   const { controllerFilename } = args;
   const code = genControllerCode(args);
@@ -687,6 +689,7 @@ export const defaultGenProjectArgs = {
   ws: true,
   injectFormat: true,
   asyncLogicProcessor: false,
+  replayQuery: false,
 };
 
 export async function genProject(_args: {
@@ -728,6 +731,7 @@ export async function genProject(_args: {
   serverOrigin?: string;
   injectFormat?: boolean;
   asyncLogicProcessor?: boolean;
+  replayQuery?: boolean;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
