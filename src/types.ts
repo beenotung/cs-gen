@@ -65,7 +65,7 @@ export interface IEvent {
   version: string;
   command_id: string;
   timestamp: number;
-  event_type?: string;
+  event_type: string;
 }
 
 export interface IQuery {

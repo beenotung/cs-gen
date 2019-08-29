@@ -8,8 +8,9 @@ export function checkCallType(t: Call) {
 const promiseString = Promise.resolve().toString();
 
 export function then<T, R>(x: Result<T>, f: (x: T) => Result<R>): Result<R> {
-  if (x && x.toString() === promiseString) {
-    return (x as Promise<T>).then(f);
+  const p = x as Promise<T>;
+  if (p && typeof p === 'object' && p.toString() === promiseString) {
+    return p.then(f);
   }
   return f(x as T);
 }
@@ -42,7 +43,6 @@ export function flattenCallMetas(args: {
   queryTypes?: PartialCallMeta[];
   subscribeTypes?: PartialCallMeta[];
 }): CallMeta[] {
-  args = Object.assign({}, defaultTypeName, args);
   const {
     commandTypeName,
     queryTypeName,
@@ -50,10 +50,16 @@ export function flattenCallMetas(args: {
     commandTypes,
     queryTypes,
     subscribeTypes,
-  } = args;
+  } = { ...defaultTypeName, ...args };
   return [
-    ...commandTypes.map(call => ({ CallType: commandTypeName, ...call })),
-    ...queryTypes.map(call => ({ CallType: queryTypeName, ...call })),
-    ...subscribeTypes.map(call => ({ CallType: subscribeTypeName, ...call })),
+    ...(commandTypes || []).map(call => ({
+      CallType: commandTypeName,
+      ...call,
+    })),
+    ...(queryTypes || []).map(call => ({ CallType: queryTypeName, ...call })),
+    ...(subscribeTypes || []).map(call => ({
+      CallType: subscribeTypeName,
+      ...call,
+    })),
   ];
 }

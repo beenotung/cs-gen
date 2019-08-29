@@ -281,7 +281,7 @@ interface Package {
 }
 
 const tslib_dirname = path.join(
-  process.env.HOME,
+  process.env.HOME!,
   'workspace',
   'github.com',
   'beenotung',
@@ -376,7 +376,7 @@ function sortObjectKey<T extends object>(json: T): T {
   const res = {} as T;
   Object.keys(json)
     .sort()
-    .forEach(x => (res[x] = json[x]));
+    .forEach(x => ((res as any)[x] = (json as any)[x]));
   return res;
 }
 
@@ -856,7 +856,7 @@ export async function genProject(_args: {
     setServerPackage(args),
     setClientPackage({ ...args, projectDirname: clientProjectDirname }),
     setClientPackage({ ...args, projectDirname: adminProjectDirname }),
-    ...[].concat.apply(
+    ...(([] as Array<Promise<void>>).concat.apply(
       [],
       [serverProjectDirname, clientProjectDirname, adminProjectDirname].map(
         projectDirname => [
@@ -866,6 +866,6 @@ export async function genProject(_args: {
           setPrettierrc({ ...args, projectDirname }),
         ],
       ),
-    ),
+    ) as Array<Promise<any>>),
   ]);
 }
