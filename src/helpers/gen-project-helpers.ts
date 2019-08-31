@@ -35,7 +35,7 @@ export let queryTypes: PartialCallMeta[] = [];
 export let subscribeTypes: PartialCallMeta[] = [];
 
 // only allow token of this app_id
-export let app_id: string | undefined;
+let app_id: string | undefined;
 
 export function checkAppId(appId?: string) {
   app_id = appId;
@@ -61,7 +61,7 @@ function SuccessType(Out?: string): string {
   return Out ? `{ Success: true } & (${Out})` : `{ Success: true }`;
 }
 
-export function authCall(
+function authCall(
   types: PartialCallMeta[],
   call: {
     Type: string;
