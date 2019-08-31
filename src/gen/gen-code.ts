@@ -910,6 +910,7 @@ export function genDocumentationHtmlCode(args: {
   queryTypeName: string;
   subscribeTypeName: string;
   callTypes: CallMeta[];
+  role: string;
 }) {
   const {
     baseProjectName,
@@ -917,6 +918,7 @@ export function genDocumentationHtmlCode(args: {
     commandTypeName,
     queryTypeName,
     subscribeTypeName,
+    role,
   } = args;
 
   const commandTypes: PartialCallMeta[] = callTypes.filter(
@@ -929,14 +931,14 @@ export function genDocumentationHtmlCode(args: {
     x => x.CallType === subscribeTypeName,
   );
 
-  const title = `${baseProjectName} APIs`;
+  const title = `${baseProjectName} ${role} APIs`;
 
   const formatApis = (prefix: string, name: string, calls: PartialCallMeta[]) =>
     `<h2>${name} APIs</h2>
 ${prefix}<ul>${calls
       .map(
-        ({ Type, Admin }) => `
-${prefix}  <li><a href="#${Type}">${Type}${Admin ? ' (Admin)' : ''}</a></li>`,
+        ({ Type }) => `
+${prefix}  <li><a href="#${Type}">${Type}</a></li>`,
       )
       .join('')}
 ${prefix}</ul>`;

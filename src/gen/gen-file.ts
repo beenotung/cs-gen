@@ -640,19 +640,41 @@ export function injectTimestampFieldOnCall(args: {
 async function genDocumentationHtmlFile(args: {
   outDirname: string;
   docDirname: string;
-  docFilename: string;
+  clientDocFilename: string;
+  adminDocFilename: string;
   baseProjectName: string;
   commandTypeName: string;
   queryTypeName: string;
   subscribeTypeName: string;
   callTypes: CallMeta[];
 }) {
-  const { outDirname, docDirname, docFilename } = args;
+  const {
+    outDirname,
+    docDirname,
+    clientDocFilename,
+    adminDocFilename,
+    callTypes,
+  } = args;
   const dirname = path.join(outDirname, docDirname);
   await mkdirp(dirname);
-  const filename = path.join(dirname, docFilename);
-  const code = genDocumentationHtmlCode(args);
-  await writeFile(filename, code);
+  {
+    const filename = path.join(dirname, clientDocFilename);
+    const code = genDocumentationHtmlCode({
+      ...args,
+      role: 'Client',
+      callTypes: callTypes.filter(x => !x.Admin),
+    });
+    await writeFile(filename, code);
+  }
+  {
+    const filename = path.join(dirname, adminDocFilename);
+    const code = genDocumentationHtmlCode({
+      ...args,
+      role: 'Admin',
+      callTypes: callTypes.filter(x => x.Admin),
+    });
+    await writeFile(filename, code);
+  }
 }
 
 export const defaultGenProjectArgs = {
@@ -695,7 +717,8 @@ export const defaultGenProjectArgs = {
 export async function genProject(_args: {
   outDirname?: string;
   docDirname?: string;
-  docFilename?: string;
+  clientDocFilename?: string;
+  adminDocFilename?: string;
   baseProjectName: string;
   serverProjectName?: string;
   clientProjectName?: string;
@@ -742,7 +765,10 @@ export async function genProject(_args: {
       _args.clientProjectName || _args.baseProjectName + '-client',
     adminProjectName:
       _args.adminProjectName || _args.baseProjectName + '-admin',
-    docFilename: _args.docFilename || _args.baseProjectName + '-doc.html',
+    clientDocFilename:
+      _args.clientDocFilename || _args.baseProjectName + '-client-doc.html',
+    adminDocFilename:
+      _args.adminDocFilename || _args.baseProjectName + '-admin-doc.html',
   };
   const {
     outDirname,
