@@ -20,7 +20,7 @@ export function checkAppId(appId?: string) {
   app_id = appId;
 }
 
-export function FailType(Reasons: string[]): string {
+export function FailType(Reasons?: string[]): string {
   return Reasons && Reasons.length > 0
     ? `{ Success: false, Reason: ${Reasons.map(Reason =>
         JSON.stringify(Reason),
