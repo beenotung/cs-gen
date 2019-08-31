@@ -1,5 +1,26 @@
+import { ArrayType } from 'gen-ts-type';
 import { CallMeta } from '../types';
-import { flattenCallMetas, PartialCallMeta } from '../utils';
+import { flattenCallMetas, PartialCallMeta, TypeAlias } from '../utils';
+
+export let typeAlias: TypeAlias = {};
+
+export function alias(_typeAlias: TypeAlias) {
+  Object.assign(typeAlias, _typeAlias);
+  const type = (typeStr: string): string => {
+    for (const [name, type] of Object.entries(typeAlias)) {
+      if (typeStr === type) {
+        return name;
+      }
+    }
+    console.warn('type not register as alias: ' + typeStr);
+    return typeStr;
+  };
+  const typeArray = (typeStr: string): string => ArrayType(type(typeStr));
+  return {
+    type,
+    typeArray,
+  };
+}
 
 export const InvalidToken = 'InvalidToken';
 export const InvalidAppId = 'InvalidAppId';
@@ -35,9 +56,11 @@ function InjectReasons(Reasons?: string[]): string[] {
     : // only a specific app_id is allowed
       [InvalidToken, InvalidAppId, ...(Reasons || [])];
 }
+
 function SuccessType(Out?: string): string {
   return Out ? `{ Success: true } & (${Out})` : `{ Success: true }`;
 }
+
 export function authCall(
   types: PartialCallMeta[],
   call: {

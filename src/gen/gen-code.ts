@@ -1,7 +1,7 @@
 import { groupBy } from '@beenotung/tslib/functional';
 import { genTsType } from 'gen-ts-type';
 import { CallMeta } from '../types';
-import { PartialCallMeta } from '../utils';
+import { PartialCallMeta, TypeAlias } from '../utils';
 
 export function formatString(s: string): string {
   return '`' + s.replace(/\\/g, '\\\\').replace(/`/g, '\\`') + '`';
@@ -398,6 +398,7 @@ export type ${callTypeName} = ${callTypes.map(({ Type }) => Type).join(' | ')};
 }
 
 export function genCallTypeCode(args: {
+  typeAlias: TypeAlias;
   callTypes: CallMeta[];
   callTypeName: string;
   commandTypeName: string;
@@ -405,6 +406,7 @@ export function genCallTypeCode(args: {
   subscribeTypeName: string;
 }): string {
   const {
+    typeAlias,
     commandTypeName,
     queryTypeName,
     subscribeTypeName,
@@ -416,6 +418,9 @@ export function genCallTypeCode(args: {
   const queryTypes = callTypesMap.get(queryTypeName) || [];
   const subscribeTypes = callTypesMap.get(subscribeTypeName) || [];
   const code = `
+${Object.entries(typeAlias)
+  .map(([name, type]) => `export type ${name} = ${type};`)
+  .join('\n')}
 ${[
   { typeName: commandTypeName, types: commandTypes },
   { typeName: queryTypeName, types: queryTypes },

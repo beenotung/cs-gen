@@ -7,7 +7,7 @@ import {
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { CallMeta } from '../types';
-import { defaultTypeName, PartialCallMeta } from '../utils';
+import { defaultTypeName, PartialCallMeta, TypeAlias } from '../utils';
 import {
   genCallTypeCode,
   genClientLibCode,
@@ -161,6 +161,7 @@ async function genTypeFile(args: {
   queryTypeName: string;
   commandTypeName: string;
   subscribeTypeName: string;
+  typeAlias: TypeAlias;
 }) {
   const code = genCallTypeCode(args);
 
@@ -712,6 +713,7 @@ export const defaultGenProjectArgs = {
   injectFormat: true,
   asyncLogicProcessor: false,
   replayQuery: false,
+  typeAlias: {},
 };
 
 export async function genProject(_args: {
@@ -755,6 +757,7 @@ export async function genProject(_args: {
   injectFormat?: boolean;
   asyncLogicProcessor?: boolean;
   replayQuery?: boolean;
+  typeAlias?: TypeAlias;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
