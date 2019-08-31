@@ -5,22 +5,28 @@ import { Db } from './store/db';
 import { Call, Call as _Call, IEvent } from './types';
 import { CallInput } from './utils';
 
-export interface LogicProcessor<C extends Call> {
-  [Type: string]: (In: Call['In']) => Call['Out'];
+export interface LogicProcessor<C extends Call, E extends IEvent> {
+  [CallType_or_EventType: string]:  // Call Handler
+    | ((In: Call['In']) => Call['Out'])
+    // Event Callback
+    | ((event: string) => void);
 }
 
 /**
  * this is a template
  * it should be generated for each application since they may name CallType differently
  * */
-export class Dispatcher<Call extends _Call = _Call> {
-  logicProcessor: LogicProcessor<Call>;
+export class Dispatcher<
+  Call extends _Call = _Call,
+  Event extends IEvent = IEvent
+> {
+  logicProcessor: LogicProcessor<Call, Event>;
   db: Db;
   ready: Promise<void>;
   dbName: string;
 
   constructor(args: {
-    logicProcessor: LogicProcessor<Call>;
+    logicProcessor: LogicProcessor<Call, Event>;
     db: Db;
     dbName: string;
   }) {
@@ -49,7 +55,7 @@ export class Dispatcher<Call extends _Call = _Call> {
             HttpStatus.NOT_IMPLEMENTED,
           );
       }
-    })().bind(this)(call);
+    })().bind(this)(call as CallInput<any>);
   }
 
   // inject logic processor method route below
@@ -71,14 +77,13 @@ export class Dispatcher<Call extends _Call = _Call> {
 
   // inject logic processor event route below
   private routeEvent(event: IEvent) {
-    const method = this.logicProcessor[event.event_type];
-    if (typeof method !== 'function') {
+    if (typeof this.logicProcessor[event.event_type] !== 'function') {
       throw new HttpException(
         `not implement event handler: event_type=${event.event_type}`,
         HttpStatus.NOT_IMPLEMENTED,
       );
     }
-    return method.bind(this.logicProcessor)(event);
+    return this.logicProcessor[event.event_type](event as any);
   }
 
   // injected Call route above
@@ -141,7 +146,7 @@ export class Dispatcher<Call extends _Call = _Call> {
     const cursor = await this.runTable('Event', table => table);
     let eventP: Result<void> = void 0;
     return new Promise((resolve, _reject) => {
-      const reject = err => {
+      const reject = (err: any) => {
         cursor.close();
         _reject(err);
       };

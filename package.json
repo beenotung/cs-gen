@@ -43,7 +43,7 @@
     "async-mkdirp": "^1.2.7",
     "gen-ts-type": "^1.2.0",
     "graceful-fs": "^4.1.15",
-    "mkdirp-sync": "0.0.3",
+    "mkdirp-sync": "^0.0.3",
     "reflect-metadata": "^0.1.13",
     "rethinkdb": "^2.3.3"
   },

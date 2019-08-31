@@ -2,9 +2,11 @@ import { later } from '@beenotung/tslib/async/wait';
 import { compare_string } from '@beenotung/tslib/string';
 import { Injectable } from '@nestjs/common';
 import * as fs from 'graceful-fs';
-import mkdirp = require('mkdirp-sync');
 import * as path from 'path';
 import * as util from 'util';
+// tslint:disable:no-var-requires
+const mkdirp = require('mkdirp-sync');
+// tslint:enable:no-var-requires
 
 const readdir: typeof fs.readdir.__promisify__ = util.promisify(fs.readdir);
 const writeFile: typeof fs.writeFile.__promisify__ = util.promisify(
@@ -20,8 +22,8 @@ function fixFS() {
 
 @Injectable()
 export class LogService {
-  private now: number;
-  private acc: number;
+  private now?: number;
+  private acc?: number;
   // private store: AsyncStore;
   // private fsPool = new NonVoidResultPool(8000);
 
@@ -72,13 +74,13 @@ export class LogService {
     // return this.store.getObject(key);
     const bin = await readFile(this.keyToPath(key));
     const text = bin ? bin.toString() : null;
-    return JSON.parse(text);
+    return JSON.parse(text!);
   }
 
   nextKey(): string {
     const now = Date.now();
     if (this.now === now) {
-      this.acc++;
+      this.acc!++;
     } else {
       this.now = now;
       this.acc = 0;
