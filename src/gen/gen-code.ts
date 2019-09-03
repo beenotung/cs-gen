@@ -205,6 +205,8 @@ export function genControllerCode(args: {
   ws: boolean;
   asyncLogicProcessor: boolean;
   replayQuery: boolean;
+  timestampFieldName: string;
+  injectTimestampField: boolean;
 }) {
   const {
     callTypeName,
@@ -221,6 +223,8 @@ export function genControllerCode(args: {
     ws,
     asyncLogicProcessor,
     replayQuery,
+    timestampFieldName,
+    injectTimestampField,
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
@@ -318,7 +322,12 @@ export class ${controllerClassName} {${
         const spark: Spark = _spark as any;
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
-        spark.on('${callApiPath}', (async (call: CallInput<${callTypeName}>, ack: (data: any) => void) => {
+        spark.on('${callApiPath}', (async (call: CallInput<${callTypeName}>, ack: (data: any) => void) => {${
+            injectTimestampField
+              ? `
+          call.In.${timestampFieldName} = Date.now();`
+              : ``
+          }
           startSparkCall(spark, call);
           try {
             await this.ready;
@@ -357,7 +366,12 @@ export class ${controllerClassName} {${
     @Req() req: Request,
     @Res() res: Response,
     @Body() call: CallInput<C>,
-  ): Promise<C['Out']> {
+  ): Promise<C['Out']> {${
+    injectTimestampField
+      ? `
+    call.In.${timestampFieldName} = Date.now();`
+      : ``
+  }
     await this.ready;
     try {
       startRestCall(req, res, call);

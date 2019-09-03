@@ -7,7 +7,7 @@ import {
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { CallMeta } from '../types';
-import { defaultTypeName, PartialCallMeta, TypeAlias } from '../utils';
+import { defaultTypeName, TypeAlias } from '../utils';
 import {
   genCallTypeCode,
   genClientLibCode,
@@ -144,6 +144,8 @@ async function genControllerFile(args: {
   ws: boolean;
   asyncLogicProcessor: boolean;
   replayQuery: boolean;
+  timestampFieldName: string;
+  injectTimestampField: boolean;
 }) {
   const { controllerFilename } = args;
   const code = genControllerCode(args);
@@ -601,14 +603,15 @@ function hasNestProject(args: {
   return hasFile(filename);
 }
 
-export function injectTimestampFieldOnCall(args: {
-  call: PartialCallMeta;
+export function injectTimestampFieldOnCall<Call extends { In: string }>(args: {
+  call: Call;
   timestampFieldName: string;
-}): void {
-  const { call, timestampFieldName } = args;
+  injectTimestampField: boolean;
+}): Call {
+  const { call, timestampFieldName, injectTimestampField } = args;
   let { In } = call;
-  if (In.includes(timestampFieldName)) {
-    return;
+  if (!injectTimestampField) {
+    return call;
   }
   In = In.trim();
   if (In === '{}' || In === 'void' || In === 'null' || In === 'undefined') {
@@ -637,7 +640,10 @@ export function injectTimestampFieldOnCall(args: {
   } else {
     In = `(${In}) & { ${timestampFieldName}: number }`;
   }
-  call.In = In;
+  return {
+    ...call,
+    In,
+  };
 }
 
 async function genDocumentationHtmlFile(args: {
@@ -793,12 +799,6 @@ export async function genProject(_args: {
     serverProjectDirname,
   };
 
-  if (injectTimestampField) {
-    callTypes.forEach(call =>
-      injectTimestampFieldOnCall({ call, timestampFieldName }),
-    );
-  }
-
   if (!(await hasNestProject(args))) {
     await runNestCommand({
       cwd: outDirname,
@@ -848,6 +848,13 @@ export async function genProject(_args: {
     genTypeFile({
       ...args,
       projectDirname: serverProjectDirname,
+      callTypes: callTypes.map(call =>
+        injectTimestampFieldOnCall({
+          call,
+          injectTimestampField,
+          timestampFieldName,
+        }),
+      ),
     }),
     genTypeFile({
       ...args,
