@@ -1,12 +1,13 @@
 import * as path from 'path';
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Request, Response } from 'express-serve-static-core';
 import { Call } from '../domain/types';
 import { CallInput, LogService } from 'cqrs-exp';
 import { CoreService } from './core.service';
 import { Bar } from 'cli-progress';
 import { ok, rest_return } from 'nestlib';
 import { status } from './status';
-import { Response } from 'express-serve-static-core';
+import { endRestCall, startRestCall } from './connection';
 import {
   closeConnection,
   endSparkCall,
@@ -98,16 +99,20 @@ export class CoreController {
 
   @Post('Call')
   async Call<C extends Call>(
+    @Req() req: Request,
     @Res() res: Response,
     @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     await this.ready;
     try {
+      startRestCall(req, res, call);
       const out = this.storeAndCall<C>(call);
       ok(res, out);
       return out;
     } catch (e) {
       return rest_return(res, Promise.reject(e));
+    } finally {
+      endRestCall(call);
     }
   }
 }

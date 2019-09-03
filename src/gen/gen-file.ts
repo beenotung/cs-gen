@@ -521,26 +521,30 @@ function genIdeaModulesXml(projectName: string) {
 }
 
 async function setBaseProjectIdeaConfig(args: {
+  outDirname: string;
   baseProjectName: string;
   serverProjectName: string;
   clientProjectName: string;
   adminProjectName: string;
 }) {
   const {
+    outDirname,
     baseProjectName,
     serverProjectName,
     clientProjectName,
     adminProjectName,
   } = args;
+  const ideaDir = path.join(outDirname, '.idea');
+  await mkdirp(ideaDir);
   await Promise.all([
     writeFile(
-      path.join('.idea', baseProjectName + '.iml'),
+      path.join(ideaDir, baseProjectName + '.iml'),
       genIdeaModuleIml({
         excludeDirs: [serverProjectName, clientProjectName, adminProjectName],
       }),
     ),
     writeFile(
-      path.join('.idea', 'modules.xml'),
+      path.join(ideaDir, 'modules.xml'),
       genIdeaModulesXml(baseProjectName),
     ),
   ]);

@@ -1,4 +1,5 @@
 import { CallInput } from 'cqrs-exp';
+import { Request, Response } from 'express-serve-static-core';
 
 export interface Spark {
   id: string;
@@ -74,4 +75,23 @@ export function endSparkCall(spark: Spark, call: CallInput) {
   if(!session){return}
   remove(session.calls, call);
   in_session_map.delete(call.In);
+}
+
+export interface RestSession {
+  req: Request;
+  res: Response;
+}
+
+const in_rest_session_map = new Map<any, RestSession>();
+
+export function startRestCall(req: Request, res: Response, call: CallInput) {
+  in_rest_session_map.set(call.In, { req, res });
+}
+
+export function getRestSessionByIn(In: any): RestSession | undefined {
+  return in_rest_session_map.get(In);
+}
+
+export function endRestCall(call: CallInput) {
+  in_rest_session_map.delete(call.In);
 }

@@ -1,9 +1,9 @@
-import { Body, Controller, injectNestClient, Post, setBaseUrl } from 'nest-client';
+import { Body, Controller, injectNestClient, Post } from 'nest-client';
 import {
   BlockUser,
   Call as CallType,
 } from './types';
-import Primus from 'typestub-primus';
+import { Primus } from 'typestub-primus';
 
 export interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;
@@ -31,8 +31,9 @@ let coreService: CoreService;
 @Controller('core')
 export class CoreService {
   constructor(baseUrl: string) {
-    setBaseUrl(baseUrl);
-    injectNestClient(this);
+    injectNestClient(this, {
+      baseUrl,
+    });
   }
 
   @Post('Call')
