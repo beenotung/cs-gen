@@ -59,7 +59,7 @@ window.onhashchange=function(){
   var Out = 'unknown';
   switch (Type) {
     case 'BlockUser': {
-      In = `{ UserId: string, Timestamp: number }`;
+      In = `{ UserId: string }`;
       Out = `({ Success: true } | { Success: false; Reason: string })`;
       break;
     }

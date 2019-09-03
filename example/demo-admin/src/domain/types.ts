@@ -1,7 +1,7 @@
 export type BlockUser = {
   CallType: 'Command';
   Type: 'BlockUser',
-  In: { UserId: string, Timestamp: number },
+  In: { UserId: string },
   Out: ({ Success: true } | { Success: false; Reason: string }),
 };
 

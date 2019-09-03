@@ -65,6 +65,7 @@ export class CoreController {
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
         spark.on('Call', (async (call: CallInput<Call>, ack: (data: any) => void) => {
+          call.In.Timestamp = Date.now();
           startSparkCall(spark, call);
           try {
             await this.ready;
@@ -103,6 +104,7 @@ export class CoreController {
     @Res() res: Response,
     @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
+    call.In.Timestamp = Date.now();
     await this.ready;
     try {
       startRestCall(req, res, call);

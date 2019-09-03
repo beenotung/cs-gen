@@ -68,12 +68,12 @@ export function startPrimus(baseUrl: string) {
 export function Call<C extends CallType>(
   CallType: C['CallType'],
   Type: C['Type'],
-  In: Omit<C['In'], 'Timestamp'> & { Timestamp?: number },
+  In: C['In'],
 ): Promise<C['Out']> {
   const callInput: CallInput<C> = {
     CallType,
     Type,
-    In: { ...In, Timestamp: In.Timestamp || Date.now() },
+    In,
   };
   if (coreService) {
     return coreService.Call<C>(callInput);
@@ -91,6 +91,6 @@ export function Call<C extends CallType>(
   });
 }
 
-export function BlockUser(In: Omit<BlockUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<BlockUser['Out']> {
+export function BlockUser(In: BlockUser['In']): Promise<BlockUser['Out']> {
   return Call<BlockUser>('Command', 'BlockUser', In);
 }

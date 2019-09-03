@@ -74,12 +74,12 @@ export function startPrimus(baseUrl: string) {
 export function Call<C extends CallType>(
   CallType: C['CallType'],
   Type: C['Type'],
-  In: Omit<C['In'], 'Timestamp'> & { Timestamp?: number },
+  In: C['In'],
 ): Promise<C['Out']> {
   const callInput: CallInput<C> = {
     CallType,
     Type,
-    In: { ...In, Timestamp: In.Timestamp || Date.now() },
+    In,
   };
   if (coreService) {
     return coreService.Call<C>(callInput);
@@ -97,23 +97,23 @@ export function Call<C extends CallType>(
   });
 }
 
-export function CreateUser(In: Omit<CreateUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<CreateUser['Out']> {
+export function CreateUser(In: CreateUser['In']): Promise<CreateUser['Out']> {
   return Call<CreateUser>('Command', 'CreateUser', In);
 }
 
-export function RenameUser(In: Omit<RenameUser['In'], 'Timestamp'> & { Timestamp?: number }): Promise<RenameUser['Out']> {
+export function RenameUser(In: RenameUser['In']): Promise<RenameUser['Out']> {
   return Call<RenameUser>('Command', 'RenameUser', In);
 }
 
-export function CreateItem(In: Omit<CreateItem['In'], 'Timestamp'> & { Timestamp?: number }): Promise<CreateItem['Out']> {
+export function CreateItem(In: CreateItem['In']): Promise<CreateItem['Out']> {
   return Call<CreateItem>('Command', 'CreateItem', In);
 }
 
-export function GetProfile(In: Omit<GetProfile['In'], 'Timestamp'> & { Timestamp?: number }): Promise<GetProfile['Out']> {
+export function GetProfile(In: GetProfile['In']): Promise<GetProfile['Out']> {
   return Call<GetProfile>('Query', 'GetProfile', In);
 }
 
-export function GetUserList(In: Omit<GetUserList['In'], 'Timestamp'> & { Timestamp?: number }): Promise<GetUserList['Out']> {
+export function GetUserList(In: GetUserList['In']): Promise<GetUserList['Out']> {
   return Call<GetUserList>('Query', 'GetUserList', In);
 }
 
@@ -128,7 +128,7 @@ export interface SubscribeResult {
 
 export function Subscribe<C extends SubscribeType>(
   Type: C['Type'],
-  In: Omit<C['In'], 'Timestamp'> & { Timestamp?: number },
+  In: C['In'],
   options: SubscribeOptions<C['Out']>,
 ): SubscribeResult {
   if (coreService) {
@@ -137,7 +137,7 @@ export function Subscribe<C extends SubscribeType>(
   const callInput: CallInput<C> = {
     CallType: 'Subscribe',
     Type,
-    In: { ...In, Timestamp: In.Timestamp || Date.now() },
+    In,
   };
   let cancelled = false;
   const res: SubscribeResult = { cancel: () => cancelled = true };
@@ -166,7 +166,7 @@ export function Subscribe<C extends SubscribeType>(
 }
 
 export function SubscribeItems(
-  In: Omit<SubscribeItems['In'], 'Timestamp'> & { Timestamp?: number },
+  In: SubscribeItems['In'],
   options: SubscribeOptions<SubscribeItems['Out']>,
 ): SubscribeResult {
   return Subscribe<SubscribeItems>('SubscribeItems', In, options);
