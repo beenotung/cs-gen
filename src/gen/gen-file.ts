@@ -261,8 +261,6 @@ async function genClientLibFile(args: {
   callTypeName: string;
   subscribeTypeName: string;
   callTypes: CallMeta[];
-  timestampFieldName: string;
-  injectTimestampOnClient: boolean;
   primusGlobalName: string;
   primusPath: string;
   ws: boolean;
@@ -710,7 +708,6 @@ export const defaultGenProjectArgs = {
   logicProcessorClassName: 'LogicProcessor',
   timestampFieldName: 'Timestamp',
   injectTimestampField: true,
-  injectTimestampOnClient: true,
   primusGlobalName: 'Primus',
   primusPath: '/primus',
   ws: true,
@@ -753,7 +750,6 @@ export async function genProject(_args: {
   apiFilename?: string;
   timestampFieldName?: string;
   injectTimestampField?: boolean;
-  injectTimestampOnClient?: boolean;
   primusGlobalName?: string;
   primusPath?: string;
   ws?: boolean;

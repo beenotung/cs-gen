@@ -560,8 +560,6 @@ export function genClientLibCode(args: {
   callTypeName: string;
   subscribeTypeName: string;
   callTypes: CallMeta[];
-  timestampFieldName: string;
-  injectTimestampOnClient: boolean;
   primusGlobalName: string;
   ws: boolean;
   serverOrigin?: string;
@@ -576,8 +574,6 @@ export function genClientLibCode(args: {
     callTypeName,
     subscribeTypeName,
     callTypes,
-    timestampFieldName,
-    injectTimestampOnClient,
     primusGlobalName,
     ws,
     serverOrigin,
@@ -596,16 +592,6 @@ export function genClientLibCode(args: {
           .join('/') +
         `/${typeDirname}`;
   const typeFilePath = `'${relativeDir}/${removeTsExtname(typeFilename)}'`;
-
-  const wrapInType = (Type: string) =>
-    injectTimestampOnClient
-      ? `Omit<${Type}['In'], '${timestampFieldName}'> & { ${timestampFieldName}?: number }`
-      : `${Type}['In']`;
-
-  const inPropCode = injectTimestampOnClient
-    ? `In: { ...In, ${timestampFieldName}: In.${timestampFieldName} || Date.now() }`
-    : 'In';
-
   let code = `
 import { Body, Controller, injectNestClient, Post } from 'nest-client';
 import {
@@ -701,12 +687,12 @@ export function startPrimus(baseUrl: string${
 export function ${callTypeName}<C extends CallType>(
   CallType: C['CallType'],
   Type: C['Type'],
-  In: ${wrapInType('C')},
+  In: C['In'],
 ): Promise<C['Out']> {
   const callInput: CallInput<C> = {
     CallType,
     Type,
-    ${inPropCode},
+    In,
   };
   ${
     ws
@@ -735,7 +721,7 @@ ${callTypes
   .filter(c => c.CallType !== subscribeTypeName)
   .map(
     ({ CallType, Type }) => `
-export function ${Type}(In: ${wrapInType(Type)}): Promise<${Type}['Out']> {
+export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
   return Call<${Type}>('${CallType}', '${Type}', In);
 }
 `,
@@ -755,7 +741,7 @@ export interface SubscribeResult {
 
 export function ${subscribeTypeName}<C extends SubscribeType>(
   Type: C['Type'],
-  In: ${wrapInType('C')},
+  In: C['In'],
   options: SubscribeOptions<C['Out']>,
 ): SubscribeResult {
   if (coreService) {
@@ -764,7 +750,7 @@ export function ${subscribeTypeName}<C extends SubscribeType>(
   const callInput: CallInput<C> = {
     CallType: '${subscribeTypeName}',
     Type,
-    ${inPropCode},
+    In,
   };
   let cancelled = false;
   const res: SubscribeResult = { cancel: () => cancelled = true };
@@ -796,7 +782,7 @@ ${callTypes
   .map(
     ({ Type }) => `
 export function ${Type}(
-  In: ${wrapInType(Type)},
+  In: ${Type}['In'],
   options: SubscribeOptions<${Type}['Out']>,
 ): SubscribeResult {
   return ${subscribeTypeName}<${Type}>('${Type}', In, options);
