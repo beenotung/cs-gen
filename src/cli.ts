@@ -124,6 +124,7 @@ async function initProject() {
     'server origin',
     `https://${name}.${serverDomain}`,
   );
+  io.close();
   console.log(`initializing gen-project for '${name}'`);
   if (name !== cwd) {
     await mkdirp(name);
@@ -141,6 +142,7 @@ async function initProject() {
     appId,
     serverOrigin,
   });
+  console.log('generated skeleton.');
 }
 
 catchMain(initProject());
