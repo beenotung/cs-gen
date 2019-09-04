@@ -1,16 +1,15 @@
 {
   "extends": [
-    "tslint:recommended"
-  ],
-  "rulesDirectory": [
-    "node_modules/tslint-eslint-rules/dist/rules"
+    "tslint:recommended",
+    "tslint-eslint-rules",
+    "tslint-config-prettier"
   ],
   "rules": {
+    "no-var-requires": false,
+    "interface-over-type-literal": false,
     "no-reference": true,
     "only-arrow-functions": false,
-    "max-classes-per-file": [
-      true
-    ],
+    "max-classes-per-file": false,
     "no-namespace": false,
     "align": [
       true,
@@ -38,7 +37,6 @@
       true,
       "spaces"
     ],
-    "interface-over-type-literal": true,
     "label-position": true,
     "max-line-length": [
       true,
@@ -72,7 +70,7 @@
     "no-empty": true,
     "no-empty-interface": true,
     "no-eval": true,
-    "no-inferrable-types": true,
+    "no-inferrable-types": false,
     "no-shadowed-variable": false,
     "no-string-literal": true,
     "no-string-throw": true,
