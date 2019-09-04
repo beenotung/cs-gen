@@ -57,8 +57,12 @@ function InjectReasons(Reasons?: string[]): string[] {
       [InvalidToken, InvalidAppId, ...(Reasons || [])];
 }
 
-function SuccessType(Out?: string): string {
+export function SuccessType(Out?: string): string {
   return Out ? `{ Success: true } & (${Out})` : `{ Success: true }`;
+}
+
+export function ResultType(Reasons: string[], Out?: string): string {
+  return `(${FailType(Reasons)}) | (${SuccessType(Out)})`;
 }
 
 function authCall(
