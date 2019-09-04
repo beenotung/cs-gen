@@ -79,15 +79,31 @@ async function initGenProject(args: {
     `
 import { flattenCallMetas, genProject } from 'cqrs-exp';
 import { catchMain } from '@beenotung/tslib/node';
+import { ArrayType } from 'gen-ts-type';
 import {
   checkAppId,
+  enableSubscription,
   commandTypes,
   queryTypes,
   subscribeTypes,
   typeAlias,
+  ResultType,
+  Admin,
+  UserNotFound,
+  NoPermission,
 } from 'cqrs-exp/dist/helpers/gen-project-helpers';
 
 checkAppId(${JSON.stringify(appId)});
+enableSubscription();
+
+commandTypes.push(
+  { Type: 'CreateUser', In: \`{ UserId: string }\`, Out: ResultType([UserNotFound]) },
+  { Type: 'CreateAdmin', In: \`{ UserId: string }\`, Out: ResultType([UserNotFound]), Admin },
+);
+queryTypes.push(
+  { Type: 'GetUserList', In: 'void', Out: ResultType([NoPermission], \`{ Users: \${ArrayType(\`{ UserId: string }\`)} }\`) },
+  { Type: 'HasUser', In: \`{ UserId: string }\`, Out: ResultType([NoPermission], \`{ HasUser: boolean }\`), Admin },
+);
 
 catchMain(genProject({
   outDirname: '.',
@@ -96,6 +112,7 @@ catchMain(genProject({
   timestampFieldName: 'Timestamp',
   asyncLogicProcessor: true,
   staticControllerReference: true,
+  injectFormat: true,
   callTypes: flattenCallMetas({
     commandTypes,
     queryTypes,
@@ -166,8 +183,8 @@ function help() {
     `
 cqrs-exp [command]
 Commands:
-  init  : initialize project skeleton, create setup package.json and scripts/gen-project.ts
-  gen   : generate the client-side SDK for -client and -admin project, and create stub code for -server project
+  init  : initialize project skeleton, setup package.json and create scripts/gen-project.ts with default settings
+  gen   : generate the client-side SDK for *-client and *-admin project, and stub code for *-server project
   help  : show this help message
 `.trim(),
   );
