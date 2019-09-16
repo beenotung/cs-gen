@@ -3,6 +3,15 @@ import { genTsType } from 'gen-ts-type';
 import { CallMeta } from '../types';
 import { PartialCallMeta, TypeAlias } from '../utils';
 
+export type GenProjectPlugins = {
+  auth?: {
+    ImportFile: string;
+    Method: string;
+    AttemptPrefix: string;
+    AuthPrefix: string;
+  };
+};
+
 export function formatString(s: string): string {
   return '`' + s.replace(/\\/g, '\\\\').replace(/`/g, '\\`') + '`';
 }
@@ -70,6 +79,7 @@ export function genServiceCode(args: {
   logicProcessorClassName: string;
   logicProcessorCode: string;
   asyncLogicProcessor: boolean;
+  plugins: GenProjectPlugins;
 }) {
   const {
     callTypeName,
@@ -81,11 +91,19 @@ export function genServiceCode(args: {
     logicProcessorCode,
     callTypes,
     asyncLogicProcessor,
+    plugins,
   } = args;
+  const { auth } = plugins;
   const async_import_type = asyncLogicProcessor ? ', Result' : '';
   const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
-  const code = `
+  let code = ``;
+  if (auth) {
+    code += `
+import { ${auth.Method} } from ${JSON.stringify(auth.ImportFile)};
+`.trim();
+  }
+  code += `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   ${[
@@ -161,7 +179,13 @@ export class ${serviceClassName} {
         CallType === subscribeTypeName ? '{ id: string }' : `${Type}['Out']`,
       )} {
     ${
-      logicProcessorCode.includes(Type)
+      auth &&
+      Type.length > auth.AttemptPrefix.length &&
+      Type.startsWith(auth.AttemptPrefix)
+        ? `return ${auth.Method}(${JSON.stringify(CallType)}, ${JSON.stringify(
+            Type,
+          )}, In);`
+        : logicProcessorCode.includes(Type)
         ? `return this.impl.${Type}(In);`
         : `return not_impl('${Type}');`
     }
@@ -172,7 +196,7 @@ export class ${serviceClassName} {
     .join('')
     .trim()}
 }
-`;
+`.trim();
   return code.trim();
 }
 

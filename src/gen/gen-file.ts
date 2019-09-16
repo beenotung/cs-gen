@@ -16,6 +16,7 @@ import {
   genDocumentationHtmlCode,
   genMainCode,
   genModuleCode,
+  GenProjectPlugins,
   genServiceCode,
   genStatusCode,
 } from './gen-code';
@@ -102,6 +103,7 @@ async function genServiceFile(args: {
   logicProcessorClassName: string;
   logicProcessorCode: string;
   asyncLogicProcessor: boolean;
+  plugins: GenProjectPlugins;
 }) {
   const { serviceFilename } = args;
   const code = genServiceCode(args);
@@ -721,6 +723,7 @@ export const defaultGenProjectArgs = {
   asyncLogicProcessor: false,
   replayQuery: false,
   typeAlias: {},
+  plugins: {} as GenProjectPlugins,
 };
 
 export async function genProject(_args: {
@@ -764,6 +767,7 @@ export async function genProject(_args: {
   asyncLogicProcessor?: boolean;
   replayQuery?: boolean;
   typeAlias?: TypeAlias;
+  plugins?: GenProjectPlugins;
 }) {
   const __args = {
     ...defaultGenProjectArgs,

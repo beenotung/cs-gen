@@ -64,7 +64,12 @@ export function SuccessType(Out?: string): string {
 export function ResultType(Reasons: string[], Out?: string): string {
   return `(${FailType(Reasons)}) | (${SuccessType(Out)})`;
 }
-
+export let authConfig = {
+  AttemptPrefix: 'Attempt',
+  AuthPrefix: 'Auth',
+  ImportFile: '../domain/core/server-utils',
+  Method: 'authCall',
+};
 function authCall(
   types: PartialCallMeta[],
   call: {
@@ -79,7 +84,7 @@ function authCall(
   const InType = In ? In : `{}`;
   const _SuccessType = SuccessType(Out);
   types.push({
-    Type: 'Attempt' + Type,
+    Type: authConfig.AttemptPrefix + Type,
     In: `(${InType}) & { token: string }`,
     Out: `${FailType(InjectReasons(Reasons))} | ${_SuccessType}`,
     Admin: !!AdminOnly,
@@ -90,7 +95,7 @@ function authCall(
     : // can be any app
       `{ user_id: string, app_id: string }`;
   types.push({
-    Type: 'Auth' + Type,
+    Type: authConfig.AuthPrefix + Type,
     In: `(${InType}) & ${InjectIn}`,
     Out: `${FailType(Reasons)} | ${_SuccessType}`,
     Admin: true,
