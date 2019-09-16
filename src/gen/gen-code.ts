@@ -225,8 +225,7 @@ export function genControllerCode(args: {
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
-  const async_import_type = asyncLogicProcessor ? ', Result' : '';
-  const async_await = asyncLogicProcessor ? 'await ' : '';
+  const async_import_type = asyncLogicProcessor ? ', isPromise, Result' : '';
   const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
   return `
@@ -279,7 +278,7 @@ export class ${controllerClassName} {${
   }
 
   async restore() {
-    const keys = await this.logService.getKeys();
+    const keys = this.logService.getKeysSync();
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
@@ -292,7 +291,7 @@ export class ${controllerClassName} {${
         bar.increment(1);
         continue;
       }
-      const call = await this.logService.getObject<CallInput<${callTypeName}>>(key);
+      const call = this.logService.getObjectSync<CallInput<${callTypeName}>>(key);
       if (call === null) {
         continue;
       }
@@ -303,7 +302,14 @@ export class ${controllerClassName} {${
         continue;
       }
       try {
-        ${async_await}this.${serviceObjectName}.${callTypeName}(call);
+        const out = this.${serviceObjectName}.${callTypeName}(call);${
+    !asyncLogicProcessor
+      ? ''
+      : `
+        if (isPromise(out)) {
+          await out;
+        }`
+  }
       } catch (e) {
         console.error(\`failed when call '\${call.CallType}' '\${call.Type}':\`, e);
       }
@@ -328,8 +334,10 @@ export class ${controllerClassName} {${
           startSparkCall(spark, call);
           try {
             await this.ready;
-            await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
-            const out = ${async_await}this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
+            let out = this.storeAndCall(call);
+            if (isPromise(out)) {
+              out = await out;
+            }
             ack(out);
           } catch (e) {
             console.error(e);
@@ -372,7 +380,10 @@ export class ${controllerClassName} {${
     await this.ready;
     try {
       startRestCall(req, res, call);
-      const out = ${async_await}this.storeAndCall<C>(call);
+      let out = this.storeAndCall<C>(call);
+      if (isPromise(out)) {
+        out = await out;
+      }
       ok(res, out);
       return out;
     } catch (e) {
