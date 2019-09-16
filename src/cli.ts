@@ -191,6 +191,11 @@ Commands:
 }
 
 function call(cmd: string) {
+  if (process.platform === 'win32') {
+    if (cmd.startsWith('pnpm ') || cmd.startsWith('npm ')) {
+      cmd = cmd.replace('npm', 'npm.cmd');
+    }
+  }
   return spawn({ cmd });
 }
 
