@@ -82,8 +82,8 @@ export function genServiceCode(args: {
     callTypes,
     asyncLogicProcessor,
   } = args;
-  const asyncLogicProcessor_Result = asyncLogicProcessor ? ', Result' : '';
-  const asyncLogicProcessor_type = (type: string) =>
+  const async_import_type = asyncLogicProcessor ? ', Result' : '';
+  const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
   const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
@@ -98,7 +98,7 @@ import {
 import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(
     logicProcessorFilename,
   )}';
-import { CallInput${asyncLogicProcessor_Result} } from 'cqrs-exp';
+import { CallInput${async_import_type} } from 'cqrs-exp';
 
 // tslint:disable:no-unused-variable
 function not_impl(name: string): any {
@@ -110,7 +110,7 @@ function not_impl(name: string): any {
 export class ${serviceClassName} {
   impl = new ${logicProcessorClassName}();
 
-  ${callTypeName}<C extends ${callTypeName}>(args: CallInput<C>): ${asyncLogicProcessor_type(
+  ${callTypeName}<C extends ${callTypeName}>(args: CallInput<C>): ${async_type(
     `C['Out']`,
   )} {
     const { CallType, Type, In } = args;
@@ -157,10 +157,7 @@ export class ${serviceClassName} {
 
   ${callTypes
     .map(
-      ({
-        CallType,
-        Type,
-      }) => `${Type}(In: ${Type}['In']): ${asyncLogicProcessor_type(
+      ({ CallType, Type }) => `${Type}(In: ${Type}['In']): ${async_type(
         CallType === subscribeTypeName ? '{ id: string }' : `${Type}['Out']`,
       )} {
     ${
@@ -228,16 +225,16 @@ export function genControllerCode(args: {
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
-  const asyncLogicProcessor_Result = asyncLogicProcessor ? ', Result' : '';
-  const asyncLogicProcessor_await = asyncLogicProcessor ? 'await ' : '';
-  const asyncLogicProcessor_type = (type: string) =>
+  const async_import_type = asyncLogicProcessor ? ', Result' : '';
+  const async_await = asyncLogicProcessor ? 'await ' : '';
+  const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
   return `
 import * as path from 'path';
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express-serve-static-core';
 import { ${callTypeName} } from ${getTypeFileImportPath(args)};
-import { CallInput, LogService${asyncLogicProcessor_Result} } from 'cqrs-exp';
+import { CallInput, LogService${async_import_type} } from 'cqrs-exp';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
 import { ok, rest_return } from 'nestlib';
@@ -306,7 +303,7 @@ export class ${controllerClassName} {${
         continue;
       }
       try {
-        ${asyncLogicProcessor_await}this.${serviceObjectName}.${callTypeName}(call);
+        ${async_await}this.${serviceObjectName}.${callTypeName}(call);
       } catch (e) {
         console.error(\`failed when call '\${call.CallType}' '\${call.Type}':\`, e);
       }
@@ -332,7 +329,7 @@ export class ${controllerClassName} {${
           try {
             await this.ready;
             await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
-            const out = ${asyncLogicProcessor_await}this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
+            const out = ${async_await}this.${serviceObjectName}.${callTypeName}<${callTypeName}>(call);
             ack(out);
           } catch (e) {
             console.error(e);
@@ -353,7 +350,7 @@ export class ${controllerClassName} {${
 
   storeAndCall<C extends ${callTypeName}>(
     call: CallInput<C>,
-  ): ${asyncLogicProcessor_type(`C['Out']`)} {
+  ): ${async_type(`C['Out']`)} {
     this.logService.storeObjectSync(
       call,
       this.logService.nextKey() + '-' + call.CallType,
@@ -375,7 +372,7 @@ export class ${controllerClassName} {${
     await this.ready;
     try {
       startRestCall(req, res, call);
-      const out = ${asyncLogicProcessor_await}this.storeAndCall<C>(call);
+      const out = ${async_await}this.storeAndCall<C>(call);
       ok(res, out);
       return out;
     } catch (e) {
