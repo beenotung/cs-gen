@@ -86,11 +86,13 @@ import {
   commandTypes,
   queryTypes,
   subscribeTypes,
+  alias,
   typeAlias,
   ResultType,
   Admin,
   UserNotFound,
   NoPermission,
+  authConfig,
 } from 'cqrs-exp/dist/helpers/gen-project-helpers';
 
 checkAppId(${JSON.stringify(appId)});
@@ -120,6 +122,7 @@ catchMain(genProject({
   }),
   serverOrigin: ${JSON.stringify(serverOrigin)},
   typeAlias,
+  plugins: { auth: authConfig },
 }));
 `.trim() + '\n';
   await writeFile(path.join('scripts', 'gen-project.ts'), code);
