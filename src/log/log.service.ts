@@ -70,6 +70,13 @@ export class LogService {
   // getObject<T>(key: string): Result<T | null> {
   //   return this.fsPool.run(()=>this.store.getObject(key));
   // }
+
+  getObjectSync<T>(key: string): T | null {
+    const bin = fs.readFileSync(this.keyToPath(key));
+    const text = bin ? bin.toString() : null;
+    return JSON.parse(text!);
+  }
+
   async getObject<T>(key: string): Promise<T | null> {
     // return this.store.getObject(key);
     const bin = await readFile(this.keyToPath(key));
