@@ -6,7 +6,7 @@ let n = 1;
 for (;;) {
   console.log(`n : ${n}`);
   for (let i = 0; i < n; i++) {
-    logService.storeObject({ n, i });
+    logService.storeObject({ n, i }, logService.nextKey());
   }
   n *= 2;
   if (n >= 262144) {
