@@ -1,4 +1,5 @@
 import { ArrayType } from 'gen-ts-type';
+import { GenProjectPlugins } from '../gen/gen-code';
 import { CallMeta } from '../types';
 import { flattenCallMetas, PartialCallMeta, TypeAlias } from '../utils';
 
@@ -35,10 +36,10 @@ export let queryTypes: PartialCallMeta[] = [];
 export let subscribeTypes: PartialCallMeta[] = [];
 
 // only allow token of this app_id
-let app_id: string | undefined;
+export let check_app_id: string | undefined;
 
 export function checkAppId(appId?: string) {
-  app_id = appId;
+  check_app_id = appId;
 }
 
 export function FailType(Reasons?: string[]): string {
@@ -50,7 +51,7 @@ export function FailType(Reasons?: string[]): string {
 }
 
 function InjectReasons(Reasons?: string[]): string[] {
-  return app_id
+  return check_app_id
     ? // any app_id is allowed
       [InvalidToken, ...(Reasons || [])]
     : // only a specific app_id is allowed
@@ -66,11 +67,12 @@ export function ResultType(Reasons: string[], Out?: string): string {
   return `(${FailType(Reasons)}) | (${SuccessType(Out)})`;
 }
 
-export let authConfig = {
+export let authConfig: Required<GenProjectPlugins>['auth'] = {
   AttemptPrefix: 'Attempt',
   AuthPrefix: 'Auth',
   ImportFile: '../domain/core/server-utils',
-  Method: 'authCall',
+  MethodAuthCall: 'authCall',
+  MethodCheckAppId: 'checkAppId',
 };
 
 function andType(aType: string, bType: string): string {
@@ -102,7 +104,7 @@ function authCall(
     Out: `${FailType(InjectReasons(Reasons))} | ${_SuccessType}`,
     Admin: !!AdminOnly,
   });
-  const InjectIn: string = app_id
+  const InjectIn: string = check_app_id
     ? // explicit to be the current app
       `{ user_id: string }`
     : // can be any app

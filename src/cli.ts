@@ -122,6 +122,7 @@ catchMain(genProject({
   }),
   serverOrigin: ${JSON.stringify(serverOrigin)},
   typeAlias,
+  // replayQuery: true,
   plugins: { auth: authConfig },
 }));
 `.trim() + '\n';

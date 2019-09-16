@@ -1,12 +1,14 @@
 import { groupBy } from '@beenotung/tslib/functional';
 import { genTsType } from 'gen-ts-type';
+import { check_app_id } from '../helpers/gen-project-helpers';
 import { CallMeta } from '../types';
 import { PartialCallMeta, TypeAlias } from '../utils';
 
 export type GenProjectPlugins = {
   auth?: {
     ImportFile: string;
-    Method: string;
+    MethodAuthCall: string;
+    MethodCheckAppId: string;
     AttemptPrefix: string;
     AuthPrefix: string;
   };
@@ -80,6 +82,7 @@ export function genServiceCode(args: {
   logicProcessorCode: string;
   asyncLogicProcessor: boolean;
   plugins: GenProjectPlugins;
+  check_app_id: string;
 }) {
   const {
     callTypeName,
@@ -97,13 +100,7 @@ export function genServiceCode(args: {
   const async_import_type = asyncLogicProcessor ? ', Result' : '';
   const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
-  let code = ``;
-  if (auth) {
-    code += `
-import { ${auth.Method} } from ${JSON.stringify(auth.ImportFile)};
-`.trim();
-  }
-  code += `
+  const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   ${[
@@ -116,7 +113,21 @@ import {
 import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(
     logicProcessorFilename,
   )}';
-import { CallInput${async_import_type} } from 'cqrs-exp';
+import { CallInput${async_import_type} } from 'cqrs-exp';${
+    !auth
+      ? ''
+      : `
+import { ${auth.MethodAuthCall}${
+          check_app_id ? `, ${auth.MethodCheckAppId}` : ''
+        } } from ${JSON.stringify(auth.ImportFile)};${
+          !check_app_id
+            ? ''
+            : `
+
+${auth.MethodCheckAppId}(${JSON.stringify(check_app_id)});`
+        }
+`
+  }
 
 // tslint:disable:no-unused-variable
 function not_impl(name: string): any {
@@ -182,9 +193,9 @@ export class ${serviceClassName} {
       auth &&
       Type.length > auth.AttemptPrefix.length &&
       Type.startsWith(auth.AttemptPrefix)
-        ? `return ${auth.Method}(${JSON.stringify(CallType)}, ${JSON.stringify(
-            Type,
-          )}, In);`
+        ? `return ${auth.MethodAuthCall}(${JSON.stringify(
+            CallType,
+          )}, ${JSON.stringify(Type)}, In);`
         : logicProcessorCode.includes(Type)
         ? `return this.impl.${Type}(In);`
         : `return not_impl('${Type}');`
