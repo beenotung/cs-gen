@@ -58,18 +58,31 @@ function InjectReasons(Reasons?: string[]): string[] {
 }
 
 export function SuccessType(Out?: string): string {
-  return Out ? `{ Success: true } & (${Out})` : `{ Success: true }`;
+  const OutType = Out ? Out : '{}';
+  return andType(`{ Success: true }`, OutType);
 }
 
 export function ResultType(Reasons: string[], Out?: string): string {
   return `(${FailType(Reasons)}) | (${SuccessType(Out)})`;
 }
+
 export let authConfig = {
   AttemptPrefix: 'Attempt',
   AuthPrefix: 'Auth',
   ImportFile: '../domain/core/server-utils',
   Method: 'authCall',
 };
+
+function andType(aType: string, bType: string): string {
+  if (aType === '{}') {
+    return bType;
+  }
+  if (bType === '{}') {
+    return aType;
+  }
+  return `(${aType}) & ${bType}`;
+}
+
 function authCall(
   types: PartialCallMeta[],
   call: {
@@ -85,7 +98,7 @@ function authCall(
   const _SuccessType = SuccessType(Out);
   types.push({
     Type: authConfig.AttemptPrefix + Type,
-    In: `(${InType}) & { token: string }`,
+    In: andType(InType, `{ token: string }`),
     Out: `${FailType(InjectReasons(Reasons))} | ${_SuccessType}`,
     Admin: !!AdminOnly,
   });
@@ -96,7 +109,7 @@ function authCall(
       `{ user_id: string, app_id: string }`;
   types.push({
     Type: authConfig.AuthPrefix + Type,
-    In: `(${InType}) & ${InjectIn}`,
+    In: andType(InType, InjectIn),
     Out: `${FailType(Reasons)} | ${_SuccessType}`,
     Admin: true,
   });
@@ -129,9 +142,10 @@ export function authSubscribe(call: {
   AdminOnly?: boolean;
 }) {
   const { Type, In, Reasons, Out, AdminOnly } = call;
+  const InType = In ? In : '{}';
   subscribeTypes.push({
     Type,
-    In: `(${In}) & { token: string }`,
+    In: andType(InType, `{ token: string }`),
     Out: `${FailType(InjectReasons(Reasons))} | ${SuccessType(Out)}`,
     Admin: AdminOnly,
   });
