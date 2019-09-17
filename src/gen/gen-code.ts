@@ -195,7 +195,10 @@ export class ${serviceClassName} {
       Type.startsWith(auth.AttemptPrefix)
         ? `return ${auth.MethodAuthCall}(${JSON.stringify(
             CallType,
-          )}, ${JSON.stringify(Type)}, In);`
+          )}, ${JSON.stringify(Type).replace(
+            auth.AttemptPrefix,
+            auth.AuthPrefix,
+          )}, In);`
         : logicProcessorCode.includes(Type)
         ? `return this.impl.${Type}(In);`
         : `return not_impl('${Type}');`
