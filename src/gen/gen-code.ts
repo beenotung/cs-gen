@@ -316,6 +316,7 @@ export class ${controllerClassName} {${
   }
 
   async restore() {
+    console.log('start to restore');
     const keys = this.logService.getKeysSync();
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
@@ -354,7 +355,8 @@ export class ${controllerClassName} {${
       bar.increment(1);
     }
     ${statusName}.isReplay = false;
-    bar.stop();${
+    bar.stop();
+    console.log('finished restore');${
       !ws
         ? ''
         : `
