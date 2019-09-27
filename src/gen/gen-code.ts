@@ -375,9 +375,13 @@ export class ${controllerClassName} {${
           startSparkCall(spark, call);
           try {
             await this.ready;
-            let out = this.storeAndCall(call);
+            let out = this.storeAndCall(call);${
+              !asyncLogicProcessor
+                ? ''
+                : `
             if (isPromise(out)) {
               out = await out;
+            }`
             }
             ack(out);
           } catch (e) {
@@ -421,9 +425,13 @@ export class ${controllerClassName} {${
     await this.ready;
     try {
       startRestCall(req, res, call);
-      let out = this.storeAndCall<C>(call);
+      let out = this.storeAndCall<C>(call);${
+        !asyncLogicProcessor
+          ? ''
+          : `
       if (isPromise(out)) {
         out = await out;
+      }`
       }
       ok(res, out);
       return out;
