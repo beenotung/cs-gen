@@ -340,15 +340,16 @@ export class ${controllerClassName} {${
         bar.increment(1);
         continue;
       }
-      try {
-        const out = this.${serviceObjectName}.${callTypeName}(call);${
-    !asyncLogicProcessor
-      ? ''
-      : `
+      try {${
+        !asyncLogicProcessor
+          ? `
+        this.${serviceObjectName}.${callTypeName}(call);`
+          : `
+        const out = this.${serviceObjectName}.${callTypeName}(call);
         if (isPromise(out)) {
           await out;
         }`
-  }
+      }
       } catch (e) {
         console.error(\`failed when call '\${call.CallType}' '\${call.Type}':\`, e);
       }
