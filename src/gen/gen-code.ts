@@ -972,6 +972,7 @@ export function genDocumentationHtmlCode(args: {
   queryTypeName: string;
   subscribeTypeName: string;
   callTypes: CallMeta[];
+  typeAlias: TypeAlias;
   role: string;
 }) {
   const {
@@ -980,6 +981,7 @@ export function genDocumentationHtmlCode(args: {
     commandTypeName,
     queryTypeName,
     subscribeTypeName,
+    typeAlias,
     role,
   } = args;
 
@@ -992,9 +994,23 @@ export function genDocumentationHtmlCode(args: {
   const subscribeTypes: PartialCallMeta[] = callTypes.filter(
     x => x.CallType === subscribeTypeName,
   );
+  const aliasTypes = Object.entries(typeAlias)
+    .map(([name, type]) => ({ name, type }))
+    .filter(({ name }) =>
+      callTypes.some(call => call.In.includes(name) || call.Out.includes(name)),
+    );
 
   const title = `${baseProjectName} ${role} APIs`;
 
+  const formatAliases = (prefix: string) =>
+    `<h2>Type Aliases</h2>
+${prefix}<ul>${aliasTypes
+      .map(
+        ({ name }) => `
+${prefix}  <li><a href="#${name}">${name}</a></li>`,
+      )
+      .join('')}
+${prefix}</ul>`;
   const formatApis = (prefix: string, name: string, calls: PartialCallMeta[]) =>
     `<h2>${name} APIs</h2>
 ${prefix}<ul>${calls
@@ -1039,6 +1055,7 @@ ${prefix}</ul>`;
   <h1>${title}</h1>
   <div id="content">
     <nav>
+      ${formatAliases('      ')}
       ${formatApis('      ', commandTypeName, commandTypes)}
       ${formatApis('      ', queryTypeName, queryTypes)}
       ${formatApis('      ', subscribeTypeName, subscribeTypes)}
@@ -1059,6 +1076,17 @@ window.onhashchange=function(){
   var In = 'unknown';
   var Out = 'unknown';
   switch (Type) {
+    ${aliasTypes
+      .map(
+        ({ name, type }) => `case '${name}': {
+      In = ${removeTailingSpace(formatString(type))};
+      Out = '';
+      break;
+    }
+    `,
+      )
+      .join('')
+      .trim()}
     ${callTypes
       .map(
         ({ Type, In, Out }) => `case '${Type}': {

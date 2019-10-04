@@ -660,6 +660,7 @@ async function genDocumentationHtmlFile(args: {
   queryTypeName: string;
   subscribeTypeName: string;
   callTypes: CallMeta[];
+  typeAlias: TypeAlias;
 }) {
   const {
     outDirname,
