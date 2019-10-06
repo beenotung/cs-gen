@@ -293,6 +293,8 @@ import { usePrimus } from '../main';
 `.trim()
 }
 
+let ready: Promise<void>;
+
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {${
     !staticControllerReference
@@ -301,7 +303,6 @@ export class ${controllerClassName} {${
   static instance: ${controllerClassName};`
   }
   logService: LogService;
-  ready: Promise<void>;
 
   constructor(
     public ${serviceObjectName}: ${serviceClassName},
@@ -312,7 +313,7 @@ export class ${controllerClassName} {${
     ${controllerClassName}.instance = this;`
   }
     this.logService = new LogService(path.join('data', 'log'));
-    this.ready = this.restore();
+    ready = this.restore();
   }
 
   async restore() {
@@ -374,7 +375,7 @@ export class ${controllerClassName} {${
           }
           startSparkCall(spark, call);
           try {
-            await this.ready;
+            await ready;
             let out = this.storeAndCall(call);${
               !asyncLogicProcessor
                 ? ''
@@ -422,7 +423,7 @@ export class ${controllerClassName} {${
     call.In.${timestampFieldName} = Date.now();`
       : ``
   }
-    await this.ready;
+    await ready;
     try {
       startRestCall(req, res, call);
       let out = this.storeAndCall<C>(call);${
