@@ -83,6 +83,7 @@ function authCall(
     Reasons?: string[];
     Out?: string;
     AdminOnly?: boolean;
+    OptionalAuth?: boolean;
   },
 ) {
   const { Type, In, Reasons, Out, AdminOnly } = call;
@@ -105,6 +106,14 @@ function authCall(
     Out: `${FailType(Reasons)} | ${_SuccessType}`,
     Admin: true,
   });
+  if (call.OptionalAuth) {
+    types.push({
+      Type,
+      In: andType(InType, `{ token?: string }`),
+      Out: `${FailType(InjectReasons(Reasons))} | ${_SuccessType}`,
+      Admin: !!AdminOnly,
+    });
+  }
 }
 
 export function authCommand(call: {
@@ -112,6 +121,7 @@ export function authCommand(call: {
   In?: string;
   Reasons?: string[];
   AdminOnly?: boolean;
+  OptionalAuth?: boolean;
 }) {
   return authCall(commandTypes, call);
 }
@@ -122,6 +132,7 @@ export function authQuery(call: {
   Reasons?: string[];
   Out: string;
   AdminOnly?: boolean;
+  OptionalAuth?: boolean;
 }) {
   return authCall(queryTypes, call);
 }
