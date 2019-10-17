@@ -100,6 +100,38 @@ export function genServiceCode(args: {
   const async_import_type = asyncLogicProcessor ? ', Result' : '';
   const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
+  const genMethodBody = (call: { CallType: string; Type: string }): string => {
+    const { CallType, Type } = call;
+    const code = logicProcessorCode.includes(Type)
+      ? `return this.impl.${Type}(In);`
+      : `return not_impl('${Type}');`;
+    if (auth) {
+      if (
+        Type.length > auth.AttemptPrefix.length &&
+        Type.startsWith(auth.AttemptPrefix)
+      ) {
+        // auto call CheckToken, then call store and call Auth version call
+        return `return ${auth.MethodAuthCall}(${JSON.stringify(
+          CallType,
+        )}, ${JSON.stringify(Type).replace(
+          auth.AttemptPrefix,
+          auth.AuthPrefix,
+        )}, In);`;
+      }
+      if (
+        callTypes.find(call => call.Type === auth.AttemptPrefix + Type) &&
+        callTypes.find(call => call.Type === auth.AuthPrefix + Type)
+      ) {
+        // the auth is optional
+        // if the call.In contain token, reroute to Attempt version call
+        return `if (In.token) {
+      return this.${auth.AttemptPrefix + Type}(In);
+    }
+    ${code}`;
+      }
+    }
+    return code;
+  };
   const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
@@ -189,20 +221,7 @@ export class ${serviceClassName} {
       ({ CallType, Type }) => `${Type}(In: ${Type}['In']): ${async_type(
         CallType === subscribeTypeName ? '{ id: string }' : `${Type}['Out']`,
       )} {
-    ${
-      auth &&
-      Type.length > auth.AttemptPrefix.length &&
-      Type.startsWith(auth.AttemptPrefix)
-        ? `return ${auth.MethodAuthCall}(${JSON.stringify(
-            CallType,
-          )}, ${JSON.stringify(Type).replace(
-            auth.AttemptPrefix,
-            auth.AuthPrefix,
-          )}, In);`
-        : logicProcessorCode.includes(Type)
-        ? `return this.impl.${Type}(In);`
-        : `return not_impl('${Type}');`
-    }
+    ${genMethodBody({ CallType, Type })}
   }
 
   `,

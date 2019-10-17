@@ -109,7 +109,7 @@ function authCall(
   if (call.OptionalAuth) {
     types.push({
       Type,
-      In: andType(InType, `{ token?: string }`),
+      In: andType(InType, `{ token: string | undefined | null }`),
       Out: `${FailType(InjectReasons(Reasons))} | ${_SuccessType}`,
       Admin: !!AdminOnly,
     });
