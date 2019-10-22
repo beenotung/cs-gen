@@ -103,7 +103,7 @@ export function genServiceCode(args: {
   const genMethodBody = (call: { CallType: string; Type: string }): string => {
     const { CallType, Type } = call;
     const code = logicProcessorCode.includes(Type)
-      ? `return this.impl.${Type}(In);`
+      ? `return impl.${Type}(In);`
       : `return not_impl('${Type}');`;
     if (auth) {
       if (
@@ -167,10 +167,10 @@ function not_impl(name: string): any {
 }
 // tslint:enable:no-unused-variable
 
+const impl = new ${logicProcessorClassName}();
+
 @Injectable()
 export class ${serviceClassName} {
-  impl = new ${logicProcessorClassName}();
-
   ${callTypeName}<C extends ${callTypeName}>(args: CallInput<C>): ${async_type(
     `C['Out']`,
   )} {
