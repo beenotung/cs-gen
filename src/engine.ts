@@ -41,21 +41,19 @@ export class Dispatcher<
   // TODO pass session info, for auth and pub/sub (live query)
   // inject Call route below
   async Call<C extends Call>(call: CallInput<C>): Promise<C['Out']> {
-    return (() => {
-      switch (call.CallType) {
-        case 'Command':
-          return this.Command;
-        case 'Query':
-          return this.Query;
-        case 'Subscribe':
-          return this.Subscribe;
-        default:
-          throw new HttpException(
-            `not implement call type: CallType=${call.CallType}`,
-            HttpStatus.NOT_IMPLEMENTED,
-          );
-      }
-    })().bind(this)(call as CallInput<any>);
+    switch (call.CallType) {
+      case 'Command':
+        return this.Command(call as Call & { CallType: 'Command' });
+      case 'Query':
+        return this.Query(call as Call & { CallType: 'Query' });
+      case 'Subscribe':
+        return this.Subscribe(call as Call & { CallType: 'Subscribe' });
+      default:
+        throw new HttpException(
+          `not implement call type: CallType=${call.CallType}`,
+          HttpStatus.NOT_IMPLEMENTED,
+        );
+    }
   }
 
   // inject logic processor method route below
