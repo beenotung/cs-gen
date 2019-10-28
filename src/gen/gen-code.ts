@@ -340,6 +340,7 @@ export class ${controllerClassName} {${
   }
 
   async restore() {
+    const start = Date.now();
     console.log('start to restore');
     const keys = this.logService.getKeysSync();
     const bar = new Bar({
@@ -381,7 +382,9 @@ export class ${controllerClassName} {${
     }
     ${statusName}.isReplay = false;
     bar.stop();
-    console.log('finished restore');${
+    console.log('finished restore');
+    const end = Date.now();
+    console.log('used:', (end - start) / 1000, 'seconds');${
       !ws
         ? ''
         : `
