@@ -171,6 +171,10 @@ const impl = new ${logicProcessorClassName}();
 
 @Injectable()
 export class ${serviceClassName} {
+  get impl() {
+    return impl;
+  }
+
   ${callTypeName}<C extends ${callTypeName}>(args: CallInput<C>): ${async_type(
     `C['Out']`,
   )} {
