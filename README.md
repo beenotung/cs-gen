@@ -1,38 +1,157 @@
-## TODO
+# cqrs-exp
 
-### [done] manage subscribe consumer
-Currently, client need to use primus.on(id) manually.
-And the emitted data is not typed.
+Code generated and helper library for rapid development using CQRS (Command Query Responsibility Segregation) design pattern.
 
-### auto re-subscribe when reconnect
-Currently, if the device is disconnected,
-client need to manually subscribe again when back to online.
+This is not a framework, instead it's a tool and library to reduce the burden of boilerplate for common tasks in development.
 
-### Use Dispatcher
-Move common logic of persistent and routing
-into dispatcher
-instead of controller and service.
+__Under active development.__
 
-The new approach is less dependent to nest.js
-and allow less duplication in nest and primus parts.
+## Installation
+```bash
+> pnpm i || npm i
+> npm i -g .
+```
+The `cqrs-exp` command will be installed for cli
 
-### Change from overwrite to inject
-inject into project,
-instead of overwriting entire project
+## Usage
 
-e.g. below file `types.ts`:
-```typescript
-// some custom types
-export type id = string;
-
-// inject command type below
-// injected command type above
-
-// some other custom code
+### Show Available Commands
+```bash
+> cqrs-exp help
+cqrs-exp [command]
+Commands:
+  init  : initialize project skeleton, setup package.json and create scripts/gen-project.ts with default settings
+  gen   : generate the client-side SDK for *-client and *-admin project, and stub code for *-server project
+  help  : show this help message
 ```
 
-This approach allow larger flexibility.
-Otherwise need to commit the files every time before regenerate, then use meld to compare and restore unwanted parts.
+### Create Project Template
+```bash
+> mkdir -p ~/workspace/myapp && cd $_
 
-### Automate npm setup
-Currently require manually setup tsconfig, tslint, and npm script to do formatting
+> cqrs-exp init
+project name [myapp]:
+server domain [example.com]:
+server origin [https://myapp.example.com]:
+app id [com.example.myapp]:
+initializing gen-project for 'myapp'
+generated skeleton.
+
+> find
+.
+./.editorconfig
+./.prettierrc
+./.gitignore
+./package.json
+./scripts
+./scripts/gen-project.ts
+```
+
+### Declare Project APIs
+The APIs can be declared in `./scripts/gen-project.ts`.
+Depending the on project scale, the apis can be declared across multiple files, then imported from the `gen-project.ts`.
+
+When the project skeleton is generated, there are some example Commands and Queries.
+Below shows a part of `gen-project.ts`:
+```typescript
+commandTypes.push(
+  { Type: 'CreateUser', In: `{ UserId: string }`, Out: ResultType([UserNotFound]) },
+  { Type: 'CreateAdmin', In: `{ UserId: string }`, Out: ResultType([UserNotFound]), Admin },
+);
+queryTypes.push(
+  { Type: 'GetUserList', In: 'void', Out: ResultType([NoPermission], `{ Users: ${ArrayType(`{ UserId: string }`)} }`) },
+  { Type: 'HasUser', In: `{ UserId: string }`, Out: ResultType([NoPermission], `{ HasUser: boolean }`), Admin },
+);
+
+catchMain(genProject({
+  outDirname: '.',
+  baseProjectName: "myapp",
+  injectTimestampField: true,
+  timestampFieldName: 'Timestamp',
+  asyncLogicProcessor: true,
+  staticControllerReference: true,
+  injectFormat: true,
+  callTypes: flattenCallMetas({
+    commandTypes,
+    queryTypes,
+    subscribeTypes,
+  }),
+  serverOrigin: "https://myapp.example.com",
+  typeAlias,
+  // replayQuery: true,
+  plugins: { auth: authConfig },
+}));
+```
+
+#### Decalre Type Alias and authentication plugin
+```typescript
+import {
+  alias,
+  authConfig,
+  typeAlias,
+  authCommand as _authCommand,
+  authQuery as _authQuery,
+  queryTypes, commandTypes, subscribeTypes,
+} from 'cqrs-exp/dist/helpers/gen-project-helpers';
+
+let ProfileType = `{
+  UserId: string
+  Nickname: string
+  Bio?: string
+  Avatar?: string
+  Timestamp: number
+}`;
+let { type, typeArray } = alias({
+  ProfileType,
+});
+
+// custom wrapper is possible
+function authCommand(Type: string, In: string, Reasons: string[]) {
+  _authCommand({ Type, In, Reasons });
+}
+function authQuery(Type: string, In: string, Reasons: string[], DataType: string) {
+  _authQuery({ Type, In, Reasons, Out: DataType });
+}
+
+// token will be injected as part of API params
+authCommand('SetProfile', `{Profile: ${type(ProfileType)}}`, []);
+
+// similar for queries
+authQuery('GetProfile', `{ProfileUserId: string}`, [QuotaExcess, UserNotFound], `{Profile: ${type(ProfileType)}}`);
+
+genProject({
+  ...
+    asyncLogicProcessor: true, // for async auth check with external service / database
+    typeAlias,
+    plugins: { auth: authConfig },
+  ...
+})
+```
+
+#### Declare API with auth plugin
+
+```typescript
+import {
+  alias,
+  authConfig,
+  typeAlias,
+  authCommand as _authCommand,
+  authQuery as _authQuery,
+  queryTypes, commandTypes, subscribeTypes, checkAppId,
+} from 'cqrs-exp/dist/helpers/gen-project-helpers';
+authCommand('SetProfile', `{Profile: ${type(ProfileType)}}`, []);
+```
+
+### Generate client-side SDK and server side stub code
+```bash
+> cqrs-exp gen
+```
+
+The myapp-client, myapp-server, and myapp-admin projects will be created / updated accordingly.
+(The paths and controller names are configurable in the `./scripts/gen-project.ts`)
+
+## Features
+- Command, Query pattern
+- Subscription (live query)
+- Auto reconnect when network restore from failure
+- Auto setup project formatting and package dependencies (tsconfig, tslint, prettier, npm scripts, e.t.c.)
