@@ -263,6 +263,7 @@ export function genControllerCode(args: {
   ws: boolean;
   asyncLogicProcessor: boolean;
   replayQuery: boolean;
+  storeQuery: boolean;
   timestampFieldName: string;
   injectTimestampField: boolean;
 }) {
@@ -281,6 +282,7 @@ export function genControllerCode(args: {
     ws,
     asyncLogicProcessor,
     replayQuery,
+    storeQuery,
     timestampFieldName,
     injectTimestampField,
   } = args;
@@ -428,13 +430,24 @@ export class ${controllerClassName} {${
     }
   }
 
-  storeAndCall<C extends ${callTypeName}>(
-    call: CallInput<C>,
-  ): ${async_type(`C['Out']`)} {
-    this.logService.storeObjectSync(
+  storeAndCall<C extends ${callTypeName}>(call: CallInput<C>): ${async_type(
+    `C['Out']`,
+  )} {
+    ${((): string => {
+      const store = `this.logService.storeObjectSync(
       call,
       this.logService.nextKey() + '-' + call.CallType,
-    );
+    );`;
+      if (storeQuery) {
+        return store;
+      }
+      return `if (call.CallType !== '${queryTypeName}') {
+    ${store
+      .split('\n')
+      .map(line => '  ' + line)
+      .join('\n')}
+    }`;
+    })()}
     return this.coreService.${callTypeName}<C>(call);
   }
 

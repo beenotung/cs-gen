@@ -123,6 +123,7 @@ catchMain(genProject({
   serverOrigin: ${JSON.stringify(serverOrigin)},
   typeAlias,
   // replayQuery: true,
+  // storeQuery: false,
   plugins: { auth: authConfig },
 }));
 `.trim() + '\n';

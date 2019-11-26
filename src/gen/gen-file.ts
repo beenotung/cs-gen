@@ -148,6 +148,7 @@ async function genControllerFile(args: {
   ws: boolean;
   asyncLogicProcessor: boolean;
   replayQuery: boolean;
+  storeQuery: boolean;
   timestampFieldName: string;
   injectTimestampField: boolean;
 }) {
@@ -725,6 +726,7 @@ export const defaultGenProjectArgs = {
   injectFormat: true,
   asyncLogicProcessor: false,
   replayQuery: false,
+  storeQuery: true,
   typeAlias: {},
   plugins: {} as GenProjectPlugins,
 };
@@ -769,6 +771,7 @@ export async function genProject(_args: {
   injectFormat?: boolean;
   asyncLogicProcessor?: boolean;
   replayQuery?: boolean;
+  storeQuery?: boolean;
   typeAlias?: TypeAlias;
   plugins?: GenProjectPlugins;
 }) {
