@@ -965,6 +965,20 @@ export function getSessionByIn(In: any): Session | undefined {
   return in_session_map.get(In);
 }
 
+export function checkedGetSessionByIn(In: any): Session {
+  if (status.isReplay) {
+    throw new HttpException('SkipWhenReplay', HttpStatus.NOT_ACCEPTABLE);
+  }
+  const session = in_session_map.get(In);
+  if (!session) {
+    throw new HttpException(
+      'primus session not found',
+      HttpStatus.HTTP_VERSION_NOT_SUPPORTED,
+    );
+  }
+  return session;
+}
+
 export function getSessionBySparkId(sparkId: string): Session | undefined {
   return sparkId_session_map.get(sparkId);
 }
