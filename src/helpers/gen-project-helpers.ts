@@ -143,15 +143,9 @@ export function authSubscribe(call: {
   Reasons?: string[];
   Out: string;
   AdminOnly?: boolean;
+  OptionalAuth?: boolean;
 }) {
-  const { Type, In, Reasons, Out, AdminOnly } = call;
-  const InType = In ? In : '{}';
-  subscribeTypes.push({
-    Type,
-    In: andType(InType, `{ token: string }`),
-    Out: `${FailType(InjectReasons(Reasons))} | ${SuccessType(Out)}`,
-    Admin: AdminOnly,
-  });
+  return authCall(subscribeTypes, call);
 }
 
 export function callTypes(
