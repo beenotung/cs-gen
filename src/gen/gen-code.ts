@@ -946,15 +946,17 @@ export function newConnection(spark: Spark) {
 }
 
 export function closeConnection(spark: Spark) {
-  let session = sparkId_session_map.get(spark.id);
+  const session = sparkId_session_map.get(spark.id);
   if(!session){return}
   session.subscriptions.forEach(sub => sub.close());
   sparkId_session_map.delete(spark.id);
 }
 
 export function startSparkCall(spark: Spark, call: CallInput) {
-  let session = sparkId_session_map.get(spark.id);
-  if(!session){return}
+  const session = sparkId_session_map.get(spark.id);
+  if (!session) {
+    return;
+  }
   session.calls.push(call);
   in_session_map.set(call.In, session);
 }
