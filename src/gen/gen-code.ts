@@ -908,6 +908,7 @@ export function genConnectionCode(): string {
   return `
 import { CallInput } from 'cqrs-exp';
 import { Request, Response } from 'express-serve-static-core';
+import { status } from './status';
 
 export interface Spark {
   id: string;
