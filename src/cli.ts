@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { spawn } from '@beenotung/tslib/child_process';
 import {
   hasDirectory,

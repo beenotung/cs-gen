@@ -12,7 +12,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "cqrs-exp": "dist/cli.js"
+    "cqrs-exp": "cqrs-exp"
   },
   "scripts": {
     "test": "npm run rawtest",
