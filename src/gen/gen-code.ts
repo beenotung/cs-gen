@@ -8,6 +8,7 @@ export type GenProjectPlugins = {
   auth?: {
     ImportFile: string;
     MethodAuthCall: string;
+    MethodAuthSubscribe: string;
     MethodCheckAppId: string;
     AttemptPrefix: string;
     AuthPrefix: string;
@@ -111,9 +112,11 @@ export function genServiceCode(args: {
         Type.startsWith(auth.AttemptPrefix)
       ) {
         // auto call CheckToken, then call store and call Auth version call
-        return `return ${auth.MethodAuthCall}(${JSON.stringify(
-          CallType,
-        )}, ${JSON.stringify(Type).replace(
+        return `return ${
+          CallType === subscribeTypeName
+            ? auth.MethodAuthSubscribe
+            : auth.MethodAuthCall
+        }(${JSON.stringify(CallType)}, ${JSON.stringify(Type).replace(
           auth.AttemptPrefix,
           auth.AuthPrefix,
         )}, In);`;
@@ -149,7 +152,7 @@ import { CallInput${async_import_type} } from 'cqrs-exp';${
     !auth
       ? ''
       : `
-import { ${auth.MethodAuthCall}${
+import { ${auth.MethodAuthCall}, ${auth.MethodAuthSubscribe}${
           check_app_id ? `, ${auth.MethodCheckAppId}` : ''
         } } from ${JSON.stringify(auth.ImportFile)};${
           !check_app_id
@@ -223,7 +226,9 @@ export class ${serviceClassName} {
   ${callTypes
     .map(
       ({ CallType, Type }) => `${Type}(In: ${Type}['In']): ${async_type(
-        CallType === subscribeTypeName ? '{ id: string }' : `${Type}['Out']`,
+        CallType === subscribeTypeName
+          ? '{ id: string } | { error: any }'
+          : `${Type}['Out']`,
       )} {
     ${genMethodBody({ CallType, Type })}
   }

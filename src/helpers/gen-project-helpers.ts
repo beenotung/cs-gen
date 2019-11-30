@@ -72,6 +72,7 @@ export let authConfig: Required<GenProjectPlugins>['auth'] = {
   AuthPrefix: 'Auth',
   ImportFile: '../domain/core/server-utils',
   MethodAuthCall: 'authCall',
+  MethodAuthSubscribe: 'authSubscribe',
   MethodCheckAppId: 'checkAppId',
 };
 
