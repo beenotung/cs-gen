@@ -837,7 +837,7 @@ export async function genProject(_args: {
       ...args,
       dataWrapper,
     }),
-    initTslib(args).then(() => Promise.all([]) as any),
+    initTslib(args),
     setProjectIdeaConfig({
       projectDirname: serverProjectDirname,
       projectName: serverProjectName,
@@ -898,7 +898,6 @@ export async function genProject(_args: {
     genStatusFile(args),
     genControllerFile(args),
   ]);
-  await initTslib(args);
   await Promise.all([
     setServerPackage(args),
     setClientPackage({ ...args, projectDirname: clientProjectDirname }),
