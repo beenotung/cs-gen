@@ -729,8 +729,8 @@ export const defaultGenProjectArgs = {
   replayQuery: false,
   storeQuery: true,
   typeAlias: {},
-  plugins: {} as GenProjectPlugins,
   constants: {} as Constants,
+  plugins: {} as GenProjectPlugins,
 };
 
 export async function genProject(_args: {
@@ -775,8 +775,8 @@ export async function genProject(_args: {
   replayQuery?: boolean;
   storeQuery?: boolean;
   typeAlias?: TypeAlias;
-  plugins?: GenProjectPlugins;
   constants?: Constants;
+  plugins?: GenProjectPlugins;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
