@@ -8,6 +8,7 @@ import {
   PartialCallMeta,
   TypeAlias,
 } from '../utils';
+import { InvalidAppId, InvalidToken } from './constants';
 
 export let typeAlias: TypeAlias = {};
 
@@ -47,14 +48,6 @@ export function def(_constants: Constants) {
   Object.assign(constants, _constants);
   return { ref };
 }
-
-export const InvalidToken = 'InvalidToken';
-export const InvalidAppId = 'InvalidAppId';
-export const QuotaExcess = 'QuotaExcess';
-export const NoPermission = 'NoPermission';
-export const UserNotFound = 'UserNotFound';
-
-export const Admin = true;
 
 export let commandTypes: PartialCallMeta[] = [];
 export let queryTypes: PartialCallMeta[] = [];
