@@ -90,11 +90,14 @@ import {
   def,
   constants,
   ResultType,
+  authConfig,
+} from 'cqrs-exp/dist/helpers/gen-project-helpers';
+import {
   Admin,
   UserNotFound,
   NoPermission,
-  authConfig,
-} from 'cqrs-exp/dist/helpers/gen-project-helpers';
+  Duplicated,
+} from 'cqrs-exp/dist/helpers/constants';
 
 checkAppId(${JSON.stringify(appId)});
 enableSubscription();
