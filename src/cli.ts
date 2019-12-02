@@ -97,6 +97,7 @@ import {
 import {
   Admin,
   AdminOnly,
+  OptionalAuth,
   UserNotFound,
   NoPermission,
   Duplicated,
