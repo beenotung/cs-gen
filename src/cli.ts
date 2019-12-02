@@ -91,6 +91,8 @@ import {
   constants,
   ResultType,
   authConfig,
+  authCommand,
+  authQuery,
 } from 'cqrs-exp/dist/helpers/gen-project-helpers';
 import {
   Admin,
