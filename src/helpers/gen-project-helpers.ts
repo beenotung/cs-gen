@@ -1,7 +1,13 @@
 import { andType, ArrayType } from 'gen-ts-type';
 import { GenProjectPlugins } from '../gen/gen-code';
 import { CallMeta } from '../types';
-import { flattenCallMetas, PartialCallMeta, TypeAlias } from '../utils';
+import {
+  Constant,
+  Constants,
+  flattenCallMetas,
+  PartialCallMeta,
+  TypeAlias,
+} from '../utils';
 
 export let typeAlias: TypeAlias = {};
 
@@ -21,6 +27,24 @@ export function alias(_typeAlias: TypeAlias) {
     type,
     typeArray,
   };
+}
+
+export let constants: Constants = {};
+
+const ref = (constantVal: any): string => {
+  for (const [name, constant] of Object.entries(constants)) {
+    const value = typeof constant === 'string' ? constant : constant.value;
+    if (constantVal === value) {
+      return name;
+    }
+  }
+  console.warn('constant not register:', constantVal);
+  return JSON.stringify(constantVal, null, 2);
+};
+
+export function def(_constants: Constants) {
+  Object.assign(constants, _constants);
+  return { ref };
 }
 
 export const InvalidToken = 'InvalidToken';
