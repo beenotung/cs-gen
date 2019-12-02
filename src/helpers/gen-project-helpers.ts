@@ -11,18 +11,19 @@ import {
 
 export let typeAlias: TypeAlias = {};
 
+const type = (typeStr: string): string => {
+  for (const [name, type] of Object.entries(typeAlias)) {
+    if (typeStr === type) {
+      return name;
+    }
+  }
+  console.warn('type not register as alias: ' + typeStr);
+  return typeStr;
+};
+const typeArray = (typeStr: string): string => ArrayType(type(typeStr));
+
 export function alias(_typeAlias: TypeAlias) {
   Object.assign(typeAlias, _typeAlias);
-  const type = (typeStr: string): string => {
-    for (const [name, type] of Object.entries(typeAlias)) {
-      if (typeStr === type) {
-        return name;
-      }
-    }
-    console.warn('type not register as alias: ' + typeStr);
-    return typeStr;
-  };
-  const typeArray = (typeStr: string): string => ArrayType(type(typeStr));
   return {
     type,
     typeArray,
