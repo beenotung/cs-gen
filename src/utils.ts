@@ -75,3 +75,14 @@ export function flattenCallMetas(args: {
 export interface TypeAlias {
   [name: string]: string;
 }
+
+export type Constant =
+  | string
+  | {
+      value: any;
+      type?: string;
+    };
+
+export interface Constants {
+  [name: string]: Constant;
+}

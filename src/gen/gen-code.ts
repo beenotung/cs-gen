@@ -2,7 +2,7 @@ import { groupBy } from '@beenotung/tslib/functional';
 import { genTsType } from 'gen-ts-type';
 import { check_app_id } from '../helpers/gen-project-helpers';
 import { CallMeta } from '../types';
-import { PartialCallMeta, TypeAlias } from '../utils';
+import { Constants, PartialCallMeta, TypeAlias } from '../utils';
 
 export type GenProjectPlugins = {
   auth?: {
@@ -513,6 +513,22 @@ export type ${callTypeName} = ${callTypes.map(({ Type }) => Type).join(' | ')};
 `.trim();
 }
 
+function genConstant(constants: Constants): string {
+  return Object.entries(constants)
+    .map(([name, constant]) => {
+      let type: string | undefined;
+      let value: string;
+      if (typeof constant === 'string') {
+        type = value = JSON.stringify(constant);
+      } else {
+        type = constant.type;
+        value = JSON.stringify(constant.value, null, 2);
+      }
+      return `export const ${name}${type ? `: ${type}` : ''} = ${value};`;
+    })
+    .join('\n');
+}
+
 export function genCallTypeCode(args: {
   typeAlias: TypeAlias;
   callTypes: CallMeta[];
@@ -520,6 +536,7 @@ export function genCallTypeCode(args: {
   commandTypeName: string;
   queryTypeName: string;
   subscribeTypeName: string;
+  constants: Constants;
 }): string {
   const {
     typeAlias,
@@ -528,6 +545,7 @@ export function genCallTypeCode(args: {
     subscribeTypeName,
     callTypeName,
     callTypes,
+    constants,
   } = args;
   const callTypesMap = groupBy(t => t.CallType, callTypes);
   const commandTypes = callTypesMap.get(commandTypeName) || [];
@@ -572,6 +590,8 @@ function checkCallType(_t: {
 }
 
 checkCallType({} as ${callTypeName});
+
+${genConstant(constants)}
 `;
   return code.replace(/\n\n\n\n/g, '\n\n').trim();
 }

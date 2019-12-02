@@ -8,7 +8,7 @@ import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import { check_app_id } from '../helpers/gen-project-helpers';
 import { CallMeta } from '../types';
-import { defaultTypeName, TypeAlias } from '../utils';
+import { Constants, defaultTypeName, TypeAlias } from '../utils';
 import {
   genCallTypeCode,
   genClientLibCode,
@@ -169,6 +169,7 @@ async function genTypeFile(args: {
   commandTypeName: string;
   subscribeTypeName: string;
   typeAlias: TypeAlias;
+  constants: Constants;
 }) {
   const code = genCallTypeCode(args);
 
@@ -729,6 +730,7 @@ export const defaultGenProjectArgs = {
   storeQuery: true,
   typeAlias: {},
   plugins: {} as GenProjectPlugins,
+  constants: {} as Constants,
 };
 
 export async function genProject(_args: {
@@ -774,6 +776,7 @@ export async function genProject(_args: {
   storeQuery?: boolean;
   typeAlias?: TypeAlias;
   plugins?: GenProjectPlugins;
+  constants?: Constants;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
