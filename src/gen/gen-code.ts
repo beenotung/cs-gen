@@ -295,6 +295,7 @@ export function genControllerCode(args: {
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
   const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
+  // prettier-ignore
   return `
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { Bar } from 'cli-progress';
@@ -303,25 +304,17 @@ import { ok, rest_return } from 'nestlib';
 import * as path from 'path';
 import { ISpark } from 'typestub-primus';
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
-import { LogService } from '../${libDirname}/log.service';${
-    asyncLogicProcessor
-      ? `
-import { isPromise, Result } from '../${libDirname}/result';`
-      : ''
-  }
+import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
+import { isPromise, Result } from '../${libDirname}/result';` : ''}
 import { usePrimus } from '../main';
-import { endRestCall, startRestCall } from './connection';${
-    ws
-      ? `
+import { endRestCall, startRestCall } from './connection';${ws ? `
 import {
   closeConnection,
   endSparkCall,
   newConnection,
   Spark,
   startSparkCall,
-} from './connection';`
-      : ''
-  }
+} from './connection';` : ''}
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { ${statusName} } from './${removeTsExtname(statusFilename)}';
 
@@ -375,15 +368,15 @@ export class ${controllerClassName} {${
         continue;
       }
       try {${
-        !asyncLogicProcessor
-          ? `
+    !asyncLogicProcessor
+      ? `
         this.${serviceObjectName}.${callTypeName}(call);`
-          : `
+      : `
         const out = this.${serviceObjectName}.${callTypeName}(call);
         if (isPromise(out)) {
           await out;
         }`
-      }
+  }
       } catch (e) {
         console.error(\`failed when call '\${call.CallType}' '\${call.Type}':\`, e);
       }
@@ -394,31 +387,31 @@ export class ${controllerClassName} {${
     console.log('finished restore');
     const end = Date.now();
     console.log('used:', (end - start) / 1000, 'seconds');${
-      !ws
-        ? ''
-        : `
+    !ws
+      ? ''
+      : `
     usePrimus(primus => {
       primus.on('connection', (_spark: ISpark) => {
         const spark: Spark = _spark as any;
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
         spark.on('${callApiPath}', (async (call: CallInput<${callTypeName}>, ack: (data: any) => void) => {${
-            injectTimestampField
-              ? `
+        injectTimestampField
+          ? `
           call.In.${timestampFieldName} = Date.now();`
-              : ``
-          }
+          : ``
+      }
           startSparkCall(spark, call);
           try {
             await ready;
             let out = this.storeAndCall(call);${
-              !asyncLogicProcessor
-                ? ''
-                : `
+        !asyncLogicProcessor
+          ? ''
+          : `
             if (isPromise(out)) {
               out = await out;
             }`
-            }
+      }
             ack(out);
           } catch (e) {
             console.error(e);
@@ -434,27 +427,27 @@ export class ${controllerClassName} {${
         }) as any);
       });
     });`
-    }
+  }
   }
 
   storeAndCall<C extends ${callTypeName}>(call: CallInput<C>): ${async_type(
     `C['Out']`,
   )} {
     ${((): string => {
-      const store = `this.logService.storeObjectSync(
+    const store = `this.logService.storeObjectSync(
       call,
       this.logService.nextKey() + '-' + call.CallType,
     );`;
-      if (storeQuery) {
-        return store;
-      }
-      return `if (call.CallType !== '${queryTypeName}') {
+    if (storeQuery) {
+      return store;
+    }
+    return `if (call.CallType !== '${queryTypeName}') {
     ${store
       .split('\n')
       .map(line => '  ' + line)
       .join('\n')}
     }`;
-    })()}
+  })()}
     return this.coreService.${callTypeName}<C>(call);
   }
 
@@ -473,13 +466,13 @@ export class ${controllerClassName} {${
     try {
       startRestCall(req, res, call);
       let out = this.storeAndCall<C>(call);${
-        !asyncLogicProcessor
-          ? ''
-          : `
+    !asyncLogicProcessor
+      ? ''
+      : `
       if (isPromise(out)) {
         out = await out;
       }`
-      }
+  }
       ok(res, out);
       return out;
     } catch (e) {
