@@ -42,7 +42,7 @@
   },
   "homepage": "https://gitlab.com/beenotung/cqrs-exp#readme",
   "dependencies": {
-    "@beenotung/tslib": "^14.35.0",
+    "@beenotung/tslib": "^14.41.0",
     "async-mkdirp": "^1.2.7",
     "gen-ts-type": "^1.5.0",
     "graceful-fs": "^4.1.15",

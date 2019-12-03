@@ -1,5 +1,6 @@
 import { exec } from '@beenotung/tslib/child_process';
 import {
+  copyFile,
   hasFile,
   readFile,
   writeFile as _writeFile,
@@ -295,10 +296,7 @@ const tslib_dirname = path.join(
   'tslib',
 );
 let tslib_tslint: string;
-let tslib_tsconfig: string;
 let tslib_package: Package;
-let tslib_editorconfig: string;
-let tslib_prettierrc: string;
 
 async function initTslib(args: { injectFormat: boolean }) {
   const { injectFormat } = args;
@@ -318,17 +316,8 @@ async function initTslib(args: { injectFormat: boolean }) {
   }
   await Promise.all([
     readFile(tslint_file).then(bin => (tslib_tslint = bin.toString())),
-    readFile(path.join(tslib_dirname, 'tsconfig.json')).then(
-      bin => (tslib_tsconfig = bin.toString()),
-    ),
     readFile(path.join(tslib_dirname, 'package.json')).then(
       bin => (tslib_package = JSON.parse(bin.toString())),
-    ),
-    readFile(path.join(tslib_dirname, '.editorconfig')).then(
-      bin => (tslib_editorconfig = bin.toString()),
-    ),
-    readFile(path.join(tslib_dirname, '.prettierrc')).then(
-      bin => (tslib_prettierrc = bin.toString()),
     ),
   ]);
 }
@@ -369,11 +358,12 @@ async function setTsconfig(args: {
   if (!injectFormat) {
     return;
   }
-  const filename = path.join(projectDirname, 'tsconfig.json');
-  if (await hasFile(filename)) {
+  const filename = 'tsconfig.json';
+  const destFile = path.join(projectDirname, filename);
+  if (await hasFile(destFile)) {
     return;
   }
-  await writeFile(filename, tslib_tsconfig);
+  await copyFile(path.join(tslib_dirname, filename), destFile);
 }
 
 const dependencies: 'dependencies' = 'dependencies';
@@ -585,8 +575,11 @@ async function setEditorConfig(args: {
   if (!injectFormat) {
     return;
   }
-  const filename = path.join(projectDirname, '.editorconfig');
-  await writeFile(filename, tslib_editorconfig);
+  const filename = '.editorconfig';
+  await copyFile(
+    path.join(tslib_dirname, filename),
+    path.join(projectDirname, filename),
+  );
 }
 
 async function setPrettierrc(args: {
@@ -597,8 +590,11 @@ async function setPrettierrc(args: {
   if (!injectFormat) {
     return;
   }
-  const filename = path.join(projectDirname, '.prettierrc');
-  await writeFile(filename, tslib_prettierrc);
+  const filename = '.prettierrc';
+  await copyFile(
+    path.join(tslib_dirname, filename),
+    path.join(projectDirname, filename),
+  );
 }
 
 function hasNestProject(args: {
