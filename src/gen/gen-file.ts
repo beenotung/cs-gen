@@ -159,6 +159,55 @@ async function genControllerFile(args: {
   await writeFile(filename, code);
 }
 
+async function injectServerLibFiles(args: {
+  serverProjectDirname: string;
+  libDirName: string;
+  asyncLogicProcessor: boolean;
+}) {
+  const { serverProjectDirname, libDirName, asyncLogicProcessor } = args;
+  const dest = path.join(serverProjectDirname, libDirName);
+  let src = __dirname;
+  src = path.dirname(src); // pop gen
+  src = path.dirname(src); // pop dist
+  src = path.join(src, 'src');
+  await Promise.all([
+    copyFile(
+      path.join(src, 'log', 'log.service.ts'),
+      path.join(dest, 'log.service.ts'),
+    ),
+    readFile(path.join(src, 'utils.ts')).then(bin => {
+      const blocks = bin
+        .toString()
+        .replace(/\r/g, '')
+        .split('\n\n');
+      const ps: Array<Promise<any>> = [];
+      // ps.push(
+      //   writeFile(
+      //     path.join(dest, 'call.type.ts'),
+      //     blocks.filter(s => s.includes('interface CallInput')).join('\n\n'),
+      //   ),
+      // );
+      if (asyncLogicProcessor) {
+        ps.push(
+          writeFile(
+            path.join(dest, 'result.ts'),
+            'export type Result<T> = T | Promise<T>;' +
+              '\n\n' +
+              blocks
+                .filter(
+                  block =>
+                    block.includes('function isPromise') ||
+                    block.includes('function then'),
+                )
+                .join('\n\n'),
+          ),
+        );
+      }
+      return Promise.all(ps);
+    }),
+  ]);
+}
+
 async function genTypeFile(args: {
   projectDirname: string;
   typeDirname: string;
@@ -714,6 +763,7 @@ export const defaultGenProjectArgs = {
   apiFilename: 'api.ts',
   logicProcessorFilename: 'logic-processor.ts',
   logicProcessorClassName: 'LogicProcessor',
+  libDirName: path.join('src', 'lib'),
   timestampFieldName: 'Timestamp',
   injectTimestampField: true,
   primusGlobalName: 'Primus',
@@ -757,6 +807,7 @@ export async function genProject(_args: {
   logicProcessorDirname?: string;
   logicProcessorFilename?: string;
   logicProcessorClassName?: string;
+  libDirName?: string;
   apiDirname?: string;
   apiFilename?: string;
   timestampFieldName?: string;
@@ -794,6 +845,7 @@ export async function genProject(_args: {
     adminProjectName,
     typeDirname,
     logicProcessorDirname,
+    libDirName,
     injectTimestampField,
     timestampFieldName,
     callTypes,
@@ -823,6 +875,7 @@ export async function genProject(_args: {
     mkdirp(path.join(adminProjectDirname, '.idea')),
     mkdirp(path.join(serverSrcDirname, typeDirname)),
     mkdirp(path.join(serverSrcDirname, logicProcessorDirname)),
+    mkdirp(path.join(serverProjectDirname, libDirName)),
   ]);
   const dataWrapper: { logicProcessorCode: string } = {} as any;
   await Promise.all([
@@ -891,6 +944,7 @@ export async function genProject(_args: {
     }),
     genStatusFile(args),
     genControllerFile(args),
+    injectServerLibFiles(args),
   ]);
   await Promise.all([
     setServerPackage(args),

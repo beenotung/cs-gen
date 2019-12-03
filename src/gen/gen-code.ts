@@ -580,6 +580,12 @@ export type ${typeName} = ${types.map(({ Type }) => Type).join(' | ') ||
   .join('')}
 export type ${callTypeName} = ${commandTypeName} | ${queryTypeName} | ${subscribeTypeName};
 
+export interface CallInput<C extends Call = Call> {
+  CallType: C['CallType'];
+  Type: C['Type'];
+  In: C['In'];
+}
+
 function checkCallType(_t: {
   CallType: '${commandTypeName}' | '${queryTypeName}' | '${subscribeTypeName}';
   Type: string;
@@ -733,6 +739,7 @@ import { Body, Controller, injectNestClient, Post } from 'nest-client';
 import {
   ${[
     `${callTypeName} as CallType`,
+    'CallInput',
     !hasSubscribe ? '' : `${subscribeTypeName} as SubscribeType`,
     ...callTypes
       .filter(call => ws || call.CallType !== subscribeTypeName)
@@ -763,12 +770,6 @@ export function usePrimus(f: (primus: IPrimus) => void): void {
   pfs.push(f);
 }
 `.trim()
-}
-
-export interface CallInput<C extends CallType> {
-  CallType: C['CallType'];
-  Type: C['Type'];
-  In: C['In'];
 }
 
 let ${serviceObjectName}: ${serviceClassName};
