@@ -479,6 +479,8 @@ async function setServerPackage(args: {
   dep.nestlib = '^0.3.1';
   dep['engine.io'] = '^3.3.2';
   dep['engine.io-client'] = '^3.3.2';
+  // for log.service.ts
+  dep['graceful-fs'] = '^4.1.15';
   if (ws) {
     dep['typestub-primus'] = '^1.1.3';
     dep['primus-emitter'] = '^3.1.1';
