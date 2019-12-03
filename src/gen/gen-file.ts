@@ -82,9 +82,12 @@ async function genConnectionFile(args: {
   outDirname: string;
   serverProjectDirname: string;
   moduleDirname: string;
+  typeDirname: string;
+  typeFilename: string;
+  statusFilename: string;
 }): Promise<void> {
   const filename = path.join(getModuleDirname(args), 'connection.ts');
-  const code = genConnectionCode();
+  const code = genConnectionCode(args);
   await writeFile(filename, code);
 }
 

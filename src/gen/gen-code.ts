@@ -925,12 +925,17 @@ export function ${Type}(
   return code.trim();
 }
 
-export function genConnectionCode(): string {
+export function genConnectionCode(args: {
+  typeDirname: string;
+  typeFilename: string;
+  statusFilename: string;
+}): string {
+  const { statusFilename } = args;
   return `
-import { CallInput } from 'cqrs-exp';
-import { Request, Response } from 'express-serve-static-core';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { status } from './status';
+import { Request, Response } from 'express-serve-static-core';
+import { CallInput } from ${getTypeFileImportPath(args)};
+import { status } from './${removeTsExtname(statusFilename)}';
 
 export interface Spark {
   id: string;
