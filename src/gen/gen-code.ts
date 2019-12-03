@@ -44,6 +44,7 @@ export function genModuleCode(args: {
   serviceClassName: string;
   controllerFilename: string;
   controllerClassName: string;
+  libDirname: string;
 }) {
   const {
     moduleClassName,
@@ -51,11 +52,12 @@ export function genModuleCode(args: {
     serviceClassName,
     controllerFilename,
     controllerClassName,
+    libDirname,
   } = args;
   return `
 import { Module } from '@nestjs/common';
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
-import { LogService } from 'cqrs-exp';
+import { LogService } from '../${libDirname}/log.service';
 import * as path from 'path';
 import { ${controllerClassName} } from './${removeTsExtname(
     controllerFilename,
@@ -82,6 +84,7 @@ export function genServiceCode(args: {
   logicProcessorClassName: string;
   logicProcessorCode: string;
   asyncLogicProcessor: boolean;
+  libDirname: string;
   plugins: GenProjectPlugins;
   check_app_id: string;
 }) {
@@ -96,9 +99,9 @@ export function genServiceCode(args: {
     callTypes,
     asyncLogicProcessor,
     plugins,
+    libDirname,
   } = args;
   const { auth } = plugins;
-  const async_import_type = asyncLogicProcessor ? ', Result' : '';
   const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
   const genMethodBody = (call: { CallType: string; Type: string }): string => {
@@ -135,34 +138,29 @@ export function genServiceCode(args: {
     }
     return code;
   };
+  // prettier-ignore
   const code = `
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';${auth ? `
+import {
+  ${auth.MethodAuthCall},
+  ${auth.MethodAuthSubscribe},${check_app_id ? `
+  ${auth.MethodCheckAppId},` : ''}
+} from ${JSON.stringify(auth.ImportFile)};` : ''}
+import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(logicProcessorFilename)}';
 import {
   ${[
     callTypeName,
+    'CallInput',
     ...Array.from(new Set(callTypes.map(call => call.CallType))),
     ...callTypes.map(call => call.Type),
   ].sort().join(`,
   `)}
-} from ${getTypeFileImportPath(args)};
-import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(
-    logicProcessorFilename,
-  )}';
-import { CallInput${async_import_type} } from 'cqrs-exp';${
-    !auth
-      ? ''
-      : `
-import { ${auth.MethodAuthCall}, ${auth.MethodAuthSubscribe}${
-          check_app_id ? `, ${auth.MethodCheckAppId}` : ''
-        } } from ${JSON.stringify(auth.ImportFile)};${
-          !check_app_id
-            ? ''
-            : `
+} from ${getTypeFileImportPath(args)};${asyncLogicProcessor ? `
+import { Result } from '../${libDirname}/result';` : ''}
 
-${auth.MethodCheckAppId}(${JSON.stringify(check_app_id)});`
-        }
-`
-  }
+${check_app_id && auth ? `
+${auth.MethodCheckAppId}(${JSON.stringify(check_app_id)});
+` : ''}
 
 // tslint:disable:no-unused-variable
 function not_impl(name: string): any {
@@ -186,23 +184,23 @@ export class ${serviceClassName} {
     let method: (In: C['In']) => C['Out'];
     switch (_type) {
       ${callTypes
-        .map(({ CallType, Type }) =>
-          CallType === subscribeTypeName
-            ? `case '${Type}': {
+    .map(({ CallType, Type }) =>
+      CallType === subscribeTypeName
+        ? `case '${Type}': {
         // @ts-ignore
         const m: (In: C['In']) => { id: string } = this.${Type};
         method = m as any;
         break;
       }
       `
-            : `case '${Type}':
+        : `case '${Type}':
         // @ts-ignore
         method = this.${Type};
         break;
       `,
-        )
-        .join('')
-        .trim()}
+    )
+    .join('')
+    .trim()}
       default:
         const x: never = _type;
         console.log(\`not implemented, CallType: \${CallType}, Type: \${Type}\`);
@@ -212,14 +210,14 @@ export class ${serviceClassName} {
     // TODO validate input
     const res = method(In);
     ${
-      /**
-       * TODO auto save result
-       * for Command, store the output to event table
-       * for Query, count the query type and timestamp
-       * for Subscribe, store the id to a session manager (or do nothing?)
-       * */
-      `// TODO save the result`
-    }
+    /**
+     * TODO auto save result
+     * for Command, store the output to event table
+     * for Query, count the query type and timestamp
+     * for Subscribe, store the id to a session manager (or do nothing?)
+     * */
+    `// TODO save the result`
+  }
     return res;
   }
 
@@ -260,7 +258,7 @@ export function genControllerCode(args: {
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
-  libDirName: string;
+  libDirname: string;
   staticControllerReference: boolean;
   serviceApiPath: string;
   callApiPath: string;
@@ -282,7 +280,7 @@ export function genControllerCode(args: {
     serviceApiPath,
     callApiPath,
     controllerClassName,
-    libDirName,
+    libDirname,
     staticControllerReference,
     statusName,
     statusFilename,
@@ -305,10 +303,10 @@ import { ok, rest_return } from 'nestlib';
 import * as path from 'path';
 import { ISpark } from 'typestub-primus';
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
-import { LogService } from '../${libDirName}/log.service';${
+import { LogService } from '../${libDirname}/log.service';${
     asyncLogicProcessor
       ? `
-import { isPromise, Result } from '../${libDirName}/result';`
+import { isPromise, Result } from '../${libDirname}/result';`
       : ''
   }
 import { usePrimus } from '../main';
