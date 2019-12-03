@@ -898,14 +898,16 @@ export async function genProject(_args: {
     setClientPackage({ ...args, projectDirname: adminProjectDirname }),
     ...(([] as Array<Promise<void>>).concat.apply(
       [],
-      [serverProjectDirname, clientProjectDirname, adminProjectDirname].map(
-        projectDirname => [
-          setTslint({ ...args, projectDirname }),
-          setTsconfig({ ...args, projectDirname }),
-          setEditorConfig({ ...args, projectDirname }),
-          setPrettierrc({ ...args, projectDirname }),
-        ],
-      ),
+      [
+        serverProjectDirname,
+        clientProjectDirname,
+        adminProjectDirname,
+      ].map(projectDirname => [
+        setTslint({ ...args, projectDirname }),
+        setTsconfig({ ...args, projectDirname }),
+        setEditorConfig({ ...args, projectDirname }),
+        setPrettierrc({ ...args, projectDirname }),
+      ]),
     ) as Array<Promise<any>>),
   ]);
 }

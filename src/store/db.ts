@@ -72,9 +72,8 @@ export class Db {
       switch (version.split('.').length) {
         case 1:
         case 2:
-          filter = filter.and(Expression.cast(rowExpr).match(
-            '^' + version + '\\.',
-          ) as Expression<boolean>);
+          // prettier-ignore
+          filter = filter.and(Expression.cast(rowExpr).match('^' + version + '\\.') as Expression<boolean>);
           break;
         case 3:
           filter = filter.and(rowExpr.eq(version));

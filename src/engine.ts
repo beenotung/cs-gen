@@ -6,7 +6,9 @@ import { Call, Call as _Call, IEvent } from './types';
 import { CallInput } from './utils';
 
 export interface LogicProcessor<C extends Call, E extends IEvent> {
-  [CallType_or_EventType: string]:  // Call Handler
+  // prettier-ignore
+  [CallType_or_EventType: string]:
+    // Call Handler
     | ((In: Call['In']) => Call['Out'])
     // Event Callback
     | ((event: string) => void);
@@ -154,6 +156,7 @@ export class Dispatcher<
           return;
         }
         const event: IEvent = row;
+        // prettier-ignore
         eventP = then(eventP, () => this.routeEvent(event), err => reject(err));
         i++;
         if (i >= n) {
