@@ -260,6 +260,7 @@ export function genControllerCode(args: {
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
+  libDirName: string;
   staticControllerReference: boolean;
   serviceApiPath: string;
   callApiPath: string;
@@ -281,6 +282,7 @@ export function genControllerCode(args: {
     serviceApiPath,
     callApiPath,
     controllerClassName,
+    libDirName,
     staticControllerReference,
     statusName,
     statusFilename,
@@ -293,35 +295,37 @@ export function genControllerCode(args: {
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
-  const async_import_type = asyncLogicProcessor ? ', isPromise, Result' : '';
   const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
   return `
-import * as path from 'path';
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
-import { Request, Response } from 'express-serve-static-core';
-import { ${callTypeName} } from ${getTypeFileImportPath(args)};
-import { CallInput, LogService${async_import_type} } from 'cqrs-exp';
-import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { Bar } from 'cli-progress';
+import { Request, Response } from 'express-serve-static-core';
 import { ok, rest_return } from 'nestlib';
-import { ${statusName} } from './${removeTsExtname(statusFilename)}';
-import { endRestCall, startRestCall } from './connection';
-${
-  !ws
-    ? ''
-    : `
+import * as path from 'path';
+import { ISpark } from 'typestub-primus';
+import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
+import { LogService } from '../${libDirName}/log.service';${
+    asyncLogicProcessor
+      ? `
+import { isPromise, Result } from '../${libDirName}/result';`
+      : ''
+  }
+import { usePrimus } from '../main';
+import { endRestCall, startRestCall } from './connection';${
+    ws
+      ? `
 import {
   closeConnection,
   endSparkCall,
   newConnection,
   Spark,
   startSparkCall,
-} from './connection';
-import { ISpark } from 'typestub-primus';
-import { usePrimus } from '../main';
-`.trim()
-}
+} from './connection';`
+      : ''
+  }
+import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
+import { ${statusName} } from './${removeTsExtname(statusFilename)}';
 
 let ready: Promise<void>;
 

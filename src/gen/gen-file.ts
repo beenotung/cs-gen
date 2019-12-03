@@ -139,6 +139,7 @@ async function genControllerFile(args: {
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
+  libDirName: string;
   staticControllerReference: boolean;
   serviceApiPath: string;
   callApiPath: string;
@@ -165,7 +166,7 @@ async function injectServerLibFiles(args: {
   asyncLogicProcessor: boolean;
 }) {
   const { serverProjectDirname, libDirName, asyncLogicProcessor } = args;
-  const dest = path.join(serverProjectDirname, libDirName);
+  const dest = path.join(serverProjectDirname, 'src', libDirName);
   let src = __dirname;
   src = path.dirname(src); // pop gen
   src = path.dirname(src); // pop dist
@@ -763,7 +764,7 @@ export const defaultGenProjectArgs = {
   apiFilename: 'api.ts',
   logicProcessorFilename: 'logic-processor.ts',
   logicProcessorClassName: 'LogicProcessor',
-  libDirName: path.join('src', 'lib'),
+  libDirName: 'lib',
   timestampFieldName: 'Timestamp',
   injectTimestampField: true,
   primusGlobalName: 'Primus',
@@ -875,7 +876,7 @@ export async function genProject(_args: {
     mkdirp(path.join(adminProjectDirname, '.idea')),
     mkdirp(path.join(serverSrcDirname, typeDirname)),
     mkdirp(path.join(serverSrcDirname, logicProcessorDirname)),
-    mkdirp(path.join(serverProjectDirname, libDirName)),
+    mkdirp(path.join(serverSrcDirname, libDirName)),
   ]);
   const dataWrapper: { logicProcessorCode: string } = {} as any;
   await Promise.all([
