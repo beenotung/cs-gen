@@ -22,7 +22,6 @@ import {
   genServiceCode,
   genStatusCode,
 } from './gen-code';
-import { scanProject } from './scanner';
 
 async function writeFile(filename: string, code: string) {
   code = code.trim();
@@ -825,10 +824,6 @@ export async function genProject(_args: {
     mkdirp(path.join(serverSrcDirname, typeDirname)),
     mkdirp(path.join(serverSrcDirname, logicProcessorDirname)),
   ]);
-  if (!'dev') {
-    await scanProject(args);
-    return;
-  }
   const dataWrapper: { logicProcessorCode: string } = {} as any;
   await Promise.all([
     genDocumentationHtmlFile(args),
