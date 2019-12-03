@@ -481,6 +481,7 @@ async function setServerPackage(args: {
   dep['engine.io-client'] = '^3.3.2';
   // for log.service.ts
   dep['graceful-fs'] = '^4.1.15';
+  dep['mkdirp-sync'] = '^0.0.3';
   if (ws) {
     dep['typestub-primus'] = '^1.1.3';
     dep['primus-emitter'] = '^3.1.1';
