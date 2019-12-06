@@ -105,6 +105,15 @@ ${cs.map(({ not_found }) => `export const ${not_found}: { Success: false, Reason
 export function wrapCollections(collections: {${cs.map(({ type, collection_name }) => `
   ${collection_name}: Map<string, ${type}>`).join('')}
 }) {
+  ${cs.map(({ key, name, type, collection_name, not_found }) => `
+  function get${WordCase(type)}<T>(${key}: string, f: (${name}: ${type}) => T): T | typeof ${not_found} {
+    let ${collection_name} = collections.${collection_name};
+    if (!${collection_name}.has(${key})) {
+      return ${not_found}
+    }
+    return f(${collection_name}.get(${key})!);
+  }
+`).join('').trimRight()}
   ${combos.map(cs => `
   function gets<T>(keys: { ${cs.map(c => `${c.key}: string`).join(', ')} }, f: (values: { ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }) => T): T | ${failType(cs.map(c => c.not_found))};`).join('')}
   function gets<T>(keys: { ${xs.map(c => `${c.key}?: string`).join(', ')} }, f: (values: ${valuesType}) => T): T | ${failType(cs.map(c => c.not_found))} {
@@ -160,7 +169,8 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
     return f();
   }
 
-  return {
+  return {${cs.map(c=>`
+    get${WordCase(c.type)},`).join('')}
     gets,
     sets,
   };
@@ -204,12 +214,13 @@ class Core {
 let core = new Core();
 let cs = wrapCollections(core);
 [
-  cs.gets({ user_id: 'Alice' }, ({ user }) => ({ user })), // UserNotFound
+  cs.gets({ user_id: 'Alice' }, ({ user }) => ({ user })),       // UserNotFound
   cs.sets({
     user: { user_id: 'Alice', username: 'alice' },
     post: { post_id: 'p1', title: 'ti', content: 'co' },
-  }, () => 'registered Alice'), // registered Alice
+  }, () => 'registered Alice'),                                       // registered Alice
   cs.gets({ user_id: 'Alice' }, values => values.user.username), // alice
+  cs.getPost('p1', post => post.title),                        // ti
 ].forEach(x => console.log(x));
 `.trim();
 })();
