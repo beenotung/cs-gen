@@ -130,6 +130,7 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
   ${combos.map(cs => `
   function sets<T>(values: { ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }, f: () => T): T | typeof Duplicated;`).join('')}
   function sets<T>(values: { ${xs.map(({ name, type }) => `${name}?: ${type}`).join(', ')} }, f: () => T): T | typeof Duplicated {
+    // validate in batch for atomicity
     for (const [name, value] of Object.entries(values)) {
       switch (name) {${cs.map(({ name, collection_name, aliases, key, type }) => `
         case '${name}':${aliases.map(alias => `
@@ -139,11 +140,21 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
           if (${collection_name}.has(${name}.${key})) {
             return Duplicated;
           }
-          ${collection_name}.set(${name}.${key}, ${name});
           break;
         }`).join('')}
         default:
           throw new Error(\`undefined collection for set: '\${name}'\`);
+      }
+    }
+    // apply update in batch, so won't have partial update when something wrong in the middle of process
+    for (const [name, value] of Object.entries(values)) {
+      switch (name) {${cs.map(({ name, collection_name, aliases, key, type }) => `
+        case '${name}':${aliases.map(alias => `
+        case '${alias}':`)} {
+          let ${name} = value as ${type};
+          collections.${collection_name}.set(${name}.${key}, ${name});
+          break;
+        }`).join('')}
       }
     }
     return f();
