@@ -84,14 +84,9 @@ function expandAliases(cs: collection[]) {
   return xs;
 }
 
-function genGetsSignature(cs: collection[]): string {
-  const lines: string[] = [];
-  const xs = expandAliases(cs);
-  combinations(xs)
-    .sort((a, b) => b.length - a.length)
-    .forEach(cs =>
-      lines.push(`function gets<T>(keys: { ${cs.map(c => `${c.key}: string`).join(', ')} }, f: (values: { ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }) => T): T | { Success: false, Reason: ${cs.map(c => `'${c.not_found}'`).join(' | ')} };`));
-  return lines.join('\n  ');
+function failType(reasons: string[]): string {
+  reasons = Array.from(new Set(reasons));
+  return `{ Success: false, Reason: ${reasons.map(s => `'${s}'`).join(' | ')} }`;
 }
 
 function genCollections(collections: collections) {
@@ -100,7 +95,7 @@ function genCollections(collections: collections) {
     cs.push((value instanceof Map) ? to_collection(name, { map: value }) : to_collection(name, value));
   }
   const xs = expandAliases(cs);
-  const valuesType = `{ ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }`;
+  const valuesType = `{ ${xs.map(c => `${c.name}: ${c.type}`).join(', ')} }`;
   // prettier-ignore
   return `
 export const Duplicated : { Success: false, Reason: 'Duplicated' } = { Success: false, Reason: 'Duplicated' };
@@ -110,8 +105,9 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
   ${collection_name}: Map<string, ${type}>`).join('')}
 }) {
 
-  ${genGetsSignature(cs)}
-  function gets<T>(keys: { ${xs.map(c => `${c.key}?: string`).join(', ')} }, f: (values: ${valuesType}) => T): T | { Success: false, Reason: ${xs.map(c => `'${c.not_found}'`).join(' | ')} } {
+  ${combinations(xs).sort((a, b) => b.length - a.length).map(cs => `
+  function gets<T>(keys: { ${cs.map(c => `${c.key}: string`).join(', ')} }, f: (values: { ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }) => T): T | ${failType(cs.map(c => c.not_found))};`).join('')}
+  function gets<T>(keys: { ${xs.map(c => `${c.key}?: string`).join(', ')} }, f: (values: ${valuesType}) => T): T | ${failType(cs.map(c => c.not_found))} {
     const values: ${valuesType} = {} as any;
     for (let [key_name, key] of Object.entries(keys)) {
       key = key!;
@@ -162,5 +158,15 @@ ${genCollections({
     posts: new Map(),
     replies: new Map(),
   })}
+
+class Core {
+  users = new Map<string, User>();
+  posts = new Map<string, Post>();
+  replies = new Map<string, Reply>();
+}
+let core = new Core();
+let cs = wrapCollections(core);
+cs.gets({ user_id: '1', author_id: '2' }, ({ user, author }) => {
+});
 `.trim();
 })();
