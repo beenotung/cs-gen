@@ -96,6 +96,7 @@ function genCollections(collections: collections) {
   }
   const xs = expandAliases(cs);
   const valuesType = `{ ${xs.map(c => `${c.name}: ${c.type}`).join(', ')} }`;
+  const combos = combinations(xs).sort((a, b) => b.length - a.length);
   // prettier-ignore
   return `
 export const Duplicated : { Success: false, Reason: 'Duplicated' } = { Success: false, Reason: 'Duplicated' };
@@ -104,7 +105,7 @@ ${cs.map(({ not_found }) => `export const ${not_found}: { Success: false, Reason
 export function wrapCollections(collections: {${cs.map(({ type, collection_name }) => `
   ${collection_name}: Map<string, ${type}>`).join('')}
 }) {
-  ${combinations(xs).sort((a, b) => b.length - a.length).map(cs => `
+  ${combos.map(cs => `
   function gets<T>(keys: { ${cs.map(c => `${c.key}: string`).join(', ')} }, f: (values: { ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }) => T): T | ${failType(cs.map(c => c.not_found))};`).join('')}
   function gets<T>(keys: { ${xs.map(c => `${c.key}?: string`).join(', ')} }, f: (values: ${valuesType}) => T): T | ${failType(cs.map(c => c.not_found))} {
     const values: ${valuesType} = {} as any;
@@ -126,8 +127,8 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
     }
     return f(values);
   }
-  ${xs.map(({ name, type }) => `
-  function sets<T>(values: { ${name}: ${type} }, f: () => T): T | typeof Duplicated;`).join('')}
+  ${combos.map(cs => `
+  function sets<T>(values: { ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }, f: () => T): T | typeof Duplicated;`).join('')}
   function sets<T>(values: { ${xs.map(({ name, type }) => `${name}?: ${type}`).join(', ')} }, f: () => T): T | typeof Duplicated {
     for (const [name, value] of Object.entries(values)) {
       switch (name) {${cs.map(({ name, collection_name, aliases, key, type }) => `
@@ -138,6 +139,7 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
           if (${collection_name}.has(${name}.${key})) {
             return Duplicated;
           }
+          ${collection_name}.set(${name}.${key}, ${name});
           break;
         }`).join('')}
         default:
@@ -183,10 +185,20 @@ class Core {
   users = new Map<string, User>();
   posts = new Map<string, Post>();
   replies = new Map<string, Reply>();
+
+  constructor() {
+    console.log('init core');
+  }
 }
 let core = new Core();
 let cs = wrapCollections(core);
-cs.gets({ user_id: '1', author_id: '2' }, ({ user, author }) => {
-});
+[
+  cs.gets({ user_id: 'Alice' }, ({ user }) => ({ user })), // UserNotFound
+  cs.sets({
+    user: { user_id: 'Alice', username: 'alice' },
+    post: { post_id: 'p1', title: 'ti', content: 'co' },
+  }, () => 'registered Alice'), // registered Alice
+  cs.gets({ user_id: 'Alice' }, values => values.user.username), // alice
+].forEach(x => console.log(x));
 `.trim();
 })();
