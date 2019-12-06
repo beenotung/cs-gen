@@ -104,7 +104,6 @@ ${cs.map(({ not_found }) => `export const ${not_found}: { Success: false, Reason
 export function wrapCollections(collections: {${cs.map(({ type, collection_name }) => `
   ${collection_name}: Map<string, ${type}>`).join('')}
 }) {
-
   ${combinations(xs).sort((a, b) => b.length - a.length).map(cs => `
   function gets<T>(keys: { ${cs.map(c => `${c.key}: string`).join(', ')} }, f: (values: { ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }) => T): T | ${failType(cs.map(c => c.not_found))};`).join('')}
   function gets<T>(keys: { ${xs.map(c => `${c.key}?: string`).join(', ')} }, f: (values: ${valuesType}) => T): T | ${failType(cs.map(c => c.not_found))} {
@@ -127,9 +126,30 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
     }
     return f(values);
   }
+  ${xs.map(({ name, type }) => `
+  function sets<T>(values: { ${name}: ${type} }, f: () => T): T | typeof Duplicated;`).join('')}
+  function sets<T>(values: { ${xs.map(({ name, type }) => `${name}?: ${type}`).join(', ')} }, f: () => T): T | typeof Duplicated {
+    for (const [name, value] of Object.entries(values)) {
+      switch (name) {${cs.map(({ name, collection_name, aliases, key, type }) => `
+        case '${name}':${aliases.map(alias => `
+        case '${alias}':`)} {
+          let ${name} = value as ${type};
+          let ${collection_name} = collections.${collection_name};
+          if (${collection_name}.has(${name}.${key})) {
+            return Duplicated;
+          }
+          break;
+        }`).join('')}
+        default:
+          throw new Error(\`undefined collection for set: '\${name}'\`);
+      }
+    }
+    return f();
+  }
 
   return {
     gets,
+    sets,
   };
 }
 `.trim();
