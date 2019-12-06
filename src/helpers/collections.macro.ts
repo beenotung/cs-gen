@@ -70,8 +70,7 @@ function combinations<T>(xs: T[]): T[][] {
   return xss;
 }
 
-function genGetsSignature(cs: collection[]): string {
-  const lines: string[] = [];
+function expandAliases(cs: collection[]) {
   const xs: Array<{
     name: string
     type: string
@@ -82,6 +81,12 @@ function genGetsSignature(cs: collection[]): string {
     xs.push({ name, type, key, not_found });
     aliases.forEach(alias => xs.push({ name: alias, type, key: alias + key_suffix, not_found }));
   });
+  return xs;
+}
+
+function genGetsSignature(cs: collection[]): string {
+  const lines: string[] = [];
+  const xs = expandAliases(cs);
   combinations(xs)
     .sort((a, b) => b.length - a.length)
     .forEach(cs =>
@@ -94,9 +99,11 @@ function genCollections(collections: collections) {
   for (const [name, value] of Object.entries(collections)) {
     cs.push((value instanceof Map) ? to_collection(name, { map: value }) : to_collection(name, value));
   }
+  const xs = expandAliases(cs);
   const valuesType = `{ ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }`;
   // prettier-ignore
   return `
+export const Duplicated : { Success: false, Reason: 'Duplicated' } = { Success: false, Reason: 'Duplicated' };
 ${cs.map(({ not_found }) => `export const ${not_found}: { Success: false, Reason: '${not_found}' } = { Success: false, Reason: '${not_found}' };`).join('\n')}
 
 export function wrapCollections(collections: {${cs.map(({ type, collection_name }) => `
@@ -104,13 +111,13 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
 }) {
 
   ${genGetsSignature(cs)}
-  function gets<T>(keys: { ${cs.map(c => `${c.key}?: string`).join(', ')} }, f: (values: ${valuesType}) => T): T | { Success: false, Reason: ${cs.map(c => `'${c.not_found}'`).join(' | ')} } {
+  function gets<T>(keys: { ${xs.map(c => `${c.key}?: string`).join(', ')} }, f: (values: ${valuesType}) => T): T | { Success: false, Reason: ${xs.map(c => `'${c.not_found}'`).join(' | ')} } {
     const values: ${valuesType} = {} as any;
     for (let [key_name, key] of Object.entries(keys)) {
       key = key!;
-      switch (key_name) {${cs.map(({ key, collection_name, not_found, aliases, key_suffix }) => `${aliases.map(alias => `
-        case '${alias + key_suffix}':`).join('')}
-        case '${key}': {
+      switch (key_name) {${cs.map(({ key, collection_name, not_found, aliases, key_suffix }) => `
+        case '${key}':${aliases.map(alias => `
+        case '${alias + key_suffix}':`).join('')} {
           let ${collection_name} = collections.${collection_name};
           if (!${collection_name}.has(key!)) {
             return ${not_found};
