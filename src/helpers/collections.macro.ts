@@ -72,7 +72,17 @@ function combinations<T>(xs: T[]): T[][] {
 
 function genGetsSignature(cs: collection[]): string {
   const lines: string[] = [];
-  combinations(cs)
+  const xs: Array<{
+    name: string
+    type: string
+    key: string
+    not_found: string
+  }> = [];
+  cs.forEach(({ name, type, key_suffix, not_found, key, aliases }) => {
+    xs.push({ name, type, key, not_found });
+    aliases.forEach(alias => xs.push({ name: alias, type, key: alias + key_suffix, not_found }));
+  });
+  combinations(xs)
     .sort((a, b) => b.length - a.length)
     .forEach(cs =>
       lines.push(`function gets<T>(keys: { ${cs.map(c => `${c.key}: string`).join(', ')} }, f: (values: { ${cs.map(c => `${c.name}: ${c.type}`).join(', ')} }) => T): T | { Success: false, Reason: ${cs.map(c => `'${c.not_found}'`).join(' | ')} };`));
@@ -125,9 +135,20 @@ export function wrapCollections(collections: {${cs.map(({ type, collection_name 
 // example
 (function() {
   return `
-type User = {}
-type Post = {}
-type Reply = {}
+type User = {
+  user_id: string
+  username: string
+}
+type Post = {
+  post_id: string
+  title: string
+  content: string
+}
+type Reply = {
+  reply_id: string
+  author_id: string
+  content: string
+}
 
 ${genCollections({
     users: { map: new Map(), aliases: ['author'] },
