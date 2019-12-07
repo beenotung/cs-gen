@@ -10,3 +10,4 @@ data/
 rethinkdb_data/
 log.txt
 pnpm-debug.log
+src/helpers/collections.ts
