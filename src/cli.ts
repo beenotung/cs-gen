@@ -35,11 +35,11 @@ async function initPackageJson(name: string) {
       'beenotung',
       'cqrs-exp',
     ),
+    'gen-ts-type': '^1.3.1',
   };
   packageJson.devDependencies = {
     ...packageJson.devDependencies,
     '@types/node': '*',
-    'gen-ts-type': '^1.3.1',
     'ts-node': '^8.3.0',
     typescript: '^3.5.2',
   };
