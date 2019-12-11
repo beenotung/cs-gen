@@ -699,7 +699,11 @@ export function genClientLibCode(args: {
   callTypes: CallMeta[];
   primusGlobalName: string;
   ws: boolean;
-  serverOrigin?: string;
+  serverOrigin: {
+    local: string;
+    test: string;
+    prod: string;
+  };
 }): string {
   const {
     typeDirname,
@@ -785,9 +789,26 @@ export class ${serviceClassName} {
   }
 }
 
-export function startPrimus(baseUrl: string${
-    !serverOrigin ? '' : ` = ${JSON.stringify(serverOrigin)}`
-  }) {
+export function startAPI(options: {
+  mode: 'local' | 'test' | 'prod',
+} | {
+  baseUrl: string
+}) {
+  const baseUrl: string = (() => {
+    if ('baseUrl' in options) {
+      return options.baseUrl
+    }
+    switch (options.mode) {
+      case 'local':
+        return ${JSON.stringify(serverOrigin.local)};
+      case 'test':
+        return ${JSON.stringify(serverOrigin.test)};
+      case 'prod':
+        return ${JSON.stringify(serverOrigin.prod)};
+      default:
+        throw new Error(\`Failed to resolve baseUrl, unknown mode: '\${options.mode}'\`)
+    }
+  })();
   ${
     ws
       ? `
