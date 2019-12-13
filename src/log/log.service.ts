@@ -1,5 +1,3 @@
-import { later } from '@beenotung/tslib/async/wait';
-import { compare_string } from '@beenotung/tslib/string';
 import { Injectable } from '@nestjs/common';
 import * as fs from 'graceful-fs';
 import * as path from 'path';
@@ -8,7 +6,6 @@ import * as util from 'util';
 const mkdirp = require('mkdirp-sync');
 // tslint:enable:no-var-requires
 
-const readdir: typeof fs.readdir.__promisify__ = util.promisify(fs.readdir);
 const writeFile: typeof fs.writeFile.__promisify__ = util.promisify(
   fs.writeFile,
 );
@@ -39,16 +36,28 @@ export class LogService {
     return this.sortKeys(fs.readdirSync(this.dataDirname));
   }
 
-  async getKeys(): Promise<string[]> {
-    for (;;) {
-      const ss = await readdir(this.dataDirname);
-      if (ss.some(s => s.indexOf('.') !== -1)) {
-        console.log('waiting temp files to be cleared in', this.dataDirname);
-        await later(1000);
-        continue;
-      }
-      return this.sortKeys(ss);
-    }
+  getKeys(): Promise<string[]> {
+    return new Promise<string[]>((resolve, reject) => {
+      const run = () => {
+        fs.readdir(this.dataDirname, (err, ss) => {
+          if (err) {
+            // ready using graceful-fs, so don't need to retry
+            reject(err);
+            return;
+          }
+          if (ss.some(s => s.includes('.'))) {
+            console.log(
+              'waiting temp files to be cleared in',
+              this.dataDirname,
+            );
+            setTimeout(run, 1000);
+            return;
+          }
+          resolve(this.sortKeys(ss));
+        });
+      };
+      run();
+    });
   }
 
   /**
@@ -84,7 +93,7 @@ export class LogService {
     return JSON.parse(text!);
   }
 
-  nextKey(): string {
+  nextKey(suffix?: string): string {
     const now = Date.now();
     if (this.now === now) {
       this.acc!++;
@@ -92,14 +101,42 @@ export class LogService {
       this.now = now;
       this.acc = 0;
     }
-    return this.now + '-' + this.acc;
+    let key = this.now + '-' + this.acc;
+    if (suffix) {
+      key += '-' + suffix;
+    }
+    return key;
   }
 
   private keyToPath(key: string) {
     return path.join(this.dataDirname, key);
   }
 
+  // inline @beenotung/tslib/string.compare_string
   private sortKeys(ss: string[]): string[] {
-    return ss.sort((a, b) => compare_string(a, b));
+    return ss.sort((a, b) => {
+      const as = a.split('-');
+      const bs = b.split('-');
+      const an = as.length;
+      const bn = bs.length;
+      const n = Math.min(an, bn);
+      for (let i = 0; i < n; i++) {
+        const a = as[i];
+        const b = bs[i];
+        if (a < b) {
+          return -1;
+        }
+        if (a > b) {
+          return 1;
+        }
+      }
+      if (an < bn) {
+        return -1;
+      }
+      if (an > bn) {
+        return 1;
+      }
+      return 0;
+    });
   }
 }
