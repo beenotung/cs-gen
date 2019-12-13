@@ -71,7 +71,11 @@ async function initGitIgnore() {
 async function initGenProject(args: {
   baseProjectName: string;
   appId: string;
-  serverOrigin: string;
+  serverOrigin: {
+    local: string;
+    test: string;
+    prod: string;
+  };
 }) {
   const { baseProjectName, appId, serverOrigin } = args;
   const code =
@@ -160,14 +164,20 @@ async function ask(name: string, defaultAnswer: string): Promise<string> {
 async function initProject() {
   const cwd = path.basename(process.cwd());
   const name = await ask('project name', cwd);
-  const serverDomain = await ask('server domain', 'example.com');
-  const serverOrigin = await ask(
+  const prodServerDomain = await ask('production server domain', 'example.com');
+  const prodServerOrigin = await ask(
     'server origin',
-    `https://${name}.${serverDomain}`,
+    `https://${name}.${prodServerDomain}`,
   );
+  const testServerDomain = await ask('test server domain', 'example.net');
+  const testServerOrigin = await ask(
+    'server origin',
+    `https://${name}.${testServerDomain}`,
+  );
+  const port = await ask('port', '8080');
   const appId = await ask(
     'app id',
-    `${name}.${serverDomain}`
+    `${name}.${prodServerDomain}`
       .split('.')
       .reverse()
       .join('.'),
@@ -187,7 +197,11 @@ async function initProject() {
   await initGenProject({
     baseProjectName: name,
     appId,
-    serverOrigin,
+    serverOrigin: {
+      local: `http://localhost:${port}`,
+      test: testServerOrigin,
+      prod: prodServerOrigin,
+    },
   });
   console.log('generated skeleton.');
 }

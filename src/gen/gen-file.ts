@@ -327,7 +327,11 @@ async function genClientLibFile(args: {
   primusGlobalName: string;
   primusPath: string;
   ws: boolean;
-  serverOrigin?: string;
+  serverOrigin: {
+    local: string;
+    test: string;
+    prod: string;
+  };
 }) {
   const { outDirname, clientProjectName, apiDirname, apiFilename } = args;
   const dirPath = path.join(outDirname, clientProjectName, 'src', apiDirname);
@@ -825,7 +829,11 @@ export async function genProject(_args: {
   primusGlobalName?: string;
   primusPath?: string;
   ws?: boolean;
-  serverOrigin?: string;
+  serverOrigin: {
+    local: string;
+    test: string;
+    prod: string;
+  };
   injectFormat?: boolean;
   asyncLogicProcessor?: boolean;
   replayQuery?: boolean;
