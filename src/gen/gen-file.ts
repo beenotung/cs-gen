@@ -328,7 +328,7 @@ async function genClientLibFile(args: {
   primusPath: string;
   ws: boolean;
   serverOrigin: {
-    local: string;
+    port: number;
     test: string;
     prod: string;
   };
@@ -830,7 +830,7 @@ export async function genProject(_args: {
   primusPath?: string;
   ws?: boolean;
   serverOrigin: {
-    local: string;
+    port: number;
     test: string;
     prod: string;
   };

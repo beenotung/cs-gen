@@ -72,7 +72,7 @@ async function initGenProject(args: {
   baseProjectName: string;
   appId: string;
   serverOrigin: {
-    local: string;
+    port: number;
     test: string;
     prod: string;
   };
@@ -198,7 +198,7 @@ async function initProject() {
     baseProjectName: name,
     appId,
     serverOrigin: {
-      local: `http://localhost:${port}`,
+      port: +port,
       test: testServerOrigin,
       prod: prodServerOrigin,
     },

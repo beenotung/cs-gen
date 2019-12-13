@@ -700,7 +700,7 @@ export function genClientLibCode(args: {
   primusGlobalName: string;
   ws: boolean;
   serverOrigin: {
-    local: string;
+    port: number;
     test: string;
     prod: string;
   };
@@ -800,7 +800,7 @@ export function startAPI(options: {
     }
     switch (options.mode) {
       case 'local':
-        return ${JSON.stringify(serverOrigin.local)};
+        return 'http://localhost:${serverOrigin.port}';
       case 'test':
         return ${JSON.stringify(serverOrigin.test)};
       case 'prod':
