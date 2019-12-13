@@ -283,16 +283,18 @@ async function genModuleFile(args: {
 
 async function updateMainFile(args: {
   projectDirname: string;
+  entryModule: string;
   primusGlobalName: string;
   primusPath: string;
   ws: boolean;
+  port: number;
+  web: boolean;
 }) {
   const srcPath = getSrcDirname(args);
   const mainPath = path.join(srcPath, 'main.ts');
   const originalCode = (await readFile(mainPath)).toString();
   const newMainCode = genMainCode({
     ...args,
-    originalCode,
   });
   if (originalCode.trim() !== newMainCode.trim()) {
     await writeFile(mainPath, newMainCode);
@@ -760,6 +762,7 @@ export const defaultGenProjectArgs = {
   queryTypeName: defaultTypeName.queryTypeName,
   commandTypeName: defaultTypeName.commandTypeName,
   subscribeTypeName: defaultTypeName.subscribeTypeName,
+  entryModule: 'app',
   moduleDirname: 'core',
   moduleFilename: 'core.module.ts',
   moduleClassName: 'CoreModule',
@@ -783,6 +786,7 @@ export const defaultGenProjectArgs = {
   primusGlobalName: 'Primus',
   primusPath: '/primus',
   ws: true,
+  web: false,
   injectFormat: true,
   asyncLogicProcessor: false,
   replayQuery: false,
@@ -808,6 +812,7 @@ export async function genProject(_args: {
   commandTypeName?: string;
   queryTypeName?: string;
   subscribeTypeName?: string;
+  entryModule?: string;
   moduleDirname?: string;
   serviceFilename?: string;
   serviceClassName?: string;
@@ -829,6 +834,7 @@ export async function genProject(_args: {
   primusGlobalName?: string;
   primusPath?: string;
   ws?: boolean;
+  web?: boolean;
   serverOrigin: {
     port: number;
     test: string;
@@ -867,7 +873,9 @@ export async function genProject(_args: {
     injectTimestampField,
     timestampFieldName,
     callTypes,
+    serverOrigin,
   } = __args;
+  const { port } = serverOrigin;
   await mkdirp(outDirname);
   const serverProjectDirname = path.join(outDirname, serverProjectName);
   const clientProjectDirname = path.join(outDirname, clientProjectName);
@@ -918,7 +926,7 @@ export async function genProject(_args: {
     setBaseProjectIdeaConfig({
       ...args,
     }),
-    updateMainFile({ ...args, projectDirname: serverProjectDirname }),
+    updateMainFile({ ...args, projectDirname: serverProjectDirname, port }),
     updateGitIgnore({ projectDirname: serverProjectDirname }),
     genTypeFile({
       ...args,

@@ -606,42 +606,31 @@ export type ${name} = ${genTsType(demo)};
 `.trim();
 }
 
-function insert(
-  content: string,
-  insertPattern: string,
-  insertContent: string,
-): string {
-  const i = content.indexOf(insertPattern);
-  if (i === -1) {
-    throw new Error('failed to locate ' + JSON.stringify(insertPattern));
-  }
-  return content.substring(0, i) + insertContent + content.substring(i);
-}
-
 export function genMainCode(args: {
-  originalCode: string;
+  entryModule: string;
   primusGlobalName: string;
   primusPath: string;
   ws: boolean;
+  port: number;
+  web: boolean;
 }): string {
-  const { originalCode, primusGlobalName, primusPath, ws } = args;
-  if (!ws) {
-    return originalCode;
+  const { primusGlobalName, primusPath, ws, port, web, entryModule } = args;
+  const ModuleClass = entryModule[0].toUpperCase() + entryModule.substring(1);
+  let protocol = 'http';
+  if (ws) {
+    protocol += ' and ws';
   }
-  if (
-    originalCode.includes('Primus') ||
-    originalCode.includes('attachServer')
-  ) {
-    return originalCode;
-  }
-  let newCode = insert(
-    originalCode,
-    'async function bootstrap',
-    `import { Server } from 'http';
+  // prettier-ignore
+  return `${web ? `
+import * as express from 'express';
+import * as path from 'path';` : ''}
+import { NestFactory } from '@nestjs/core';
+import { ${ModuleClass} } from './${entryModule}.module';${ws ? `
+import { Server } from 'http';
 import { Primus } from 'typestub-primus';
-let primus: Primus;
 
-let pfs: Array<(primus: Primus) => void> = [];
+let primus: Primus;
+const pfs: Array<(primus: Primus) => void> = [];
 
 export function usePrimus(f: (primus: Primus) => void): void {
   if (primus) {
@@ -667,16 +656,17 @@ function attachServer(server: Server) {
     console.log(spark.id, 'connected');
   });
 }
-
-`,
-  );
-  newCode = insert(
-    newCode,
-    'await app.listen',
-    `attachServer(app.getHttpServer());
-  `,
-  );
-  return newCode.trim();
+` : ''}
+async function bootstrap() {
+  const app = await NestFactory.create(${ModuleClass});${web ? `
+  app.use('/', express.static(path.join(process.cwd(), 'www')));` : ''}
+  app.enableCors();${ws ? `
+  attachServer(app.getHttpServer());` : ''}
+  await app.listen(${port});
+  console.log('listening ${protocol} on port ${port}');
+}
+bootstrap();
+`.trim();
 }
 
 function firstCharToLowerCase(s: string): string {
