@@ -471,9 +471,10 @@ function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
 async function setServerPackage(args: {
   serverProjectDirname: string;
   ws: boolean;
+  web: boolean;
   injectFormat: boolean;
 }) {
-  const { serverProjectDirname, ws } = args;
+  const { serverProjectDirname, ws, web, injectFormat } = args;
   const filename = path.join(serverProjectDirname, 'package.json');
   const bin = await readFile(filename);
   const text = bin.toString();
@@ -493,6 +494,17 @@ async function setServerPackage(args: {
     dep['typestub-primus'] = '^1.1.3';
     dep['primus-emitter'] = '^3.1.1';
   }
+  if (web) {
+    dep.express = '^4.17.1';
+    devDep['@types/express'] = '^4.17.1';
+  }
+  if (injectFormat) {
+    devDep.prettier = '^1.18.2';
+    devDep.tslint = '^5.20.0';
+    devDep['tslint-config-prettier'] = '^1.18.0';
+    devDep['tslint-eslint-rules'] = '^5.3.1';
+    devDep.typescript = '^3.7.2';
+  }
   devDep['@types/cli-progress'] = '^1.8.1';
   devDep['@types/express-serve-static-core'] = '^4.16.7';
   json[dependencies] = sortObjectKey(dep);
@@ -501,11 +513,7 @@ async function setServerPackage(args: {
   await writeFile(filename, newText);
 }
 
-async function setClientPackage(args: {
-  projectDirname: string;
-  ws: boolean;
-  injectFormat: boolean;
-}) {
+async function setClientPackage(args: { projectDirname: string; ws: boolean }) {
   const { projectDirname, ws } = args;
   const filename = path.join(projectDirname, 'package.json');
   if (!(await hasFile(filename))) {
