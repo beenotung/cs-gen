@@ -615,7 +615,8 @@ export function genMainCode(args: {
   web: boolean;
 }): string {
   const { primusGlobalName, primusPath, ws, port, web, entryModule } = args;
-  const ModuleClass = entryModule[0].toUpperCase() + entryModule.substring(1);
+  const ModuleClass =
+    entryModule[0].toUpperCase() + entryModule.substring(1) + 'Module';
   let protocol = 'http';
   if (ws) {
     protocol += ' and ws';
@@ -655,8 +656,8 @@ function attachServer(server: Server) {
   primus.on('connection', spark => {
     console.log(spark.id, 'connected');
   });
-}
-` : ''}
+}` : ''}
+
 async function bootstrap() {
   const app = await NestFactory.create(${ModuleClass});${web ? `
   app.use('/', express.static(path.join(process.cwd(), 'www')));` : ''}
