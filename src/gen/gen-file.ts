@@ -21,6 +21,7 @@ import {
   GenProjectPlugins,
   genServiceCode,
   genStatusCode,
+  skipOptionalAttemptCallTypes,
 } from './gen-code';
 
 async function writeFile(filename: string, code: string) {
@@ -895,6 +896,10 @@ export async function genProject(_args: {
     ...__args,
     serverProjectDirname,
   };
+  const clientCallTypes = skipOptionalAttemptCallTypes({
+    callTypes: callTypes.filter(call => !call.Admin),
+    plugins,
+  });
 
   if (!(await hasNestProject(args))) {
     await runNestCommand({
@@ -953,7 +958,7 @@ export async function genProject(_args: {
     genTypeFile({
       ...args,
       projectDirname: clientProjectDirname,
-      callTypes: callTypes.filter(call => !call.Admin),
+      callTypes: clientCallTypes,
     }),
     genTypeFile({
       ...args,
@@ -963,7 +968,7 @@ export async function genProject(_args: {
     genClientLibFile({
       ...args,
       clientProjectName,
-      callTypes: callTypes.filter(call => !call.Admin),
+      callTypes: clientCallTypes,
     }),
     genClientLibFile({
       ...args,

@@ -677,7 +677,7 @@ function firstCharToLowerCase(s: string): string {
   return s[0].toLowerCase() + s.substring(1);
 }
 
-function skipOptionalAttemptCallTypes(args: {
+export function skipOptionalAttemptCallTypes(args: {
   callTypes: CallMeta[];
   plugins: GenProjectPlugins;
 }): CallMeta[] {
@@ -1088,10 +1088,10 @@ export function genDocumentationHtmlCode(args: {
   commandTypeName: string;
   queryTypeName: string;
   subscribeTypeName: string;
-  callTypes: CallMeta[];
   typeAlias: TypeAlias;
-  role: string;
+  callTypes: CallMeta[];
   plugins: GenProjectPlugins;
+  role: string;
 }) {
   const {
     baseProjectName,
