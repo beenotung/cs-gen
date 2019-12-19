@@ -732,6 +732,7 @@ async function genDocumentationHtmlFile(args: {
   subscribeTypeName: string;
   callTypes: CallMeta[];
   typeAlias: TypeAlias;
+  plugins: GenProjectPlugins;
 }) {
   const {
     outDirname,

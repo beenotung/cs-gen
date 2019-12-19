@@ -677,6 +677,27 @@ function firstCharToLowerCase(s: string): string {
   return s[0].toLowerCase() + s.substring(1);
 }
 
+function skipOptionalAttemptCallTypes(args: {
+  callTypes: CallMeta[];
+  plugins: GenProjectPlugins;
+}): CallMeta[] {
+  if (!args.plugins?.auth) {
+    return args.callTypes;
+  }
+  const { AttemptPrefix } = args.plugins.auth;
+  let { callTypes } = args;
+  const types = new Set(callTypes.map(x => x.Type));
+  callTypes = callTypes.filter(({ Type }) => {
+    if (!Type.startsWith(AttemptPrefix)) {
+      return true;
+    }
+    // is attempt call
+    const rawType = Type.replace(AttemptPrefix, '');
+    return !types.has(rawType);
+  });
+  return callTypes;
+}
+
 export function genClientLibCode(args: {
   typeDirname: string;
   typeFilename: string;
@@ -1070,16 +1091,17 @@ export function genDocumentationHtmlCode(args: {
   callTypes: CallMeta[];
   typeAlias: TypeAlias;
   role: string;
+  plugins: GenProjectPlugins;
 }) {
   const {
     baseProjectName,
-    callTypes,
     commandTypeName,
     queryTypeName,
     subscribeTypeName,
     typeAlias,
     role,
   } = args;
+  const callTypes = skipOptionalAttemptCallTypes(args);
 
   const commandTypes: PartialCallMeta[] = callTypes.filter(
     x => x.CallType === commandTypeName,
