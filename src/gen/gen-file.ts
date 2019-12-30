@@ -543,6 +543,8 @@ async function setServerPackage(args: {
   dep['graceful-fs'] = '^4.1.15';
   devDep['@types/graceful-fs'] = '^4.1.3';
   dep['mkdirp-sync'] = '^0.0.3';
+  // for generator in snapshot.ts
+  devDep.typescript = '^3.7.2';
   if (injectNestClient) {
     dep['nest-client'] = '^0.5.1';
   }
