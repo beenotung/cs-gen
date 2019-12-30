@@ -181,6 +181,10 @@ async function injectServerLibFiles(args: {
       path.join(src, 'log', 'log.service.ts'),
       path.join(dest, 'log.service.ts'),
     ),
+    copyFile(
+      path.join(src, 'log', 'snapshot.ts'),
+      path.join(dest, 'snapshot.ts'),
+    ),
     readFile(path.join(src, 'utils.ts')).then(bin => {
       const blocks = bin
         .toString()
@@ -484,6 +488,7 @@ async function setServerPackage(args: {
   setPackageJson({ ...args, packageJson: json });
   const dep = json[dependencies] || {};
   const devDep = json[devDependencies] || {};
+  // for core controller and snapshot.ts
   dep['cli-progress'] = '^2.1.1';
   dep.nestlib = '^0.3.1';
   dep['engine.io'] = '^3.3.2';

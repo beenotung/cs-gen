@@ -308,6 +308,7 @@ import { ISpark } from 'typestub-primus';
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
+import { iterateSnapshot } from '../lib/snapshot';
 import { usePrimus } from '../main';
 import { endRestCall, startRestCall } from './connection';${ws ? `
 import {
@@ -345,20 +346,26 @@ export class ${controllerClassName} {${
   async restore() {
     const start = Date.now();
     console.log('start to restore');
-    const keys = this.logService.getKeysSync();
+    // const keys = this.logService.getKeysSync();
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
     ${statusName}.isReplay = true;
-    bar.start(keys.length, 0);
-    for (const key of keys) {
+    // bar.start(keys.length, 0);
+    // for (const key of keys) {
+    bar.start(0, 0);
+    for (const { key, content, estimateTotal } of iterateSnapshot<
+      CallInput<Call>
+    >(this.logService)) {
+      bar.setTotal(estimateTotal);
       if (!key.endsWith('-${commandTypeName}')${
     !replayQuery ? '' : ` && !key.endsWith('-${queryTypeName}')`
   }) {
         bar.increment(1);
         continue;
       }
-      const call = this.logService.getObjectSync<CallInput<${callTypeName}>>(key);
+      // const call = this.logService.getObjectSync<CallInput<${callTypeName}>>(key);
+      const call = content();
       if (call === null) {
         continue;
       }
@@ -963,13 +970,14 @@ export function genConnectionCode(args: {
   typeDirname: string;
   typeFilename: string;
   statusFilename: string;
+  statusName: string;
 }): string {
-  const { statusFilename } = args;
+  const { statusFilename, statusName } = args;
   return `
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express-serve-static-core';
 import { CallInput } from ${getTypeFileImportPath(args)};
-import { status } from './${removeTsExtname(statusFilename)}';
+import { ${statusName} } from './${removeTsExtname(statusFilename)}';
 
 export interface Spark {
   id: string;
@@ -1028,7 +1036,7 @@ export function getSessionByIn(In: any): Session | undefined {
 }
 
 export function checkedGetSessionByIn(In: any): Session {
-  if (status.isReplay) {
+  if (${statusName}.isReplay) {
     throw new HttpException('SkipWhenReplay', HttpStatus.NOT_ACCEPTABLE);
   }
   const session = in_session_map.get(In);

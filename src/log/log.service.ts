@@ -19,6 +19,7 @@ function fixFS() {
 
 @Injectable()
 export class LogService {
+  static readonly keySeparator = '-';
   private now?: number;
   private acc?: number;
   // private store: AsyncStore;
@@ -86,6 +87,10 @@ export class LogService {
     return JSON.parse(text!);
   }
 
+  getBinSync(key: string): Buffer {
+    return fs.readFileSync(this.keyToPath(key));
+  }
+
   async getObject<T>(key: string): Promise<T | null> {
     // return this.store.getObject(key);
     const bin = await readFile(this.keyToPath(key));
@@ -101,11 +106,15 @@ export class LogService {
       this.now = now;
       this.acc = 0;
     }
-    let key = this.now + '-' + this.acc;
-    if (suffix) {
-      key += '-' + suffix;
-    }
-    return key;
+    return LogService.makeKey({
+      timestamp: now,
+      acc: this.acc!,
+      suffix,
+    });
+  }
+
+  removeObjectSync(key: string) {
+    fs.unlinkSync(this.keyToPath(key));
   }
 
   private keyToPath(key: string) {
@@ -138,5 +147,17 @@ export class LogService {
       }
       return 0;
     });
+  }
+
+  static makeKey(args: {
+    timestamp: number;
+    acc: number;
+    suffix?: string;
+  }): string {
+    let key = args.timestamp + '-' + args.acc;
+    if (args.suffix) {
+      key += '-' + args.suffix;
+    }
+    return key;
   }
 }
