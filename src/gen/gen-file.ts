@@ -16,6 +16,7 @@ import {
   genClientLibCode,
   genConnectionCode,
   genControllerCode,
+  genDeduplicateSnapshotCode,
   genDocumentationHtmlCode,
   genMainCode,
   genModuleCode,
@@ -175,6 +176,10 @@ async function genControllerFile(args: {
   await writeFile(filename, code);
 }
 
+// up: dist/gen
+// down: src
+const src = path.join(__dirname, '..', '..', 'src');
+
 async function injectServerLibFiles(args: {
   serverProjectDirname: string;
   libDirname: string;
@@ -182,10 +187,6 @@ async function injectServerLibFiles(args: {
 }) {
   const { serverProjectDirname, libDirname, asyncLogicProcessor } = args;
   const dest = path.join(serverProjectDirname, 'src', libDirname);
-  let src = __dirname;
-  src = path.dirname(src); // pop gen
-  src = path.dirname(src); // pop dist
-  src = path.join(src, 'src');
   await Promise.all([
     copyFile(
       path.join(src, 'log', 'log.service.ts'),
@@ -455,11 +456,7 @@ async function setServerTsconfig(args: { projectDirname: string }) {
 
 async function setServerScripts(args: {
   projectDirname: string;
-  // serverOrigin: {
-  //   port: number;
-  //   test: string;
-  //   prod: string;
-  // };
+  libDirname: string;
   omits: Array<'snapshot'>;
 }) {
   const { projectDirname, omits } = args;
@@ -470,7 +467,11 @@ async function setServerScripts(args: {
     ps.push(
       writeBinFile(
         path.join(dirname, 'snapshot-calls.ts'),
-        genSnapshotCallCode(),
+        genSnapshotCallCode(args),
+      ),
+      writeBinFile(
+        path.join(dirname, 'deduplicate-snapshots.ts'),
+        genDeduplicateSnapshotCode(args),
       ),
     );
   }

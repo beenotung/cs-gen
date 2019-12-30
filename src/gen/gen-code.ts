@@ -1237,22 +1237,34 @@ window.onhashchange=function(){
 `.trim();
 }
 
-export function genSnapshotCallCode(): string {
+export function genSnapshotCallCode(args: { libDirname: string }) {
+  const { libDirname } = args;
   // prettier-ignore
   return `
 #!/usr/bin/env ts-node
-import { format_time_duration } from '@beenotung/tslib/format';
 import * as path from 'path';
-import { LogService } from '../src/lib/log.service';
-import { makeSnapshot } from '../src/lib/snapshot';
+import { LogService } from '../src/${libDirname}/log.service';
+import { makeSnapshot } from '../src/${libDirname}/snapshot';
 
 let log = new LogService(path.join('data', 'log'));
-let start = Date.now();
 console.log('begin make snapshot');
 makeSnapshot(log);
 console.log('finished make snapshot');
-let end = Date.now();
-let used = end - start;
-console.log('used:', format_time_duration(used));
+`.trim();
+}
+
+export function genDeduplicateSnapshotCode(args: { libDirname: string }) {
+  const { libDirname } = args;
+  // prettier-ignore
+  return `
+#!/usr/bin/env ts-node
+import * as path from 'path';
+import { LogService } from '../src/${libDirname}/log.service';
+import { deduplicateSnapshot } from '../src/${libDirname}/snapshot';
+
+let log = new LogService(path.join('data', 'log'));
+console.log('begin deduplicate snapshot');
+deduplicateSnapshot(log);
+console.log('finished deduplicate snapshot');
 `.trim();
 }

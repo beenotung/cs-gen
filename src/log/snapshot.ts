@@ -12,7 +12,10 @@ const suffix = 'Snapshot';
 const suffixPattern = LogService.keySeparator + suffix;
 
 export function makeSnapshot(log: LogService) {
-  const bar = new Bar({});
+  const bar = new Bar({
+    format:
+      'makeSnapshot progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
+  });
   const keys = log.getKeysSync();
   bar.start(keys.length, 0);
   let size = 0;
@@ -161,4 +164,30 @@ export function countSnapshot(log: LogService): number {
     count += countSnapshotHelper(log, batch);
   }
   return count;
+}
+
+export function deduplicateSnapshot(log: LogService) {
+  const snapshotKeys = new Set<string>();
+  const keys = log.getKeysSync();
+  const bar = new Bar({
+    format:
+      'deduplicateSnapshot progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
+  });
+  bar.start(keys.length * 2, 0);
+  for (const key of keys) {
+    if (key.endsWith(suffixPattern)) {
+      const batch = log.getObjectSync<batch>(key);
+      if (batch) {
+        batch.forEach(([key]) => snapshotKeys.add(key));
+      }
+    }
+    bar.increment(1);
+  }
+  for (const key of keys) {
+    if (snapshotKeys.has(key)) {
+      log.removeObjectSync(key);
+    }
+    bar.increment(1);
+  }
+  bar.stop();
 }
