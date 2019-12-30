@@ -20,6 +20,7 @@ import {
   genModuleCode,
   GenProjectPlugins,
   genServiceCode,
+  genSnapshotCallCode,
   genStatusCode,
   skipOptionalAttemptCallTypes,
 } from './gen-code';
@@ -28,6 +29,13 @@ async function writeFile(filename: string, code: string) {
   code = code.trim();
   code += '\n';
   await _writeFile(filename, code);
+}
+
+async function writeBinFile(filename: string, code: string) {
+  code = code.trim();
+  code += '\n';
+  await _writeFile(filename, code);
+  await exec('chmod +x ' + JSON.stringify(filename));
 }
 
 function getSrcDirname(args: { projectDirname: string }): string {
@@ -431,6 +439,41 @@ async function setTsconfig(args: {
   await copyFile(path.join(tslib_dirname, filename), destFile);
 }
 
+async function setServerTsconfig(args: { projectDirname: string }) {
+  const { projectDirname } = args;
+  for (let filename of ['tsconfig.json', 'tsconfig.build.json']) {
+    filename = path.join(projectDirname, filename);
+    const tsconfig = JSON.parse((await readFile(filename)).toString());
+    tsconfig.exclude = tsconfig.exclude || [];
+    tsconfig.exclude.push('scripts');
+    await writeFile(filename, JSON.stringify(tsconfig, null, 2));
+  }
+}
+
+async function setServerScripts(args: {
+  projectDirname: string;
+  // serverOrigin: {
+  //   port: number;
+  //   test: string;
+  //   prod: string;
+  // };
+  omits: Array<'snapshot'>;
+}) {
+  const { projectDirname, omits } = args;
+  const dirname = path.join(projectDirname, 'scripts');
+  await mkdirp(dirname);
+  const ps: Array<Promise<any>> = [];
+  if (!omits.includes('snapshot')) {
+    ps.push(
+      writeBinFile(
+        path.join(dirname, 'snapshot-calls.ts'),
+        genSnapshotCallCode(),
+      ),
+    );
+  }
+  await Promise.all(ps);
+}
+
 const dependencies: 'dependencies' = 'dependencies';
 const devDependencies: 'devDependencies' = 'devDependencies';
 
@@ -810,6 +853,7 @@ export const defaultGenProjectArgs = {
   typeAlias: {},
   constants: {} as Constants,
   plugins: {} as GenProjectPlugins,
+  omits: [],
 };
 
 export async function genProject(_args: {
@@ -863,6 +907,7 @@ export async function genProject(_args: {
   typeAlias?: TypeAlias;
   constants?: Constants;
   plugins?: GenProjectPlugins;
+  omits?: Array<'snapshot'>;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
@@ -1010,5 +1055,9 @@ export async function genProject(_args: {
         setPrettierrc({ ...args, projectDirname }),
       ]),
     ) as Array<Promise<any>>),
+  ]);
+  await Promise.all([
+    setServerTsconfig({ ...args, projectDirname: serverProjectDirname }),
+    setServerScripts({ ...args, projectDirname: serverProjectDirname }),
   ]);
 }

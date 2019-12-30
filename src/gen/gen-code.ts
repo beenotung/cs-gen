@@ -1236,3 +1236,23 @@ window.onhashchange=function(){
 </html>
 `.trim();
 }
+
+export function genSnapshotCallCode(): string {
+  // prettier-ignore
+  return `
+#!/usr/bin/env ts-node
+import { format_time_duration } from '@beenotung/tslib/format';
+import * as path from 'path';
+import { LogService } from '../src/lib/log.service';
+import { makeSnapshot } from '../src/lib/snapshot';
+
+let log = new LogService(path.join('data', 'log'));
+let start = Date.now();
+console.log('begin make snapshot');
+makeSnapshot(log);
+console.log('finished make snapshot');
+let end = Date.now();
+let used = end - start;
+console.log('used:', format_time_duration(used));
+`.trim();
+}
