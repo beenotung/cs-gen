@@ -329,7 +329,6 @@ export class ${controllerClassName} {${
       : `
   static instance: ${controllerClassName};`
   }
-  logService: LogService;
 
   constructor(
     public ${serviceObjectName}: ${serviceClassName},
