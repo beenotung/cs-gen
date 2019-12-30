@@ -303,13 +303,13 @@ import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { Bar } from 'cli-progress';
 import { Request, Response } from 'express-serve-static-core';
 import { ok, rest_return } from 'nestlib';
-import * as path from 'path';
-import { ISpark } from 'typestub-primus';
+import * as path from 'path';${ws ? `
+import { ISpark } from 'typestub-primus';` : ''}
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
-import { iterateSnapshot } from '../lib/snapshot';
-import { usePrimus } from '../main';
+import { iterateSnapshot } from '../lib/snapshot';${ws ? `
+import { usePrimus } from '../main';` : ''}
 import { endRestCall, startRestCall } from './connection';${ws ? `
 import {
   closeConnection,
