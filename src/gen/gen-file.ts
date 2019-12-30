@@ -1,3 +1,4 @@
+import { unique } from '@beenotung/tslib/array';
 import { exec } from '@beenotung/tslib/child_process';
 import {
   copyFile,
@@ -94,6 +95,7 @@ async function genConnectionFile(args: {
   typeDirname: string;
   typeFilename: string;
   statusFilename: string;
+  statusName: string;
 }): Promise<void> {
   const filename = path.join(getModuleDirname(args), 'connection.ts');
   const code = genConnectionCode(args);
@@ -446,6 +448,7 @@ async function setServerTsconfig(args: { projectDirname: string }) {
     const tsconfig = JSON.parse((await readFile(filename)).toString());
     tsconfig.exclude = tsconfig.exclude || [];
     tsconfig.exclude.push('scripts');
+    tsconfig.exclude = unique(tsconfig.exclude);
     await writeFile(filename, JSON.stringify(tsconfig, null, 2));
   }
 }
