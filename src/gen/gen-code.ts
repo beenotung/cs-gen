@@ -54,18 +54,20 @@ export function genModuleCode(args: {
     controllerClassName,
     libDirname,
   } = args;
+  // prettier-ignore
   return `
 import { Module } from '@nestjs/common';
-import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
-import { LogService } from '../${libDirname}/log.service';
 import * as path from 'path';
-import { ${controllerClassName} } from './${removeTsExtname(
-    controllerFilename,
-  )}';
+import { LogService } from '../${libDirname}/log.service';
+import { ${controllerClassName} } from './${removeTsExtname(controllerFilename)}';
+import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 
 @Module({
   controllers: [${controllerClassName}],
-  providers: [${serviceClassName}, { provide: LogService, useValue: new LogService(path.join('data', 'log')) }],
+  providers: [
+    ${serviceClassName},
+    { provide: LogService, useValue: new LogService(path.join('data', 'log')) },
+  ],
 })
 export class ${moduleClassName} {
 }
@@ -331,13 +333,13 @@ export class ${controllerClassName} {${
 
   constructor(
     public ${serviceObjectName}: ${serviceClassName},
+    public logService: LogService,
   ) {${
     !staticControllerReference
       ? ''
       : `
     ${controllerClassName}.instance = this;`
   }
-    this.logService = new LogService(path.join('data', 'log'));
     ready = this.restore();
   }
 
