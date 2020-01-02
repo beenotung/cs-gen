@@ -685,7 +685,7 @@ async function setProjectIdeaConfig(args: {
       genIdeaModuleIml({
         srcDirs: ['src'],
         testDirs: ['test'],
-        excludeDirs: ['dist', 'data'],
+        excludeDirs: ['dist', 'data', 'www'],
       }),
     ),
     writeFile(
