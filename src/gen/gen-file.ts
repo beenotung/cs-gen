@@ -606,18 +606,21 @@ function genIdeaModuleIml(args: {
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       ${srcDirs
+        .sort()
         .map(
           dir =>
             `<sourceFolder url="file://$MODULE_DIR$/${dir}" isTestSource="false" />`,
         )
         .join('\n      ')}
       ${testDirs
+        .sort()
         .map(
           dir =>
             `<sourceFolder url="file://$MODULE_DIR$/${dir}" isTestSource="true" />`,
         )
         .join('\n      ')}
       ${excludeDirs
+        .sort()
         .map(dir => `<excludeFolder url="file://$MODULE_DIR$/${dir}" />`)
         .join('\n      ')}
     </content>
