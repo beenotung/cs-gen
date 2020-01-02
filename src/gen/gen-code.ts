@@ -114,7 +114,8 @@ export function genServiceCode(args: {
     if (auth) {
       if (
         Type.length > auth.AttemptPrefix.length &&
-        Type.startsWith(auth.AttemptPrefix)
+        Type.startsWith(auth.AttemptPrefix) &&
+        !logicProcessorCode.includes(Type) // use custom checking if exist
       ) {
         // auto call CheckToken, then call store and call Auth version call
         return `return ${
@@ -906,6 +907,7 @@ export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
 export interface SubscribeOptions<T> {
   onError: (err: any) => void
   onEach: (Out: T) => void
+  onReady?: () => void
 }
 
 export interface SubscribeResult {
@@ -946,6 +948,9 @@ export function ${subscribeTypeName}<C extends SubscribeType>(
         cancelled = true;
         primus.send('CancelSubscribe', { id });
       };
+      if (options.onReady) {
+        options.onReady();
+      }
     });
   });
   return res;
