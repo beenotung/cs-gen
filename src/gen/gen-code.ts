@@ -114,7 +114,8 @@ export function genServiceCode(args: {
     if (auth) {
       if (
         Type.length > auth.AttemptPrefix.length &&
-        Type.startsWith(auth.AttemptPrefix)
+        Type.startsWith(auth.AttemptPrefix) &&
+        !logicProcessorCode.includes(Type) // use custom checking if exist
       ) {
         // auto call CheckToken, then call store and call Auth version call
         return `return ${
