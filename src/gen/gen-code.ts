@@ -898,6 +898,7 @@ export function ${Type}(In: ${Type}['In']): Promise<${Type}['Out']> {
 export interface SubscribeOptions<T> {
   onError: (err: any) => void
   onEach: (Out: T) => void
+  onReady?: () => void
 }
 
 export interface SubscribeResult {
@@ -938,6 +939,9 @@ export function ${subscribeTypeName}<C extends SubscribeType>(
         cancelled = true;
         primus.send('CancelSubscribe', { id });
       };
+      if (options.onReady) {
+        options.onReady();
+      }
     });
   });
   return res;
