@@ -54,18 +54,20 @@ export function genModuleCode(args: {
     controllerClassName,
     libDirname,
   } = args;
+  // prettier-ignore
   return `
 import { Module } from '@nestjs/common';
-import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
-import { LogService } from '../${libDirname}/log.service';
 import * as path from 'path';
-import { ${controllerClassName} } from './${removeTsExtname(
-    controllerFilename,
-  )}';
+import { LogService } from '../${libDirname}/log.service';
+import { ${controllerClassName} } from './${removeTsExtname(controllerFilename)}';
+import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 
 @Module({
   controllers: [${controllerClassName}],
-  providers: [${serviceClassName}, { provide: LogService, useValue: new LogService(path.join('data', 'log')) }],
+  providers: [
+    ${serviceClassName},
+    { provide: LogService, useValue: new LogService(path.join('data', 'log')) },
+  ],
 })
 export class ${moduleClassName} {
 }
@@ -301,12 +303,13 @@ import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { Bar } from 'cli-progress';
 import { Request, Response } from 'express-serve-static-core';
 import { ok, rest_return } from 'nestlib';
-import * as path from 'path';
-import { ISpark } from 'typestub-primus';
+import * as path from 'path';${ws ? `
+import { ISpark } from 'typestub-primus';` : ''}
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
-import { usePrimus } from '../main';
+import { iterateSnapshot } from '../lib/snapshot';${ws ? `
+import { usePrimus } from '../main';` : ''}
 import { endRestCall, startRestCall } from './connection';${ws ? `
 import {
   closeConnection,
@@ -327,37 +330,42 @@ export class ${controllerClassName} {${
       : `
   static instance: ${controllerClassName};`
   }
-  logService: LogService;
 
   constructor(
     public ${serviceObjectName}: ${serviceClassName},
+    public logService: LogService,
   ) {${
     !staticControllerReference
       ? ''
       : `
     ${controllerClassName}.instance = this;`
   }
-    this.logService = new LogService(path.join('data', 'log'));
     ready = this.restore();
   }
 
   async restore() {
     const start = Date.now();
     console.log('start to restore');
-    const keys = this.logService.getKeysSync();
+    // const keys = this.logService.getKeysSync();
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
     ${statusName}.isReplay = true;
-    bar.start(keys.length, 0);
-    for (const key of keys) {
+    // bar.start(keys.length, 0);
+    // for (const key of keys) {
+    bar.start(0, 0);
+    for (const { key, content, estimateTotal } of iterateSnapshot<
+      CallInput<Call>
+    >(this.logService)) {
+      bar.setTotal(estimateTotal);
       if (!key.endsWith('-${commandTypeName}')${
     !replayQuery ? '' : ` && !key.endsWith('-${queryTypeName}')`
   }) {
         bar.increment(1);
         continue;
       }
-      const call = this.logService.getObjectSync<CallInput<${callTypeName}>>(key);
+      // const call = this.logService.getObjectSync<CallInput<${callTypeName}>>(key);
+      const call = content();
       if (call === null) {
         continue;
       }
@@ -966,13 +974,14 @@ export function genConnectionCode(args: {
   typeDirname: string;
   typeFilename: string;
   statusFilename: string;
+  statusName: string;
 }): string {
-  const { statusFilename } = args;
+  const { statusFilename, statusName } = args;
   return `
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express-serve-static-core';
 import { CallInput } from ${getTypeFileImportPath(args)};
-import { status } from './${removeTsExtname(statusFilename)}';
+import { ${statusName} } from './${removeTsExtname(statusFilename)}';
 
 export interface Spark {
   id: string;
@@ -1031,7 +1040,7 @@ export function getSessionByIn(In: any): Session | undefined {
 }
 
 export function checkedGetSessionByIn(In: any): Session {
-  if (status.isReplay) {
+  if (${statusName}.isReplay) {
     throw new HttpException('SkipWhenReplay', HttpStatus.NOT_ACCEPTABLE);
   }
   const session = in_session_map.get(In);
@@ -1229,5 +1238,37 @@ window.onhashchange=function(){
 </script>
 </body>
 </html>
+`.trim();
+}
+
+export function genSnapshotCallCode(args: { libDirname: string }) {
+  const { libDirname } = args;
+  // prettier-ignore
+  return `
+#!/usr/bin/env ts-node
+import * as path from 'path';
+import { LogService } from '../src/${libDirname}/log.service';
+import { makeSnapshot } from '../src/${libDirname}/snapshot';
+
+let log = new LogService(path.join('data', 'log'));
+console.log('begin make snapshot');
+makeSnapshot(log);
+console.log('finished make snapshot');
+`.trim();
+}
+
+export function genDeduplicateSnapshotCode(args: { libDirname: string }) {
+  const { libDirname } = args;
+  // prettier-ignore
+  return `
+#!/usr/bin/env ts-node
+import * as path from 'path';
+import { LogService } from '../src/${libDirname}/log.service';
+import { deduplicateSnapshot } from '../src/${libDirname}/snapshot';
+
+let log = new LogService(path.join('data', 'log'));
+console.log('begin deduplicate snapshot');
+deduplicateSnapshot(log);
+console.log('finished deduplicate snapshot');
 `.trim();
 }

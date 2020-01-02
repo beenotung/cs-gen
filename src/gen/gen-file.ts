@@ -1,3 +1,4 @@
+import { unique } from '@beenotung/tslib/array';
 import { exec } from '@beenotung/tslib/child_process';
 import {
   copyFile,
@@ -15,11 +16,13 @@ import {
   genClientLibCode,
   genConnectionCode,
   genControllerCode,
+  genDeduplicateSnapshotCode,
   genDocumentationHtmlCode,
   genMainCode,
   genModuleCode,
   GenProjectPlugins,
   genServiceCode,
+  genSnapshotCallCode,
   genStatusCode,
   skipOptionalAttemptCallTypes,
 } from './gen-code';
@@ -28,6 +31,13 @@ async function writeFile(filename: string, code: string) {
   code = code.trim();
   code += '\n';
   await _writeFile(filename, code);
+}
+
+async function writeBinFile(filename: string, code: string) {
+  code = code.trim();
+  code += '\n';
+  await _writeFile(filename, code);
+  await exec('chmod +x ' + JSON.stringify(filename));
 }
 
 function getSrcDirname(args: { projectDirname: string }): string {
@@ -86,6 +96,7 @@ async function genConnectionFile(args: {
   typeDirname: string;
   typeFilename: string;
   statusFilename: string;
+  statusName: string;
 }): Promise<void> {
   const filename = path.join(getModuleDirname(args), 'connection.ts');
   const code = genConnectionCode(args);
@@ -165,6 +176,10 @@ async function genControllerFile(args: {
   await writeFile(filename, code);
 }
 
+// up: dist/gen
+// down: src
+const src = path.join(__dirname, '..', '..', 'src');
+
 async function injectServerLibFiles(args: {
   serverProjectDirname: string;
   libDirname: string;
@@ -172,14 +187,14 @@ async function injectServerLibFiles(args: {
 }) {
   const { serverProjectDirname, libDirname, asyncLogicProcessor } = args;
   const dest = path.join(serverProjectDirname, 'src', libDirname);
-  let src = __dirname;
-  src = path.dirname(src); // pop gen
-  src = path.dirname(src); // pop dist
-  src = path.join(src, 'src');
   await Promise.all([
     copyFile(
       path.join(src, 'log', 'log.service.ts'),
       path.join(dest, 'log.service.ts'),
+    ),
+    copyFile(
+      path.join(src, 'log', 'snapshot.ts'),
+      path.join(dest, 'snapshot.ts'),
     ),
     readFile(path.join(src, 'utils.ts')).then(bin => {
       const blocks = bin
@@ -427,6 +442,42 @@ async function setTsconfig(args: {
   await copyFile(path.join(tslib_dirname, filename), destFile);
 }
 
+async function setServerTsconfig(args: { projectDirname: string }) {
+  const { projectDirname } = args;
+  for (let filename of ['tsconfig.json', 'tsconfig.build.json']) {
+    filename = path.join(projectDirname, filename);
+    const tsconfig = JSON.parse((await readFile(filename)).toString());
+    tsconfig.exclude = tsconfig.exclude || [];
+    tsconfig.exclude.push('scripts');
+    tsconfig.exclude = unique(tsconfig.exclude);
+    await writeFile(filename, JSON.stringify(tsconfig, null, 2));
+  }
+}
+
+async function setServerScripts(args: {
+  projectDirname: string;
+  libDirname: string;
+  omits: Array<'snapshot'>;
+}) {
+  const { projectDirname, omits } = args;
+  const dirname = path.join(projectDirname, 'scripts');
+  await mkdirp(dirname);
+  const ps: Array<Promise<any>> = [];
+  if (!omits.includes('snapshot')) {
+    ps.push(
+      writeBinFile(
+        path.join(dirname, 'snapshot-calls.ts'),
+        genSnapshotCallCode(args),
+      ),
+      writeBinFile(
+        path.join(dirname, 'deduplicate-snapshots.ts'),
+        genDeduplicateSnapshotCode(args),
+      ),
+    );
+  }
+  await Promise.all(ps);
+}
+
 const dependencies: 'dependencies' = 'dependencies';
 const devDependencies: 'devDependencies' = 'devDependencies';
 
@@ -484,6 +535,7 @@ async function setServerPackage(args: {
   setPackageJson({ ...args, packageJson: json });
   const dep = json[dependencies] || {};
   const devDep = json[devDependencies] || {};
+  // for core controller and snapshot.ts
   dep['cli-progress'] = '^2.1.1';
   dep.nestlib = '^0.3.1';
   dep['engine.io'] = '^3.3.2';
@@ -492,6 +544,8 @@ async function setServerPackage(args: {
   dep['graceful-fs'] = '^4.1.15';
   devDep['@types/graceful-fs'] = '^4.1.3';
   dep['mkdirp-sync'] = '^0.0.3';
+  // for generator in snapshot.ts
+  devDep.typescript = '^3.7.2';
   if (injectNestClient) {
     dep['nest-client'] = '^0.5.1';
   }
@@ -805,6 +859,7 @@ export const defaultGenProjectArgs = {
   typeAlias: {},
   constants: {} as Constants,
   plugins: {} as GenProjectPlugins,
+  omits: [],
 };
 
 export async function genProject(_args: {
@@ -858,6 +913,7 @@ export async function genProject(_args: {
   typeAlias?: TypeAlias;
   constants?: Constants;
   plugins?: GenProjectPlugins;
+  omits?: Array<'snapshot'>;
 }) {
   const __args = {
     ...defaultGenProjectArgs,
@@ -1005,5 +1061,9 @@ export async function genProject(_args: {
         setPrettierrc({ ...args, projectDirname }),
       ]),
     ) as Array<Promise<any>>),
+  ]);
+  await Promise.all([
+    setServerTsconfig({ ...args, projectDirname: serverProjectDirname }),
+    setServerScripts({ ...args, projectDirname: serverProjectDirname }),
   ]);
 }

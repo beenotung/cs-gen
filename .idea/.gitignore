@@ -1,5 +1,4 @@
-codeStyles
-emacs.xml
-encodings.xml
-vcs.xml
-workspace.xml
+*
+!modules.xml
+!*.iml
+!dictionaries/
