@@ -317,14 +317,22 @@ async function updateMainFile(args: {
   }
 }
 
+// only use for server
 async function updateGitIgnore(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const filePath = path.join(projectDirname, '.gitignore');
   let text = (await readFile(filePath)).toString();
-  text = text
-    .split('\n')
-    .filter(s => s !== '/.idea')
-    .join('\n');
+  const lines = text.split('\n').filter(s => s !== '/.idea');
+
+  function add(pattern: string) {
+    if (new Set(lines).has(pattern)) {
+      return;
+    }
+    lines.push(pattern);
+  }
+
+  add('data/log/');
+  text = lines.join('\n');
   await writeFile(filePath, text);
 }
 
