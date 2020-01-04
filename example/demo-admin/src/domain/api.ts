@@ -2,6 +2,7 @@ import { Body, Controller, injectNestClient, Post } from 'nest-client';
 import {
   BlockUser,
   Call as CallType,
+  CallInput,
 } from './types';
 import { Primus } from 'typestub-primus';
 
@@ -18,12 +19,6 @@ export function usePrimus(f: (primus: IPrimus) => void): void {
     return;
   }
   pfs.push(f);
-}
-
-export interface CallInput<C extends CallType> {
-  CallType: C['CallType'];
-  Type: C['Type'];
-  In: C['In'];
 }
 
 let coreService: CoreService;
@@ -44,7 +39,26 @@ export class CoreService {
   }
 }
 
-export function startPrimus(baseUrl: string) {
+export function startAPI(options: {
+  mode: 'local' | 'test' | 'prod',
+} | {
+  baseUrl: string
+}) {
+  const baseUrl: string = (() => {
+    if ('baseUrl' in options) {
+      return options.baseUrl
+    }
+    switch (options.mode) {
+      case 'local':
+        return 'http://localhost:3000';
+      case 'test':
+        return "https://api.example.com";
+      case 'prod':
+        return "https://api.example.com";
+      default:
+        throw new Error(`Failed to resolve baseUrl, unknown mode: '${options.mode}'`)
+    }
+  })();
   if (typeof window === 'undefined') {
     coreService = new CoreService(baseUrl);
     return;

@@ -3,9 +3,9 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/demo-server" />
-      <excludeFolder url="file://$MODULE_DIR$/demo-client" />
       <excludeFolder url="file://$MODULE_DIR$/demo-admin" />
+      <excludeFolder url="file://$MODULE_DIR$/demo-client" />
+      <excludeFolder url="file://$MODULE_DIR$/demo-server" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

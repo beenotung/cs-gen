@@ -14,12 +14,13 @@
     "@types/node": "^8.10.38",
     "prettier": "^1.16.4",
     "tslint": "^5.12.1",
+    "tslint-config-prettier": "^1.18.0",
     "tslint-eslint-rules": "^5.3.1",
     "typescript": "^3.3.3",
     "typescript-primus": "^1.0.0",
     "typestub-primus": "^1.0.0"
   },
   "dependencies": {
-    "nest-client": "^0.5.0"
+    "nest-client": "^0.5.1"
   }
 }

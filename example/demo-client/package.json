@@ -14,7 +14,7 @@
   "dependencies": {
     "@beenotung/tslib": "^14.11.0",
     "cqrs-exp": "file:../..",
-    "nest-client": "^0.5.0",
+    "nest-client": "^0.5.1",
     "primus": "^7.3.3"
   },
   "devDependencies": {
@@ -22,6 +22,7 @@
     "prettier": "^1.17.0",
     "rimraf": "^2.6.3",
     "tslint": "^5.16.0",
+    "tslint-config-prettier": "^1.18.0",
     "tslint-eslint-rules": "^5.4.0",
     "typescript": "^3.4.5",
     "typescript-primus": "^1.0.0",

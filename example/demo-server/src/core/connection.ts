@@ -1,5 +1,7 @@
-import { CallInput } from 'cqrs-exp';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express-serve-static-core';
+import { CallInput } from '../domain/types';
+import { status } from './status';
 
 export interface Spark {
   id: string;
@@ -38,21 +40,37 @@ export function newConnection(spark: Spark) {
 }
 
 export function closeConnection(spark: Spark) {
-  let session = sparkId_session_map.get(spark.id);
+  const session = sparkId_session_map.get(spark.id);
   if(!session){return}
   session.subscriptions.forEach(sub => sub.close());
   sparkId_session_map.delete(spark.id);
 }
 
 export function startSparkCall(spark: Spark, call: CallInput) {
-  let session = sparkId_session_map.get(spark.id);
-  if(!session){return}
+  const session = sparkId_session_map.get(spark.id);
+  if (!session) {
+    return;
+  }
   session.calls.push(call);
   in_session_map.set(call.In, session);
 }
 
 export function getSessionByIn(In: any): Session | undefined {
   return in_session_map.get(In);
+}
+
+export function checkedGetSessionByIn(In: any): Session {
+  if (status.isReplay) {
+    throw new HttpException('SkipWhenReplay', HttpStatus.NOT_ACCEPTABLE);
+  }
+  const session = in_session_map.get(In);
+  if (!session) {
+    throw new HttpException(
+      'primus session not found',
+      HttpStatus.HTTP_VERSION_NOT_SUPPORTED,
+    );
+  }
+  return session;
 }
 
 export function getSessionBySparkId(sparkId: string): Session | undefined {

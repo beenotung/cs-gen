@@ -31,6 +31,9 @@
   <h1>demo Admin APIs</h1>
   <div id="content">
     <nav>
+      <h2>Type Aliases</h2>
+      <ul>
+      </ul>
       <h2>Command APIs</h2>
       <ul>
         <li><a href="#BlockUser">BlockUser</a></li>
@@ -58,6 +61,7 @@ window.onhashchange=function(){
   var In = 'unknown';
   var Out = 'unknown';
   switch (Type) {
+    
     case 'BlockUser': {
       In = `{ UserId: string }`;
       Out = `({ Success: true } | { Success: false; Reason: string })`;

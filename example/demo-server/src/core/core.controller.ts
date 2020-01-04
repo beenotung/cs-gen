@@ -1,12 +1,13 @@
-import * as path from 'path';
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
-import { Request, Response } from 'express-serve-static-core';
-import { Call } from '../domain/types';
-import { CallInput, LogService } from 'cqrs-exp';
-import { CoreService } from './core.service';
 import { Bar } from 'cli-progress';
+import { Request, Response } from 'express-serve-static-core';
 import { ok, rest_return } from 'nestlib';
-import { status } from './status';
+import * as path from 'path';
+import { ISpark } from 'typestub-primus';
+import { Call, CallInput } from '../domain/types';
+import { LogService } from '../lib/log.service';
+import { iterateSnapshot } from '../lib/snapshot';
+import { usePrimus } from '../main';
 import { endRestCall, startRestCall } from './connection';
 import {
   closeConnection,
@@ -15,34 +16,42 @@ import {
   Spark,
   startSparkCall,
 } from './connection';
-import { ISpark } from 'typestub-primus';
-import { usePrimus } from '../main';
+import { CoreService } from './core.service';
+import { status } from './status';
+
+let ready: Promise<void>;
 
 @Controller('core')
 export class CoreController {
-  logService: LogService;
-  ready: Promise<void>;
 
   constructor(
     public coreService: CoreService,
+    public logService: LogService,
   ) {
-    this.logService = new LogService(path.join('data', 'log'));
-    this.ready = this.restore();
+    ready = this.restore();
   }
 
   async restore() {
-    const keys = await this.logService.getKeys();
+    const start = Date.now();
+    console.log('start to restore');
+    // const keys = this.logService.getKeysSync();
     const bar = new Bar({
       format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
     status.isReplay = true;
-    bar.start(keys.length, 0);
-    for (const key of keys) {
+    // bar.start(keys.length, 0);
+    // for (const key of keys) {
+    bar.start(0, 0);
+    for (const { key, content, estimateTotal } of iterateSnapshot<
+      CallInput<Call>
+    >(this.logService)) {
+      bar.setTotal(estimateTotal);
       if (!key.endsWith('-Command')) {
         bar.increment(1);
         continue;
       }
-      const call = await this.logService.getObject<CallInput<Call>>(key);
+      // const call = this.logService.getObjectSync<CallInput<Call>>(key);
+      const call = content();
       if (call === null) {
         continue;
       }
@@ -59,6 +68,9 @@ export class CoreController {
     }
     status.isReplay = false;
     bar.stop();
+    console.log('finished restore');
+    const end = Date.now();
+    console.log('used:', (end - start) / 1000, 'seconds');
     usePrimus(primus => {
       primus.on('connection', (_spark: ISpark) => {
         const spark: Spark = _spark as any;
@@ -68,9 +80,8 @@ export class CoreController {
           call.In.Timestamp = Date.now();
           startSparkCall(spark, call);
           try {
-            await this.ready;
-            await this.logService.storeObject(call, this.logService.nextKey() + '-' + call.CallType);
-            const out = this.coreService.Call<Call>(call);
+            await ready;
+            let out = this.storeAndCall(call);
             ack(out);
           } catch (e) {
             console.error(e);
@@ -88,9 +99,7 @@ export class CoreController {
     });
   }
 
-  storeAndCall<C extends Call>(
-    call: CallInput<C>,
-  ): C['Out'] {
+  storeAndCall<C extends Call>(call: CallInput<C>): C['Out'] {
     this.logService.storeObjectSync(
       call,
       this.logService.nextKey() + '-' + call.CallType,
@@ -105,10 +114,10 @@ export class CoreController {
     @Body() call: CallInput<C>,
   ): Promise<C['Out']> {
     call.In.Timestamp = Date.now();
-    await this.ready;
+    await ready;
     try {
       startRestCall(req, res, call);
-      const out = this.storeAndCall<C>(call);
+      let out = this.storeAndCall<C>(call);
       ok(res, out);
       return out;
     } catch (e) {

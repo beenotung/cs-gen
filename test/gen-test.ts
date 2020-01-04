@@ -61,6 +61,11 @@ async function test() {
     // ws: false,
     // staticControllerReference:true,
     // serverOrigin: 'https://api.example.com'
+    serverOrigin: {
+      port: 3000,
+      test: 'https://api.example.com',
+      prod: 'https://api.example.com',
+    },
   });
 
   console.log('all passed.');

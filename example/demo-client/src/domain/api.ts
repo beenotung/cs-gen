@@ -1,6 +1,7 @@
 import { Body, Controller, injectNestClient, Post } from 'nest-client';
 import {
   Call as CallType,
+  CallInput,
   CreateItem,
   CreateUser,
   GetProfile,
@@ -26,12 +27,6 @@ export function usePrimus(f: (primus: IPrimus) => void): void {
   pfs.push(f);
 }
 
-export interface CallInput<C extends CallType> {
-  CallType: C['CallType'];
-  Type: C['Type'];
-  In: C['In'];
-}
-
 let coreService: CoreService;
 
 @Controller('core')
@@ -50,7 +45,26 @@ export class CoreService {
   }
 }
 
-export function startPrimus(baseUrl: string) {
+export function startAPI(options: {
+  mode: 'local' | 'test' | 'prod',
+} | {
+  baseUrl: string
+}) {
+  const baseUrl: string = (() => {
+    if ('baseUrl' in options) {
+      return options.baseUrl
+    }
+    switch (options.mode) {
+      case 'local':
+        return 'http://localhost:3000';
+      case 'test':
+        return "https://api.example.com";
+      case 'prod':
+        return "https://api.example.com";
+      default:
+        throw new Error(`Failed to resolve baseUrl, unknown mode: '${options.mode}'`)
+    }
+  })();
   if (typeof window === 'undefined') {
     coreService = new CoreService(baseUrl);
     return;
@@ -120,6 +134,7 @@ export function GetUserList(In: GetUserList['In']): Promise<GetUserList['Out']> 
 export interface SubscribeOptions<T> {
   onError: (err: any) => void
   onEach: (Out: T) => void
+  onReady?: () => void
 }
 
 export interface SubscribeResult {
@@ -160,6 +175,9 @@ export function Subscribe<C extends SubscribeType>(
         cancelled = true;
         primus.send('CancelSubscribe', { id });
       };
+      if (options.onReady) {
+        options.onReady();
+      }
     });
   });
   return res;

@@ -15,6 +15,12 @@ export type Subscribe = never;
 
 export type Call = Command | Query | Subscribe;
 
+export interface CallInput<C extends Call = Call> {
+  CallType: C['CallType'];
+  Type: C['Type'];
+  In: C['In'];
+}
+
 function checkCallType(_t: {
   CallType: 'Command' | 'Query' | 'Subscribe';
   Type: string;

@@ -1,7 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { LogicProcessor } from '../domain/logic-processor';
 import {
   BlockUser,
   Call,
+  CallInput,
   Command,
   CreateItem,
   CreateUser,
@@ -12,8 +14,8 @@ import {
   Subscribe,
   SubscribeItems
 } from '../domain/types';
-import { LogicProcessor } from '../domain/logic-processor';
-import { CallInput } from 'cqrs-exp';
+
+
 
 // tslint:disable:no-unused-variable
 function not_impl(name: string): any {
@@ -21,9 +23,13 @@ function not_impl(name: string): any {
 }
 // tslint:enable:no-unused-variable
 
+const impl = new LogicProcessor();
+
 @Injectable()
 export class CoreService {
-  impl = new LogicProcessor();
+  get impl() {
+    return impl;
+  }
 
   Call<C extends Call>(args: CallInput<C>): C['Out'] {
     const { CallType, Type, In } = args;
@@ -73,7 +79,7 @@ export class CoreService {
   }
 
   CreateUser(In: CreateUser['In']): CreateUser['Out'] {
-    return this.impl.CreateUser(In);
+    return impl.CreateUser(In);
   }
 
   RenameUser(In: RenameUser['In']): RenameUser['Out'] {
@@ -96,7 +102,7 @@ export class CoreService {
     return not_impl('GetUserList');
   }
 
-  SubscribeItems(In: SubscribeItems['In']): { id: string } {
+  SubscribeItems(In: SubscribeItems['In']): { id: string } | { error: any } {
     return not_impl('SubscribeItems');
   }
 }
