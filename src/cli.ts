@@ -192,6 +192,7 @@ async function initProject() {
     initPackageJson(name),
     copyTslibFile('.editorconfig'),
     copyTslibFile('.prettierrc'),
+    copyTslibFile('.prettierignore'),
     initGitIgnore(),
     mkdirp('scripts'),
   ]);
