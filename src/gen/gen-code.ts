@@ -273,6 +273,7 @@ export function genControllerCode(args: {
   storeQuery: boolean;
   timestampFieldName: string;
   injectTimestampField: boolean;
+  plugins: GenProjectPlugins;
 }) {
   const {
     callTypeName,
@@ -293,6 +294,7 @@ export function genControllerCode(args: {
     storeQuery,
     timestampFieldName,
     injectTimestampField,
+    plugins,
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
@@ -300,7 +302,7 @@ export function genControllerCode(args: {
     asyncLogicProcessor ? `Result<${type}>` : type;
   // prettier-ignore
   return `
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { Bar } from 'cli-progress';
 import { Request, Response } from 'express-serve-static-core';
 import { ok, rest_return } from 'nestlib';
@@ -413,7 +415,7 @@ export class ${controllerClassName} {${
           startSparkCall(spark, call);
           try {
             await ready;
-            let out = this.storeAndCall(call);${
+            let out = this.storeAndCall({ call, from: 'client' });${
         !asyncLogicProcessor
           ? ''
           : `
@@ -439,9 +441,12 @@ export class ${controllerClassName} {${
   }
   }
 
-  storeAndCall<C extends ${callTypeName}>(call: CallInput<C>): ${async_type(
+  storeAndCall<C extends ${callTypeName}>({ call, from }: { call: CallInput<C>, from: 'server' | 'client' }): ${async_type(
     `C['Out']`,
-  )} {
+  )} {${plugins.auth ? `
+    if (from === 'client' && call.CallType.startsWith('${plugins.auth.AuthPrefix}')) {
+      throw new HttpException('The call is not from authentic caller', HttpStatus.FORBIDDEN);
+    }` : ``}
     ${((): string => {
     const store = `this.logService.storeObjectSync(
       call,
@@ -474,7 +479,7 @@ export class ${controllerClassName} {${
     await ready;
     try {
       startRestCall(req, res, call);
-      let out = this.storeAndCall<C>(call);${
+      let out = this.storeAndCall<C>({ call, from: 'client' });${
     !asyncLogicProcessor
       ? ''
       : `

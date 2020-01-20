@@ -168,6 +168,7 @@ async function genControllerFile(args: {
   storeQuery: boolean;
   timestampFieldName: string;
   injectTimestampField: boolean;
+  plugins: GenProjectPlugins;
 }) {
   const { controllerFilename } = args;
   const code = genControllerCode(args);
