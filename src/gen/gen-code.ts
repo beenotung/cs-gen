@@ -305,8 +305,7 @@ export function genControllerCode(args: {
 import { Body, Controller, Post, Req, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { Bar } from 'cli-progress';
 import { Request, Response } from 'express-serve-static-core';
-import { ok, rest_return } from 'nestlib';
-import * as path from 'path';${ws ? `
+import { ok, rest_return } from 'nestlib';${ws ? `
 import { ISpark } from 'typestub-primus';` : ''}
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
