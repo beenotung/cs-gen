@@ -1,8 +1,7 @@
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { Bar } from 'cli-progress';
 import { Request, Response } from 'express-serve-static-core';
 import { ok, rest_return } from 'nestlib';
-import * as path from 'path';
 import { ISpark } from 'typestub-primus';
 import { Call, CallInput } from '../domain/types';
 import { LogService } from '../lib/log.service';
@@ -81,7 +80,7 @@ export class CoreController {
           startSparkCall(spark, call);
           try {
             await ready;
-            let out = this.storeAndCall(call);
+            let out = this.storeAndCall({ call, from: 'client' });
             ack(out);
           } catch (e) {
             console.error(e);
@@ -99,7 +98,7 @@ export class CoreController {
     });
   }
 
-  storeAndCall<C extends Call>(call: CallInput<C>): C['Out'] {
+  storeAndCall<C extends Call>({ call, from }: { call: CallInput<C>, from: 'server' | 'client' }): C['Out'] {
     this.logService.storeObjectSync(
       call,
       this.logService.nextKey() + '-' + call.CallType,
@@ -117,7 +116,7 @@ export class CoreController {
     await ready;
     try {
       startRestCall(req, res, call);
-      let out = this.storeAndCall<C>(call);
+      let out = this.storeAndCall<C>({ call, from: 'client' });
       ok(res, out);
       return out;
     } catch (e) {
