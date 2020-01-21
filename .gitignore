@@ -1,0 +1,14 @@
+
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+dist/
+.cache/
+*.tgz
+out/
+data/
+rethinkdb_data/
+log.txt
+pnpm-debug.log
+*.db
+*.db-mrview-*

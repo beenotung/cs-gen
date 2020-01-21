@@ -1,0 +1,28 @@
+.Data Flow
+|===
+| from | content | to
+
+| client | request | server
+
+|===
+
+.Data Transform
+|===
+| from    | to
+
+| request | command  (attempt event)
+| command | event    (auth event)
+| event   | reaction (command / side effect)
+
+|===
+
+
+.Example
+|===
+| type | example
+
+| attempt event | { token, action, data }
+
+| auth event    | { role meta, action, data }
+
+|===
