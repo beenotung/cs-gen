@@ -592,7 +592,7 @@ async function setClientPackage(args: {
   const devDep = json[devDependencies] || {};
   dep['nest-client'] = '^0.5.1';
   if (ws) {
-    devDep['typestub-primus'] = '^1.0.0';
+    dep['typestub-primus'] = '^1.0.0';
   }
   json[dependencies] = sortObjectKey(dep);
   json[devDependencies] = sortObjectKey(devDep);
