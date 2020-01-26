@@ -61,7 +61,15 @@ async function copyTslibFile(filename: string) {
 }
 
 async function initGitIgnore() {
-  const lines = ['node_modules', 'pnpm-lock.yaml', 'pnpm-debug.log'];
+  const lines = [
+    'node_modules',
+    'package-lock.json',
+    'pnpm-lock.yaml',
+    'pnpm-debug.log',
+    '__MACOSX/',
+    'data/log/',
+    'dist/',
+  ];
   if (await hasFile('.gitignore')) {
     lines.push(...(await readFile('.gitignore')).toString().split('\n'));
   }
