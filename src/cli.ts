@@ -133,7 +133,7 @@ catchMain(genProject({
     subscribeTypes,
   }),
   // web: true,
-  serverOrigin: ${JSON.stringify(serverOrigin)},
+  serverOrigin: ${JSON.stringify(serverOrigin, null, 2)},
   typeAlias,
   constants,
   // replayQuery: true,
