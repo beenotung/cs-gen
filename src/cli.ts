@@ -67,6 +67,7 @@ async function initGitIgnore() {
     'pnpm-lock.yaml',
     'pnpm-debug.log',
     '__MACOSX/',
+    '.DS_Store',
     'data/log/',
     'dist/',
   ];
