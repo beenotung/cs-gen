@@ -670,13 +670,19 @@ async function setBaseProjectIdeaConfig(args: {
     clientProjectName,
     adminProjectName,
   } = args;
+  const appProjectName = clientProjectName.replace('-client', '-app');
   const ideaDir = path.join(outDirname, '.idea');
   await mkdirp(ideaDir);
   await Promise.all([
     writeFile(
       path.join(ideaDir, baseProjectName + '.iml'),
       genIdeaModuleIml({
-        excludeDirs: [serverProjectName, clientProjectName, adminProjectName],
+        excludeDirs: [
+          serverProjectName,
+          clientProjectName,
+          adminProjectName,
+          appProjectName,
+        ],
       }),
     ),
     writeFile(
