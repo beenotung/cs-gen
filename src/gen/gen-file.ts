@@ -24,6 +24,7 @@ import {
   genServiceCode,
   genSnapshotCallCode,
   genStatusCode,
+  skipAuthCallTypes,
   skipOptionalAttemptCallTypes,
 } from './gen-code';
 
@@ -803,7 +804,8 @@ async function genDocumentationHtmlFile(args: {
   commandTypeName: string;
   queryTypeName: string;
   subscribeTypeName: string;
-  callTypes: CallMeta[];
+  clientCallTypes: CallMeta[];
+  adminCallTypes: CallMeta[];
   typeAlias: TypeAlias;
   plugins: GenProjectPlugins;
 }) {
@@ -812,7 +814,8 @@ async function genDocumentationHtmlFile(args: {
     docDirname,
     clientDocFilename,
     adminDocFilename,
-    callTypes,
+    clientCallTypes,
+    adminCallTypes,
   } = args;
   const dirname = path.join(outDirname, docDirname);
   await mkdirp(dirname);
@@ -821,7 +824,7 @@ async function genDocumentationHtmlFile(args: {
     const code = genDocumentationHtmlCode({
       ...args,
       role: 'Client',
-      callTypes: callTypes.filter(x => !x.Admin),
+      callTypes: clientCallTypes,
     });
     await writeFile(filename, code);
   }
@@ -830,7 +833,7 @@ async function genDocumentationHtmlFile(args: {
     const code = genDocumentationHtmlCode({
       ...args,
       role: 'Admin',
-      callTypes: callTypes.filter(x => x.Admin),
+      callTypes: adminCallTypes,
     });
     await writeFile(filename, code);
   }
@@ -971,9 +974,13 @@ export async function genProject(_args: {
     serverProjectDirname,
   };
   const clientCallTypes = skipOptionalAttemptCallTypes({
-    callTypes: callTypes.filter(call => !call.Admin),
+    callTypes,
     plugins,
-  });
+  }).filter(call => !call.Admin);
+  const adminCallTypes = skipAuthCallTypes({
+    callTypes,
+    plugins,
+  }).filter(call => call.Admin);
 
   if (!(await hasNestProject(args))) {
     await runNestCommand({
@@ -995,7 +1002,11 @@ export async function genProject(_args: {
   ]);
   const dataWrapper: { logicProcessorCode: string } = {} as any;
   await Promise.all([
-    genDocumentationHtmlFile(args),
+    genDocumentationHtmlFile({
+      ...args,
+      clientCallTypes,
+      adminCallTypes,
+    }),
     genLogicProcessorFile({
       ...args,
       dataWrapper,
@@ -1037,7 +1048,7 @@ export async function genProject(_args: {
     genTypeFile({
       ...args,
       projectDirname: adminProjectDirname,
-      callTypes: callTypes.filter(call => call.Admin),
+      callTypes: adminCallTypes,
     }),
     genClientLibFile({
       ...args,
@@ -1047,7 +1058,7 @@ export async function genProject(_args: {
     genClientLibFile({
       ...args,
       clientProjectName: adminProjectName,
-      callTypes: callTypes.filter(call => call.Admin),
+      callTypes: adminCallTypes,
     }),
   ]);
   await genModuleFile(args);
