@@ -521,6 +521,7 @@ function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
         case '@types/node':
         case 'tslint':
         case 'typescript':
+        case 'tslib':
         case 'prettier':
           return true;
         default:
