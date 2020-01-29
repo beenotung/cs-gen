@@ -6,6 +6,10 @@
   ],
   "rules": {
     "interface-over-type-literal": false,
+    "array-type": [
+      true,
+      "array-simple"
+    ],
     "no-reference": true,
     "only-arrow-functions": false,
     "max-classes-per-file": false,
@@ -46,9 +50,7 @@
       true,
       {
         "order": "instance-sandwich"
-      },
-      "static-before-instance",
-      "variables-before-functions"
+      }
     ],
     "no-arg": true,
     "no-bitwise": true,
@@ -63,9 +65,6 @@
     "no-construct": true,
     "no-debugger": true,
     "no-duplicate-variable": true,
-    "no-unused-variable": [
-      true
-    ],
     "no-empty": true,
     "no-empty-interface": true,
     "no-eval": true,
@@ -79,7 +78,6 @@
       true,
       "allow-fast-null-checks"
     ],
-    "no-use-before-declare": true,
     "no-var-keyword": true,
     "object-literal-sort-keys": false,
     "one-line": [

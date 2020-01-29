@@ -15,7 +15,8 @@
     "@beenotung/tslib": "^14.11.0",
     "cqrs-exp": "file:../..",
     "nest-client": "^0.5.1",
-    "primus": "^7.3.3"
+    "primus": "^7.3.3",
+    "typestub-primus": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^8.10.38",
