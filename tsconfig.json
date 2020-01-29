@@ -16,7 +16,7 @@
       "dom",
       "es2015"
     ],
-    "module": "es2015",
+    "module": "commonjs",
     "moduleResolution": "node",
     "target": "es2015",
     "outDir": "dist"
