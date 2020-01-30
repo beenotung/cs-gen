@@ -19,6 +19,7 @@ export interface Call<
 
 export type CallMeta = Call<string, string, string, string> & {
   Admin?: boolean;
+  Internal?: boolean;
 };
 /*
 export type Call<

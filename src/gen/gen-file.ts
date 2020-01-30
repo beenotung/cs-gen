@@ -24,8 +24,6 @@ import {
   genServiceCode,
   genSnapshotCallCode,
   genStatusCode,
-  skipAuthCallTypes,
-  skipOptionalAttemptCallTypes,
 } from './gen-code';
 
 async function writeFile(filename: string, code: string) {
@@ -796,48 +794,91 @@ export function injectTimestampFieldOnCall<Call extends { In: string }>(args: {
   };
 }
 
+function splitCallTypes(
+  callTypes: CallMeta[],
+): {
+  clientCallTypes: CallMeta[];
+  adminCallTypes: CallMeta[];
+  internalCallTypes: CallMeta[];
+} {
+  const clientCallTypes: CallMeta[] = [];
+  const adminCallTypes: CallMeta[] = [];
+  const internalCallTypes: CallMeta[] = [];
+  callTypes.forEach(call => {
+    if (call.Internal) {
+      internalCallTypes.push(call);
+    } else if (call.Admin) {
+      adminCallTypes.push(call);
+    } else {
+      clientCallTypes.push(call);
+    }
+  });
+  return { clientCallTypes, adminCallTypes, internalCallTypes };
+}
+
 async function genDocumentationHtmlFile(args: {
   outDirname: string;
   docDirname: string;
   clientDocFilename: string;
   adminDocFilename: string;
+  internalDocFilename: string;
   baseProjectName: string;
   commandTypeName: string;
   queryTypeName: string;
   subscribeTypeName: string;
   clientCallTypes: CallMeta[];
   adminCallTypes: CallMeta[];
+  internalCallTypes: CallMeta[];
   typeAlias: TypeAlias;
-  plugins: GenProjectPlugins;
 }) {
   const {
     outDirname,
     docDirname,
     clientDocFilename,
     adminDocFilename,
+    internalDocFilename,
     clientCallTypes,
     adminCallTypes,
+    internalCallTypes,
   } = args;
   const dirname = path.join(outDirname, docDirname);
   await mkdirp(dirname);
-  {
-    const filename = path.join(dirname, clientDocFilename);
+
+  function genDocument({
+    docFilename,
+    role,
+    callTypes,
+  }: {
+    docFilename: string;
+    role: string;
+    callTypes: CallMeta[];
+  }) {
+    const filename = path.join(dirname, docFilename);
     const code = genDocumentationHtmlCode({
       ...args,
+      role,
+      callTypes,
+    });
+    return writeFile(filename, code);
+  }
+
+  await Promise.all([
+    genDocument({
       role: 'Client',
+      docFilename: clientDocFilename,
       callTypes: clientCallTypes,
-    });
-    await writeFile(filename, code);
-  }
-  {
-    const filename = path.join(dirname, adminDocFilename);
-    const code = genDocumentationHtmlCode({
-      ...args,
+    }),
+    genDocument({
       role: 'Admin',
+      docFilename: adminDocFilename,
       callTypes: adminCallTypes,
-    });
-    await writeFile(filename, code);
-  }
+    }),
+    genDocument({
+      role: 'Internal',
+      docFilename: internalDocFilename,
+      callTypes: internalCallTypes,
+    }),
+  ]);
 }
 
 export const defaultGenProjectArgs = {
@@ -889,6 +930,7 @@ export async function genProject(_args: {
   docDirname?: string;
   clientDocFilename?: string;
   adminDocFilename?: string;
+  internalDocFilename?: string;
   baseProjectName: string;
   serverProjectName?: string;
   clientProjectName?: string;
@@ -950,6 +992,8 @@ export async function genProject(_args: {
       _args.clientDocFilename || _args.baseProjectName + '-client-doc.html',
     adminDocFilename:
       _args.adminDocFilename || _args.baseProjectName + '-admin-doc.html',
+    internalDocFilename:
+      _args.internalDocFilename || _args.baseProjectName + '-internal-doc.html',
   };
   const {
     outDirname,
@@ -974,14 +1018,9 @@ export async function genProject(_args: {
     ...__args,
     serverProjectDirname,
   };
-  const clientCallTypes = skipOptionalAttemptCallTypes({
+  const { clientCallTypes, adminCallTypes, internalCallTypes } = splitCallTypes(
     callTypes,
-    plugins,
-  }).filter(call => !call.Admin);
-  const adminCallTypes = skipAuthCallTypes({
-    callTypes,
-    plugins,
-  }).filter(call => call.Admin);
+  );
 
   if (!(await hasNestProject(args))) {
     await runNestCommand({
@@ -1007,6 +1046,7 @@ export async function genProject(_args: {
       ...args,
       clientCallTypes,
       adminCallTypes,
+      internalCallTypes,
     }),
     genLogicProcessorFile({
       ...args,

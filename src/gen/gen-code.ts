@@ -690,51 +690,6 @@ function firstCharToLowerCase(s: string): string {
   return s[0].toLowerCase() + s.substring(1);
 }
 
-export function skipOptionalAttemptCallTypes(args: {
-  callTypes: CallMeta[];
-  plugins: GenProjectPlugins;
-}): CallMeta[] {
-  if (!args.plugins?.auth) {
-    return args.callTypes;
-  }
-  const { AttemptPrefix } = args.plugins.auth;
-  let { callTypes } = args;
-  const types = new Set(callTypes.map(x => x.Type));
-  callTypes = callTypes.filter(({ Type }) => {
-    if (!Type.startsWith(AttemptPrefix)) {
-      return true;
-    }
-    // is attempt call
-    const rawType = Type.replace(AttemptPrefix, '');
-    return !types.has(rawType);
-  });
-  return callTypes;
-}
-
-// filter out internal calls, only return 'client-side' APIs
-export function skipAuthCallTypes(args: {
-  callTypes: CallMeta[];
-  plugins: GenProjectPlugins;
-}): CallMeta[] {
-  if (!args.plugins?.auth) {
-    return args.callTypes;
-  }
-  const { AuthPrefix, AttemptPrefix } = args.plugins.auth;
-  let { callTypes } = args;
-  const types = new Set(callTypes.map(x => x.Type));
-  callTypes = callTypes.filter(({ Type }) => {
-    if (!Type.startsWith(AuthPrefix)) {
-      return true; // is not Auth API
-    }
-    // is auth call
-    const rawType = Type.replace(AuthPrefix, '');
-    const attemptType = Type.replace(AuthPrefix, AttemptPrefix);
-    const isAuthCall = types.has(rawType) || types.has(attemptType);
-    return !isAuthCall; // is distinct admin API
-  });
-  return callTypes;
-}
-
 export function genClientLibCode(args: {
   typeDirname: string;
   typeFilename: string;
@@ -1132,7 +1087,6 @@ export function genDocumentationHtmlCode(args: {
   subscribeTypeName: string;
   typeAlias: TypeAlias;
   callTypes: CallMeta[];
-  plugins: GenProjectPlugins;
   role: string;
 }) {
   const {
@@ -1141,11 +1095,9 @@ export function genDocumentationHtmlCode(args: {
     queryTypeName,
     subscribeTypeName,
     typeAlias,
-    plugins,
+    callTypes,
     role,
   } = args;
-  let callTypes = skipOptionalAttemptCallTypes(args);
-  callTypes = skipAuthCallTypes({ callTypes, plugins });
 
   const commandTypes: PartialCallMeta[] = callTypes.filter(
     x => x.CallType === commandTypeName,
