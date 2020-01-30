@@ -69,7 +69,6 @@ export function FailType(Reasons?: string[]): string {
 
 function InjectAuthReasons(Reasons?: string[]): string[] {
   // FIXME add InvalidAppId, InvalidUserId, NetworkError for better error handling
-  return [InvalidAppId];
   return check_app_id
     ? // any app_id is allowed
       [InvalidToken, ...(Reasons || [])]
