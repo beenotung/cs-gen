@@ -185,15 +185,18 @@ export function callTypes(
   });
 }
 
+export const CancelSubscribe: PartialCallMeta = {
+  Type: 'CancelSubscribe',
+  In: '{ id: string }',
+  Out: `${FailType([
+    // not using spark
+    'no active session matched',
+    // not started or already cancelled
+    'no active channel matched',
+  ])} | { Success: true }`,
+};
+
+/** @deprecated copy in-place into gen-project.ts instead of invoke this function to avoid breaking changes */
 export function enableSubscription() {
-  commandTypes.push({
-    Type: 'CancelSubscribe',
-    In: '{ id: string }',
-    Out: `${FailType([
-      // not using spark
-      'no active session matched',
-      // not started or already cancelled
-      'no active channel matched',
-    ])} | { Success: true }`,
-  });
+  commandTypes.push(CancelSubscribe);
 }
