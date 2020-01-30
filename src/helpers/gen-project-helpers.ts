@@ -2,7 +2,6 @@ import { andType, ArrayType } from 'gen-ts-type';
 import { AuthPluginOptions, DefaultAuthConfig } from '../gen/plugins/auth';
 import { CallMeta } from '../types';
 import {
-  Constant,
   Constants,
   flattenCallMetas,
   PartialCallMeta,
@@ -94,7 +93,8 @@ export function setAuthConfig(_authConfig: AuthPluginOptions) {
 }
 function genInjectAuthInType(): string {
   const user_id = authConfig.InjectUserId ? 'user_id: string' : '';
-  const app_id = authConfig.InjectAppId && !check_app_id ? 'app_id: string' : '';
+  const app_id =
+    authConfig.InjectAppId && !check_app_id ? 'app_id: string' : '';
   const fields = [user_id, app_id].filter(s => s).join(', ');
   if (fields) {
     return `{ ${fields} }`;

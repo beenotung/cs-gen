@@ -2,10 +2,16 @@
   "extends": [
     "tslint:recommended",
     "tslint-eslint-rules",
+    "tslint-etc",
     "tslint-config-prettier"
   ],
   "rules": {
     "no-var-requires": false,
+    "no-unused-declaration": true,
+    "array-type": [
+      true,
+      "array-simple"
+    ],
     "interface-over-type-literal": false,
     "no-reference": true,
     "only-arrow-functions": false,
@@ -46,9 +52,7 @@
       true,
       {
         "order": "instance-sandwich"
-      },
-      "static-before-instance",
-      "variables-before-functions"
+      }
     ],
     "no-arg": true,
     "no-bitwise": true,
@@ -63,9 +67,6 @@
     "no-construct": true,
     "no-debugger": true,
     "no-duplicate-variable": true,
-    "no-unused-variable": [
-      true
-    ],
     "no-empty": true,
     "no-empty-interface": true,
     "no-eval": true,
@@ -79,7 +80,6 @@
       true,
       "allow-fast-null-checks"
     ],
-    "no-use-before-declare": true,
     "no-var-keyword": true,
     "object-literal-sort-keys": false,
     "one-line": [
@@ -91,7 +91,7 @@
     ],
     "prefer-const": true,
     "quotemark": [
-      true,
+      false,
       "single",
       "avoid-escape"
     ],

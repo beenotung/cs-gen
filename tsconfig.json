@@ -1,20 +1,19 @@
 {
   "compilerOptions": {
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "allowJs": false,
-    "esModuleInterop": true,
     "sourceMap": true,
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "noImplicitThis": true,
     "strict": true,
     "skipLibCheck": true,
     "downlevelIteration": false,
     "importHelpers": true,
     "lib": [
       "dom",
-      "es2015"
+      "es2018"
     ],
     "module": "commonjs",
     "moduleResolution": "node",

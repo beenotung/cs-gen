@@ -139,11 +139,10 @@ ${check_app_id && auth ? `
 ${auth.MethodCheckAppId}(${JSON.stringify(check_app_id)});
 ` : ''}
 
-// tslint:disable:no-unused-variable
+// tslint:disable-next-line:no-unused-declaration
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
 }
-// tslint:enable:no-unused-variable
 
 const impl = new ${logicProcessorClassName}();
 
