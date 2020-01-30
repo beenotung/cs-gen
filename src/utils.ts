@@ -28,6 +28,7 @@ export interface PartialCallMeta {
   In: string;
   Out: string;
   Admin?: boolean;
+  Internal?: boolean;
 }
 
 export interface CallInput<C extends Call = Call> {

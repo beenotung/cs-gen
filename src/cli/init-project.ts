@@ -108,7 +108,7 @@ import {
 } from 'cqrs-exp/dist/helpers/gen-project-helpers';
 import {
   Admin,
-  AdminOnly,
+  Internal,
   OptionalAuth,
   UserNotFound,
   NoPermission,

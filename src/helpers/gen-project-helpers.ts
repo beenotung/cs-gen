@@ -68,7 +68,7 @@ export function FailType(Reasons?: string[]): string {
     : `{ Success: false }`;
 }
 
-function InjectReasons(Reasons?: string[]): string[] {
+function InjectAuthReasons(Reasons?: string[]): string[] {
   return check_app_id
     ? // any app_id is allowed
       [InvalidToken, ...(Reasons || [])]
@@ -101,36 +101,45 @@ function authCall(
     In?: string;
     Reasons?: string[];
     Out?: string;
-    AdminOnly?: boolean;
+    Admin?: boolean;
     OptionalAuth?: boolean;
   },
 ) {
-  const { Type, In, Reasons, Out, AdminOnly } = call;
+  const { Type, In, Reasons, Out, Admin } = call;
   const InType = In ? In : `{}`;
   const _SuccessType = SuccessType(Out);
-  types.push({
-    Type: authConfig.AttemptPrefix + Type,
-    In: andType(InType, `{ token: string }`),
-    Out: `${FailType(InjectReasons(Reasons))} | ${_SuccessType}`,
-    Admin: !!AdminOnly,
-  });
-  const InjectIn: string = check_app_id
+  const InjectAuthInType: string = check_app_id
     ? // explicit to be the current app
       `{ user_id: string }`
     : // can be any app
       `{ user_id: string, app_id: string }`;
   types.push({
     Type: authConfig.AuthPrefix + Type,
-    In: andType(InType, InjectIn),
+    In: andType(InType, InjectAuthInType),
     Out: `${FailType(Reasons)} | ${_SuccessType}`,
-    Admin: true,
+    Admin,
+    Internal: true,
   });
+  const attemptOutType = `${FailType(
+    InjectAuthReasons(Reasons),
+  )} | ${_SuccessType}`;
   if (call.OptionalAuth) {
+    // token is optional
     types.push({
       Type,
       In: andType(InType, `{ token: string | undefined | null }`),
-      Out: `${FailType(InjectReasons(Reasons))} | ${_SuccessType}`,
-      Admin: !!AdminOnly,
+      Out: attemptOutType,
+      Admin,
+      Internal: false,
+    });
+  } else {
+    // token is required
+    types.push({
+      Type: authConfig.AttemptPrefix + Type,
+      In: andType(InType, `{ token: string }`),
+      Out: attemptOutType,
+      Admin,
+      Internal: false,
     });
   }
 }
@@ -139,7 +148,7 @@ export function authCommand(call: {
   Type: string;
   In?: string;
   Reasons?: string[];
-  AdminOnly?: boolean;
+  Admin?: boolean;
   OptionalAuth?: boolean;
 }) {
   return authCall(commandTypes, call);
@@ -150,7 +159,7 @@ export function authQuery(call: {
   In?: string;
   Reasons?: string[];
   Out: string;
-  AdminOnly?: boolean;
+  Admin?: boolean;
   OptionalAuth?: boolean;
 }) {
   return authCall(queryTypes, call);
@@ -161,7 +170,7 @@ export function authSubscribe(call: {
   In?: string;
   Reasons?: string[];
   Out: string;
-  AdminOnly?: boolean;
+  Admin?: boolean;
   OptionalAuth?: boolean;
 }) {
   return authCall(subscribeTypes, call);

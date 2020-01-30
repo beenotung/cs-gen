@@ -1,4 +1,6 @@
 export const Admin = true;
+export const Internal = true;
+/** @deprecated use Admin or Internal flag instead */
 export const AdminOnly = true;
 export const OptionalAuth = true;
 export const InvalidToken: 'InvalidToken' = 'InvalidToken';
