@@ -2,7 +2,7 @@ export * from './types';
 export * from './utils';
 export * from './utils/reflect';
 export * from './utils/version';
-export * from './log/log.service';
+// export * from './log/log.service';
 export * from './store/types';
 export * from './store/db';
 export * from './gen/gen-file';
