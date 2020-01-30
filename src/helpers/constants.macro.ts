@@ -16,9 +16,11 @@ Duplicated
 
 let trues = extract(`
 Admin
-AdminOnly
+Internal
 OptionalAuth
 `);
 `${trues.map(name => `export const ${name} = true;`).join('\n')}
+/** @deprecated use Admin or Internal flag instead */
+export const AdminOnly = true;
 ${types.map(type => `export const ${type}: '${type}' = '${type}';`).join('\n')}
 `;
