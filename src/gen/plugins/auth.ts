@@ -8,6 +8,8 @@ export type AuthPluginOptions = {
   AttemptPrefix: string;
   AuthPrefix: string;
   ExposeAttemptPrefix: boolean; // for legacy code
+  InjectUserId: boolean; // disable for custom auth logic
+  InjectAppId: boolean; // disable for custom auth logic
 };
 export let DefaultAuthConfig: AuthPluginOptions = {
   AttemptPrefix: 'Attempt',
@@ -17,6 +19,8 @@ export let DefaultAuthConfig: AuthPluginOptions = {
   MethodAuthSubscribe: 'authSubscribe',
   MethodCheckAppId: 'checkAppId',
   ExposeAttemptPrefix: false,
+  InjectUserId: true,
+  InjectAppId: true,
 };
 
 export function genAuthServiceMethod({

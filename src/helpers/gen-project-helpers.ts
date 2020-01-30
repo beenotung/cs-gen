@@ -69,6 +69,8 @@ export function FailType(Reasons?: string[]): string {
 }
 
 function InjectAuthReasons(Reasons?: string[]): string[] {
+  // FIXME add InvalidAppId, InvalidUserId, NetworkError for better error handling
+  return [InvalidAppId];
   return check_app_id
     ? // any app_id is allowed
       [InvalidToken, ...(Reasons || [])]
@@ -89,6 +91,15 @@ export let authConfig: AuthPluginOptions = DefaultAuthConfig;
 
 export function setAuthConfig(_authConfig: AuthPluginOptions) {
   authConfig = _authConfig;
+}
+function genInjectAuthInType(): string {
+  const user_id = authConfig.InjectUserId ? 'user_id: string' : '';
+  const app_id = authConfig.InjectAppId && !check_app_id ? 'app_id: string' : '';
+  const fields = [user_id, app_id].filter(s => s).join(', ');
+  if (fields) {
+    return `{ ${fields} }`;
+  }
+  return '{}';
 }
 
 function authCall(
@@ -118,11 +129,7 @@ function authCall(
   });
 
   // Internal Auth Call for Server Side State
-  const injectAuthInType: string = check_app_id
-    ? // explicit to be the current app
-      `{ user_id: string }`
-    : // can be any app
-      `{ user_id: string, app_id: string }`;
+  const injectAuthInType: string = genInjectAuthInType();
   types.push({
     Type: authConfig.AuthPrefix + Type,
     In: andType(InType, injectAuthInType),

@@ -8,6 +8,8 @@ function extract(s: string): string[] {
 let types = extract(`
 InvalidToken
 InvalidAppId
+InvalidUserId
+NetworkError
 QuotaExcess
 NoPermission
 UserNotFound
