@@ -45,7 +45,7 @@
     "@beenotung/tslib": "^14.41.0",
     "async-mkdirp": "^1.2.7",
     "cli-progress": "^3.6.0",
-    "gen-ts-type": "^1.6.0",
+    "gen-ts-type": "^1.6.1",
     "graceful-fs": "^4.2.3",
     "hasbin": "^1.2.3",
     "mkdirp-sync": "^0.0.3",

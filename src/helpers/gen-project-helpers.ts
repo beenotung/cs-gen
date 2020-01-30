@@ -1,4 +1,4 @@
-import { andType, ArrayType } from 'gen-ts-type';
+import { andType, ArrayType, orType } from 'gen-ts-type';
 import { AuthPluginOptions, DefaultAuthConfig } from '../gen/plugins/auth';
 import { CallMeta } from '../types';
 import {
@@ -64,20 +64,32 @@ export function checkAppId(appId?: string) {
 }
 
 export function FailType(Reasons?: string[]): string {
+  Reasons = Array.from(new Set(Reasons));
   const reasonType =
-    Reasons && Reasons.length > 0
+    Reasons.length > 0
       ? Reasons.map(reason => JSON.stringify(reason)).join(' | ')
       : 'never';
   return `{ Success: false, Reason: ${reasonType} }`;
 }
 
-function InjectAuthReasons(Reasons?: string[]): string[] {
+function InjectAuthReasons({
+  Reasons,
+  ExtraAuthReasons,
+}: {
+  Reasons?: string[];
+  ExtraAuthReasons?: string[];
+}): string[] {
   // FIXME add InvalidAppId, InvalidUserId, NetworkError for better error handling
   return authConfig.AppId
     ? // any app_id is allowed
       [InvalidToken, ...(Reasons || [])]
     : // only a specific app_id is allowed
-      [InvalidToken, InvalidAppId, ...(Reasons || [])];
+      [
+        InvalidToken,
+        InvalidAppId,
+        ...(ExtraAuthReasons || []),
+        ...(Reasons || []),
+      ];
 }
 
 export function SuccessType(Out?: string): string {
@@ -86,7 +98,7 @@ export function SuccessType(Out?: string): string {
 }
 
 export function ResultType(Reasons?: string[], Out?: string): string {
-  return `(${FailType(Reasons)}) | (${SuccessType(Out)})`;
+  return orType(FailType(Reasons), SuccessType(Out));
 }
 
 function genInjectAuthInType(): string {
@@ -106,6 +118,7 @@ function authCall(
     Type: string;
     In?: string;
     Reasons?: string[];
+    ExtraAuthReasons?: string[];
     Out?: string;
     Admin?: boolean;
     OptionalAuth?: boolean;
@@ -114,7 +127,14 @@ function authCall(
   const { Type, Reasons, Out, Admin, OptionalAuth } = call;
   const InType = call.In || '{}';
 
-  const attemptOutType = ResultType(InjectAuthReasons(Reasons), Out);
+  let { ExtraAuthReasons } = call;
+  if (authConfig.AppId) {
+    ExtraAuthReasons = [InvalidAppId, ...(ExtraAuthReasons || [])];
+  }
+  const attemptOutType = ResultType(
+    InjectAuthReasons({ Reasons, ExtraAuthReasons }),
+    Out,
+  );
 
   // Virtual Attempt Call for Server Side Logic or Legacy API for client
   types.push({
@@ -156,6 +176,7 @@ export function authCommand(call: {
   Type: string;
   In?: string;
   Reasons?: string[];
+  ExtraAuthReasons?: string[];
   Admin?: boolean;
   OptionalAuth?: boolean;
 }) {
@@ -166,6 +187,7 @@ export function authQuery(call: {
   Type: string;
   In?: string;
   Reasons?: string[];
+  ExtraAuthReasons?: string[];
   Out: string;
   Admin?: boolean;
   OptionalAuth?: boolean;
@@ -177,6 +199,7 @@ export function authSubscribe(call: {
   Type: string;
   In?: string;
   Reasons?: string[];
+  ExtraAuthReasons?: string[];
   Out: string;
   Admin?: boolean;
   OptionalAuth?: boolean;
