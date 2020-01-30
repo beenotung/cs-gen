@@ -48,10 +48,9 @@ export function genAuthServiceMethod({
         ? auth.MethodAuthSubscribe
         : auth.MethodAuthCall;
     const callType = JSON.stringify(call.CallType);
-    const type = JSON.stringify(
-      Type.replace(auth.AttemptPrefix, auth.AuthPrefix),
-    );
-    return `return ${authMethod}(${callType}, ${type}, In);`;
+    const type = Type.replace(auth.AttemptPrefix, auth.AuthPrefix);
+    const typeStr = JSON.stringify(type);
+    return `return ${authMethod}<${type}>(${callType}, ${typeStr}, In);`;
   }
   return invokeCode;
 }
