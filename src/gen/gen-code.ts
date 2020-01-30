@@ -1027,7 +1027,7 @@ export function checkedGetSessionByIn(In: any): Session {
   if (${statusName}.isReplay) {
     throw new HttpException('SkipWhenReplay', HttpStatus.NOT_ACCEPTABLE);
   }
-  const session = in_session_map.get(In);
+  const session = getSessionByIn(In);
   if (!session) {
     throw new HttpException(
       'primus session not found',
