@@ -68,7 +68,7 @@ export function FailType(Reasons?: string[]): string {
     Reasons && Reasons.length > 0
       ? Reasons.map(reason => JSON.stringify(reason)).join(' | ')
       : 'never';
-  return `{ Success: false; Reason: ${reasonType} }`;
+  return `{ Success: false, Reason: ${reasonType} }`;
 }
 
 function InjectAuthReasons(Reasons?: string[]): string[] {
