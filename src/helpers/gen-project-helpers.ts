@@ -1,5 +1,5 @@
 import { andType, ArrayType } from 'gen-ts-type';
-import { GenProjectPlugins } from '../gen/gen-code';
+import { AuthPluginOptions, DefaultAuthConfig } from '../gen/plugins/auth';
 import { CallMeta } from '../types';
 import {
   Constant,
@@ -81,20 +81,17 @@ export function SuccessType(Out?: string): string {
   return andType(`{ Success: true }`, OutType);
 }
 
-export function ResultType(Reasons: string[], Out?: string): string {
+export function ResultType(Reasons?: string[], Out?: string): string {
   return `(${FailType(Reasons)}) | (${SuccessType(Out)})`;
 }
 
-export let authConfig: Required<GenProjectPlugins>['auth'] = {
-  AttemptPrefix: 'Attempt',
-  AuthPrefix: 'Auth',
-  ImportFile: '../domain/core/server-utils',
-  MethodAuthCall: 'authCall',
-  MethodAuthSubscribe: 'authSubscribe',
-  MethodCheckAppId: 'checkAppId',
-};
+export let authConfig: AuthPluginOptions = DefaultAuthConfig;
 
-function authCall(
+export function setAuthConfig(_authConfig: AuthPluginOptions) {
+  authConfig = _authConfig;
+}
+
+function legacyAuthCall(
   types: PartialCallMeta[],
   call: {
     Type: string;
@@ -107,7 +104,19 @@ function authCall(
 ) {
   const { Type, In, Reasons, Out, Admin } = call;
   const InType = In ? In : `{}`;
-  const _SuccessType = SuccessType(Out);
+
+  // Attempt Call
+  const attemptOutType = ResultType(InjectAuthReasons(Reasons), Out);
+  types.push({
+    Type: authConfig.AttemptPrefix + Type,
+    In: andType(InType, `{ token: string }`),
+    Out: attemptOutType,
+    Admin,
+    Internal: call.OptionalAuth,
+    RequiredAuth: true,
+  });
+
+  // Auth Call
   const InjectAuthInType: string = check_app_id
     ? // explicit to be the current app
       `{ user_id: string }`
@@ -116,30 +125,133 @@ function authCall(
   types.push({
     Type: authConfig.AuthPrefix + Type,
     In: andType(InType, InjectAuthInType),
-    Out: `${FailType(Reasons)} | ${_SuccessType}`,
+    Out: ResultType(Reasons, Out),
     Admin,
     Internal: true,
   });
-  const attemptOutType = `${FailType(
-    InjectAuthReasons(Reasons),
-  )} | ${_SuccessType}`;
+
+  // Optional Auth Call
   if (call.OptionalAuth) {
-    // token is optional
     types.push({
       Type,
       In: andType(InType, `{ token: string | undefined | null }`),
       Out: attemptOutType,
       Admin,
       Internal: false,
+      OptionalAuth: true,
     });
-  } else {
-    // token is required
+  }
+}
+
+export function newAuthCall(
+  types: PartialCallMeta[],
+  call: {
+    Type: string;
+    In?: string;
+    Reasons?: string[];
+    Out?: string;
+    Admin?: boolean;
+    OptionalAuth?: boolean;
+  },
+) {
+  if (authConfig.ExposeAttemptPrefix) {
+    return legacyAuthCall(types, call);
+  }
+
+  const { Type, Reasons, Out, Admin } = call;
+  const InType = call.In || '{}';
+
+  // Attempt Call for Client API
+  const injectAttemptInType = call.OptionalAuth
+    ? `{ token: string | undefined | null }`
+    : `{ token: string }`;
+  const attemptOutType = ResultType(InjectAuthReasons(Reasons), Out);
+  types.push({
+    Type,
+    In: andType(InType, injectAttemptInType),
+    Out: attemptOutType,
+    Admin,
+    Internal: false,
+    OptionalAuth: true,
+  });
+
+  // Virtual Attempt Call for Server Side Logic
+  types.push({
+    Type: authConfig.AttemptPrefix + Type,
+    In: andType(InType, `{ token: string }`),
+    Out: attemptOutType,
+    Admin,
+    Internal: true,
+    RequiredAuth: true,
+  });
+
+  // Internal Auth Call for Server Side State
+  const injectAuthInType: string = check_app_id
+    ? // explicit to be the current app
+      `{ user_id: string }`
+    : // can be any app
+      `{ user_id: string, app_id: string }`;
+  types.push({
+    Type: authConfig.AuthPrefix + Type,
+    In: andType(InType, injectAuthInType),
+    Out: ResultType(Reasons, Out),
+    Admin,
+    Internal: true,
+  });
+}
+
+function authCall(
+  types: PartialCallMeta[],
+  call: {
+    Type: string;
+    In?: string;
+    Reasons?: string[];
+    Out?: string;
+    Admin?: boolean;
+    OptionalAuth?: boolean;
+  },
+) {
+  const { Type, Reasons, Out, Admin, OptionalAuth } = call;
+  const InType = call.In || '{}';
+
+  const attemptOutType = ResultType(InjectAuthReasons(Reasons), Out);
+
+  // Virtual Attempt Call for Server Side Logic or Legacy API for client
+  types.push({
+    Type: authConfig.AttemptPrefix + Type,
+    In: andType(InType, `{ token: string }`),
+    Out: attemptOutType,
+    Admin,
+    Internal: !authConfig.ExposeAttemptPrefix || OptionalAuth,
+    RequiredAuth: true,
+  });
+
+  // Internal Auth Call for Server Side State
+  const injectAuthInType: string = check_app_id
+    ? // explicit to be the current app
+      `{ user_id: string }`
+    : // can be any app
+      `{ user_id: string, app_id: string }`;
+  types.push({
+    Type: authConfig.AuthPrefix + Type,
+    In: andType(InType, injectAuthInType),
+    Out: ResultType(Reasons, Out),
+    Admin,
+    Internal: true,
+  });
+
+  // Attempt Call for Client API
+  if (OptionalAuth || !authConfig.ExposeAttemptPrefix) {
+    const injectAttemptInType = call.OptionalAuth
+      ? `{ token: string | undefined | null }`
+      : `{ token: string }`;
     types.push({
-      Type: authConfig.AttemptPrefix + Type,
-      In: andType(InType, `{ token: string }`),
+      Type,
+      In: andType(InType, injectAttemptInType),
       Out: attemptOutType,
       Admin,
       Internal: false,
+      OptionalAuth,
     });
   }
 }

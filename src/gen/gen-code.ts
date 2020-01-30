@@ -3,16 +3,10 @@ import { genTsType } from 'gen-ts-type';
 import { check_app_id } from '../helpers/gen-project-helpers';
 import { CallMeta } from '../types';
 import { Constants, PartialCallMeta, TypeAlias } from '../utils';
+import { AuthPluginOptions, genAuthServiceMethod } from './plugins/auth';
 
 export type GenProjectPlugins = {
-  auth?: {
-    ImportFile: string;
-    MethodAuthCall: string;
-    MethodAuthSubscribe: string;
-    MethodCheckAppId: string;
-    AttemptPrefix: string;
-    AuthPrefix: string;
-  };
+  auth?: AuthPluginOptions;
 };
 
 export function formatString(s: string): string {
@@ -106,40 +100,20 @@ export function genServiceCode(args: {
   const { auth } = plugins;
   const async_type = (type: string) =>
     asyncLogicProcessor ? `Result<${type}>` : type;
-  const genMethodBody = (call: { CallType: string; Type: string }): string => {
-    const { CallType, Type } = call;
-    const code = logicProcessorCode.includes(Type)
+  const genMethodBody = (call: CallMeta): string => {
+    const { Type } = call;
+    const invokeCode = logicProcessorCode.includes(Type)
       ? `return impl.${Type}(In);`
       : `return not_impl('${Type}');`;
     if (auth) {
-      if (
-        Type.length > auth.AttemptPrefix.length &&
-        Type.startsWith(auth.AttemptPrefix) &&
-        !logicProcessorCode.includes(Type) // use custom checking if exist
-      ) {
-        // auto call CheckToken, then call store and call Auth version call
-        return `return ${
-          CallType === subscribeTypeName
-            ? auth.MethodAuthSubscribe
-            : auth.MethodAuthCall
-        }(${JSON.stringify(CallType)}, ${JSON.stringify(Type).replace(
-          auth.AttemptPrefix,
-          auth.AuthPrefix,
-        )}, In);`;
-      }
-      if (
-        callTypes.find(call => call.Type === auth.AttemptPrefix + Type) &&
-        callTypes.find(call => call.Type === auth.AuthPrefix + Type)
-      ) {
-        // the auth is optional
-        // if the call.In contain token, reroute to Attempt version call
-        return `if (In.token) {
-      return this.${auth.AttemptPrefix + Type}(In);
+      return genAuthServiceMethod({
+        call,
+        auth,
+        invokeCode,
+        subscribeTypeName,
+      });
     }
-    ${code}`;
-      }
-    }
-    return code;
+    return invokeCode;
   };
   // prettier-ignore
   const code = `
@@ -226,15 +200,18 @@ export class ${serviceClassName} {
 
   ${callTypes
     .map(
-      ({ CallType, Type }) => `${Type}(In: ${Type}['In']): ${async_type(
-        CallType === subscribeTypeName
-          ? '{ id: string } | { error: any }'
-          : `${Type}['Out']`,
-      )} {
-    ${genMethodBody({ CallType, Type })}
-  }
+      (call) => {
+        const { CallType, Type } = call;
+        return `${Type}(In: ${Type}['In']): ${async_type(
+          CallType === subscribeTypeName
+            ? '{ id: string } | { error: any }'
+            : `${Type}['Out']`,
+        )} {
+      ${genMethodBody(call)}
+    }
 
-  `,
+    `;
+      },
     )
     .join('')
     .trim()}
