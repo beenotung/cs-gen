@@ -1,6 +1,5 @@
 import { groupBy } from '@beenotung/tslib/functional';
 import { genTsType } from 'gen-ts-type';
-import { check_app_id } from '../helpers/gen-project-helpers';
 import { CallMeta } from '../types';
 import { Constants, PartialCallMeta, TypeAlias } from '../utils';
 import { AuthPluginOptions, genAuthServiceMethod } from './plugins/auth';
@@ -82,7 +81,6 @@ export function genServiceCode(args: {
   asyncLogicProcessor: boolean;
   libDirname: string;
   plugins: GenProjectPlugins;
-  check_app_id: string;
 }) {
   const {
     callTypeName,
@@ -120,7 +118,7 @@ export function genServiceCode(args: {
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';${auth ? `
 import {
   ${auth.MethodAuthCall},
-  ${auth.MethodAuthSubscribe},${check_app_id ? `
+  ${auth.MethodAuthSubscribe},${auth.AppId ? `
   ${auth.MethodCheckAppId},` : ''}
 } from ${JSON.stringify(auth.ImportFile)};` : ''}
 import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(logicProcessorFilename)}';
@@ -135,8 +133,8 @@ import {
 } from ${getTypeFileImportPath(args)};${asyncLogicProcessor ? `
 import { Result } from '../${libDirname}/result';` : ''}
 
-${check_app_id && auth ? `
-${auth.MethodCheckAppId}(${JSON.stringify(check_app_id)});
+${auth && auth.AppId ? `
+${auth.MethodCheckAppId}(${JSON.stringify(auth.AppId)});
 ` : ''}
 
 // tslint:disable-next-line:no-unused-declaration

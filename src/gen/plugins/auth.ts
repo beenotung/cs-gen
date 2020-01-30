@@ -10,6 +10,7 @@ export type AuthPluginOptions = {
   ExposeAttemptPrefix: boolean; // for legacy code
   InjectUserId: boolean; // disable for custom auth logic
   InjectAppId: boolean; // disable for custom auth logic
+  AppId?: string; // only allow token of this app_id
 };
 export let DefaultAuthConfig: AuthPluginOptions = {
   AttemptPrefix: 'Attempt',

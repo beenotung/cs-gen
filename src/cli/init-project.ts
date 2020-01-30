@@ -92,8 +92,6 @@ import { flattenCallMetas, genProject } from 'cqrs-exp';
 import { catchMain } from '@beenotung/tslib/node';
 import { ArrayType } from 'gen-ts-type';
 import {
-  checkAppId,
-  enableSubscription,
   commandTypes,
   queryTypes,
   subscribeTypes,
@@ -115,7 +113,8 @@ import {
   Duplicated,
 } from 'cqrs-exp/dist/helpers/constants';
 
-checkAppId(${JSON.stringify(appId)});
+authConfig.AppId = ${JSON.stringify(appId)};
+// authConfig.ExposeAttemptPrefix = true; // for legacy API
 
 if ('enableSubscription') {
   commandTypes.push(${JSON.stringify(CancelSubscribe, null, 2)});

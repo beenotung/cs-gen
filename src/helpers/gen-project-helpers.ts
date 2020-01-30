@@ -52,24 +52,28 @@ export let commandTypes: PartialCallMeta[] = [];
 export let queryTypes: PartialCallMeta[] = [];
 export let subscribeTypes: PartialCallMeta[] = [];
 
-// only allow token of this app_id
-export let check_app_id: string | undefined;
+export let authConfig: AuthPluginOptions = DefaultAuthConfig;
 
+export function setAuthConfig(_authConfig: AuthPluginOptions) {
+  authConfig = _authConfig;
+}
+
+/** @deprecated use authConfig or setAuthConfig() instead */
 export function checkAppId(appId?: string) {
-  check_app_id = appId;
+  authConfig.AppId = appId;
 }
 
 export function FailType(Reasons?: string[]): string {
-  return Reasons && Reasons.length > 0
-    ? `{ Success: false, Reason: ${Reasons.map(Reason =>
-        JSON.stringify(Reason),
-      ).join(' | ')} }`
-    : `{ Success: false }`;
+  const reasonType =
+    Reasons && Reasons.length > 0
+      ? Reasons.map(reason => JSON.stringify(reason)).join(' | ')
+      : 'never';
+  return `{ Success: false; Reason: ${reasonType} }`;
 }
 
 function InjectAuthReasons(Reasons?: string[]): string[] {
   // FIXME add InvalidAppId, InvalidUserId, NetworkError for better error handling
-  return check_app_id
+  return authConfig.AppId
     ? // any app_id is allowed
       [InvalidToken, ...(Reasons || [])]
     : // only a specific app_id is allowed
@@ -85,15 +89,10 @@ export function ResultType(Reasons?: string[], Out?: string): string {
   return `(${FailType(Reasons)}) | (${SuccessType(Out)})`;
 }
 
-export let authConfig: AuthPluginOptions = DefaultAuthConfig;
-
-export function setAuthConfig(_authConfig: AuthPluginOptions) {
-  authConfig = _authConfig;
-}
 function genInjectAuthInType(): string {
   const user_id = authConfig.InjectUserId ? 'user_id: string' : '';
   const app_id =
-    authConfig.InjectAppId && !check_app_id ? 'app_id: string' : '';
+    authConfig.InjectAppId && !authConfig.AppId ? 'app_id: string' : '';
   const fields = [user_id, app_id].filter(s => s).join(', ');
   if (fields) {
     return `{ ${fields} }`;

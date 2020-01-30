@@ -8,7 +8,6 @@ import {
 } from '@beenotung/tslib/fs';
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
-import { check_app_id } from '../helpers/gen-project-helpers';
 import { CallMeta } from '../types';
 import { Constants, defaultTypeName, TypeAlias } from '../utils';
 import {
@@ -120,7 +119,6 @@ async function genServiceFile(args: {
   asyncLogicProcessor: boolean;
   libDirname: string;
   plugins: GenProjectPlugins;
-  check_app_id: string;
 }) {
   const { serviceFilename } = args;
   const code = genServiceCode(args);
@@ -1108,7 +1106,6 @@ export async function genProject(_args: {
     genServiceFile({
       ...args,
       logicProcessorCode: dataWrapper.logicProcessorCode,
-      check_app_id: check_app_id || '',
     }),
     genStatusFile(args),
     genControllerFile(args),
