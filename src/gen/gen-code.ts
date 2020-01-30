@@ -1041,17 +1041,6 @@ export function getSessionBySparkId(sparkId: string): Session | undefined {
   return sparkId_session_map.get(sparkId);
 }
 
-/**
- * @remark inplace update
- * @return original array
- * */
-function remove<A>(xs: A[], x: A): void {
-  const idx = xs.indexOf(x);
-  if (idx !== -1) {
-    xs.splice(idx, 1);
-  }
-}
-
 export function endSparkCall(spark: Spark, call: CallInput) {
   const session = sparkId_session_map.get(spark.id);
   if(!session){return}
