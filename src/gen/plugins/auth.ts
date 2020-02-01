@@ -37,8 +37,9 @@ export function genAuthServiceMethod({
 }): string {
   const { Type } = call;
   if (call.OptionalAuth) {
+    // prettier-ignore
     return `if (In.token) {
-      return this.${auth.AttemptPrefix + Type}(In);
+      return this.${auth.AttemptPrefix + Type}(In as ${Type}['In'] & { token: string });
     }
     ${invokeCode}`;
   }
