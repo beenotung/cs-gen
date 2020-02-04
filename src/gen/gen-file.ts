@@ -11,6 +11,7 @@ import * as path from 'path';
 import { CallMeta } from '../types';
 import { Constants, defaultTypeName, TypeAlias } from '../utils';
 import {
+  genCallsCode,
   genCallTypeCode,
   genClientLibCode,
   genConnectionCode,
@@ -140,12 +141,33 @@ async function genStatusFile(args: {
   await writeFile(filename, code);
 }
 
+async function genCallsFile(args: {
+  outDirname: string;
+  serverProjectDirname: string;
+  moduleDirname: string;
+  typeDirname: string;
+  typeFilename: string;
+  callTypeName: string;
+  callsFilename: string;
+  callTypes: CallMeta[];
+}) {
+  const code = genCallsCode(args);
+
+  const { moduleDirname, callsFilename, serverProjectDirname } = args;
+  const dirname = path.join(serverProjectDirname, 'src', moduleDirname);
+  await mkdirp(dirname);
+  const pathname = path.join(dirname, callsFilename);
+
+  await writeFile(pathname, code);
+}
+
 async function genControllerFile(args: {
   outDirname: string;
   serverProjectDirname: string;
   moduleDirname: string;
   typeDirname: string;
   typeFilename: string;
+  callsFilename: string;
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
@@ -165,7 +187,6 @@ async function genControllerFile(args: {
   storeQuery: boolean;
   timestampFieldName: string;
   injectTimestampField: boolean;
-  plugins: GenProjectPlugins;
 }) {
   const { controllerFilename } = args;
   const code = genControllerCode(args);
@@ -241,9 +262,7 @@ async function genTypeFile(args: {
 }) {
   const code = genCallTypeCode(args);
 
-  const typeDirname = args.typeDirname || 'domain';
-  const typeFilename = args.typeFilename || 'types.ts';
-  const projectDirname = args.projectDirname || 'out';
+  const { typeDirname, typeFilename, projectDirname } = args;
   const dirname = path.join(projectDirname, 'src', typeDirname);
   await mkdirp(dirname);
   const pathname = path.join(dirname, typeFilename);
@@ -884,6 +903,7 @@ export const defaultGenProjectArgs = {
   docDirname: '',
   typeDirname: 'domain',
   typeFilename: 'types.ts',
+  callsFilename: 'calls.ts',
   callTypeName: 'Call',
   queryTypeName: defaultTypeName.queryTypeName,
   commandTypeName: defaultTypeName.commandTypeName,
@@ -935,6 +955,7 @@ export async function genProject(_args: {
   adminProjectName?: string;
   typeDirname?: string;
   typeFilename?: string;
+  callsFilename?: string;
   callTypes: CallMeta[];
   callTypeName?: string;
   commandTypeName?: string;
@@ -1108,6 +1129,7 @@ export async function genProject(_args: {
       logicProcessorCode: dataWrapper.logicProcessorCode,
     }),
     genStatusFile(args),
+    genCallsFile(args),
     genControllerFile(args),
     injectServerLibFiles(args),
   ]);

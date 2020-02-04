@@ -2,6 +2,8 @@ import { groupBy } from '@beenotung/tslib/functional';
 import { genTsType } from 'gen-ts-type';
 import { CallMeta } from '../types';
 import { Constants, PartialCallMeta, TypeAlias } from '../utils';
+import { addIndentation } from './helpers/indent';
+import { callsToQuoteString } from './helpers/quote-string';
 import { AuthPluginOptions, genAuthServiceMethod } from './plugins/auth';
 
 export type GenProjectPlugins = {
@@ -226,9 +228,45 @@ export let ${statusName} = {
 `.trim();
 }
 
+export function genCallsCode(args: {
+  typeDirname: string;
+  typeFilename: string;
+  callTypeName: string;
+  callTypes: CallMeta[];
+}) {
+  const { callTypeName, callTypes } = args;
+  // prettier-ignore
+  return `
+import { ${callTypeName} } from ${getTypeFileImportPath(args)};
+
+export type CallMeta = {
+  CallType: ${callTypeName}['CallType'],
+  Type: ${callTypeName}['Type'],
+  In: string,
+  Out: string,
+} & {
+  Admin?: boolean;
+  Internal?: boolean;
+  OptionalAuth?: boolean;
+  RequiredAuth?: boolean;
+};
+
+export const calls: CallMeta[] = ${callsToQuoteString(callTypes)};
+
+export function isInternalCall(Type: ${callTypeName}['Type']): boolean {
+  const call = calls.find(call => call.Type === Type)
+  if (!call) {
+    return false
+  }
+  return !!call.Internal
+}
+`.trim();
+}
+
 export function genControllerCode(args: {
   typeDirname: string;
   typeFilename: string;
+  callsFilename: string;
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
@@ -247,9 +285,9 @@ export function genControllerCode(args: {
   storeQuery: boolean;
   timestampFieldName: string;
   injectTimestampField: boolean;
-  plugins: GenProjectPlugins;
 }) {
   const {
+    callsFilename,
     callTypeName,
     commandTypeName,
     queryTypeName,
@@ -268,7 +306,6 @@ export function genControllerCode(args: {
     storeQuery,
     timestampFieldName,
     injectTimestampField,
-    plugins,
   } = args;
   const serviceObjectName =
     serviceClassName[0].toLowerCase() + serviceClassName.substring(1);
@@ -284,6 +321,7 @@ import { ISpark } from 'typestub-primus';` : ''}
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
+import { isInternalCall } from './${removeTsExtname(callsFilename)}';
 import { iterateSnapshot } from '../lib/snapshot';${ws ? `
 import { usePrimus } from '../main';` : ''}
 import { endRestCall, startRestCall } from './connection';${ws ? `
@@ -416,26 +454,28 @@ export class ${controllerClassName} {${
 
   storeAndCall<C extends ${callTypeName}>({ call, from }: { call: CallInput<C>, from: 'server' | 'client' }): ${async_type(
     `C['Out']`,
-  )} {${plugins.auth ? `
-    if (from === 'client' && call.CallType.startsWith('${plugins.auth.AuthPrefix}')) {
+  )} {${(() => {
+    const checkInternalCall = `if (isInternalCall(call.Type)) {
       throw new HttpException('The call is not from authentic caller', HttpStatus.FORBIDDEN);
-    }` : ``}
-    ${((): string => {
+    }`;
     const store = `this.logService.storeObjectSync(
       call,
       this.logService.nextKey() + '-' + call.CallType,
     );`;
+    const call = `return this.coreService.${callTypeName}<C>(call);`;
     if (storeQuery) {
-      return store;
+      return `
+    ${checkInternalCall}
+    ${store}
+    ${call}`;
     }
-    return `if (call.CallType !== '${queryTypeName}') {
-    ${store
-      .split('\n')
-      .map(line => '  ' + line)
-      .join('\n')}
-    }`;
+    return `
+    ${checkInternalCall}
+    if (call.CallType !== '${queryTypeName}') {
+    ${addIndentation(store, '  ')}
+    }
+    ${call}`;
   })()}
-    return this.coreService.${callTypeName}<C>(call);
   }
 
   @Post('${callApiPath}')
