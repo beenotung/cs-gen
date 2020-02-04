@@ -119,8 +119,8 @@ export function genServiceCode(args: {
   const code = `
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';${auth ? `
 import {
-  ${auth.MethodAuthCall},
-  ${auth.MethodAuthSubscribe},${auth.AppId ? `
+  ${auth.MethodAuthCall},${callTypes.some(call => call.CallType === subscribeTypeName) ? `
+  ${auth.MethodAuthSubscribe},` : ``}${auth.AppId ? `
   ${auth.MethodCheckAppId},` : ''}
 } from ${JSON.stringify(auth.ImportFile)};` : ''}
 import { ${logicProcessorClassName} } from '../${logicProcessorDirname}/${removeTsExtname(logicProcessorFilename)}';
