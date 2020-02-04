@@ -455,7 +455,7 @@ export class ${controllerClassName} {${
   storeAndCall<C extends ${callTypeName}>({ call, from }: { call: CallInput<C>, from: 'server' | 'client' }): ${async_type(
     `C['Out']`,
   )} {${(() => {
-    const checkInternalCall = `if (isInternalCall(call.Type)) {
+    const checkInternalCall = `if (from !== 'server' && isInternalCall(call.Type)) {
       throw new HttpException('The call is not from authentic caller', HttpStatus.FORBIDDEN);
     }`;
     const store = `this.logService.storeObjectSync(
