@@ -206,10 +206,10 @@ export class ${serviceClassName} {
             ? '{ id: string } | { error: any }'
             : `${Type}['Out']`,
         )} {
-      ${genMethodBody(call)}
-    }
+    ${genMethodBody(call)}
+  }
 
-    `;
+  `;
       },
     )
     .join('')
