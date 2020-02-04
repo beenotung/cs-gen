@@ -17,11 +17,10 @@ import {
 
 
 
-// tslint:disable:no-unused-variable
+// tslint:disable-next-line:no-unused-declaration
 function not_impl(name: string): any {
   throw new HttpException('not implemented ' + name, HttpStatus.NOT_IMPLEMENTED);
 }
-// tslint:enable:no-unused-variable
 
 const impl = new LogicProcessor();
 
