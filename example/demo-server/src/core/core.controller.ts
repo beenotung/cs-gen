@@ -5,6 +5,7 @@ import { ok, rest_return } from 'nestlib';
 import { ISpark } from 'typestub-primus';
 import { Call, CallInput } from '../domain/types';
 import { LogService } from '../lib/log.service';
+import { isInternalCall } from './calls';
 import { iterateSnapshot } from '../lib/snapshot';
 import { usePrimus } from '../main';
 import { endRestCall, startRestCall } from './connection';
@@ -99,6 +100,9 @@ export class CoreController {
   }
 
   storeAndCall<C extends Call>({ call, from }: { call: CallInput<C>, from: 'server' | 'client' }): C['Out'] {
+    if (from !== 'server' && isInternalCall(call.Type)) {
+      throw new HttpException('The call is not from authentic caller', HttpStatus.FORBIDDEN);
+    }
     this.logService.storeObjectSync(
       call,
       this.logService.nextKey() + '-' + call.CallType,

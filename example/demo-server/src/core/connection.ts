@@ -19,7 +19,7 @@ export interface Subscription {
 
 export interface Session {
   spark: Spark;
-  calls: CallInput[];
+  calls: Set<CallInput>;
   // channel id -> Subscription
   subscriptions: Map<string, Subscription>;
 }
@@ -34,7 +34,7 @@ export function getAllSession() {
 export function newConnection(spark: Spark) {
   sparkId_session_map.set(spark.id, {
     spark,
-    calls: [],
+    calls: new Set(),
     subscriptions: new Map(),
   });
 }
@@ -51,7 +51,7 @@ export function startSparkCall(spark: Spark, call: CallInput) {
   if (!session) {
     return;
   }
-  session.calls.push(call);
+  session.calls.add(call);
   in_session_map.set(call.In, session);
 }
 
@@ -63,7 +63,7 @@ export function checkedGetSessionByIn(In: any): Session {
   if (status.isReplay) {
     throw new HttpException('SkipWhenReplay', HttpStatus.NOT_ACCEPTABLE);
   }
-  const session = in_session_map.get(In);
+  const session = getSessionByIn(In);
   if (!session) {
     throw new HttpException(
       'primus session not found',
@@ -77,21 +77,10 @@ export function getSessionBySparkId(sparkId: string): Session | undefined {
   return sparkId_session_map.get(sparkId);
 }
 
-/**
- * @remark inplace update
- * @return original array
- * */
-function remove<A>(xs: A[], x: A): void {
-  const idx = xs.indexOf(x);
-  if (idx !== -1) {
-    xs.splice(idx, 1);
-  }
-}
-
 export function endSparkCall(spark: Spark, call: CallInput) {
   const session = sparkId_session_map.get(spark.id);
   if(!session){return}
-  remove(session.calls, call);
+  session.calls.delete(call);
   in_session_map.delete(call.In);
 }
 

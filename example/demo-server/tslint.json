@@ -2,10 +2,12 @@
   "extends": [
     "tslint:recommended",
     "tslint-eslint-rules",
+    "tslint-etc",
     "tslint-config-prettier"
   ],
   "rules": {
     "interface-over-type-literal": false,
+    "no-unused-declaration": true,
     "array-type": [
       true,
       "array-simple"
@@ -32,8 +34,7 @@
     "eofline": true,
     "forin": true,
     "import-blacklist": [
-      true,
-      "rxjs"
+      true
     ],
     "import-spacing": true,
     "indent": [

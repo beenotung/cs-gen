@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>demo Internal APIs</title>
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-tap-highlight" content="no">
+  <style>
+    #content {
+      display: flex;
+      flex-direction: row;
+    }
+    @media only screen
+    and (orientation: portrait) {
+      #content {
+        flex-direction: column;
+      }
+    }
+    #content > * {
+      flex-grow: 1;
+    }
+    code {
+      white-space: pre-wrap;
+      font-size: large;
+    }
+  </style>
+</head>
+<body>
+  <h1>demo Internal APIs</h1>
+  <div id="content">
+    <nav>
+      <h2>Type Aliases</h2>
+      <ul>
+      </ul>
+      <h2>Command APIs</h2>
+      <ul>
+      </ul>
+      <h2>Query APIs</h2>
+      <ul>
+      </ul>
+      <h2>Subscribe APIs</h2>
+      <ul>
+      </ul>
+    </nav>
+    <noscript><span style="color: red">Javascript is required to show type of In and Out<span></noscript>
+    <div>
+      <h3>In</h3>
+      <code id="in"></code>
+    </div>
+    <div>
+      <h3>Out</h3>
+      <code id="out"></code>
+    </div>
+  </div>
+<script>
+window.onhashchange=function(){
+  var Type = window.location.hash.substr(1);
+  var In = 'unknown';
+  var Out = 'unknown';
+  switch (Type) {
+    
+    
+    default:
+      console.error('unknown Type:', Type);
+  }
+  document.getElementById('in').textContent = In;
+  document.getElementById('out').textContent = Out;
+};
+</script>
+</body>
+</html>
