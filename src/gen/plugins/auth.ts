@@ -24,6 +24,10 @@ export let DefaultAuthConfig: AuthPluginOptions = {
   InjectAppId: true,
 };
 
+export function startsWith(Type: string, prefix: string): boolean {
+  return Type.length > prefix.length && Type.startsWith(prefix);
+}
+
 export function genAuthServiceMethod({
   call,
   auth,
@@ -36,6 +40,14 @@ export function genAuthServiceMethod({
   subscribeTypeName: string;
 }): string {
   const { Type } = call;
+  if (
+    !call.Internal &&
+    !auth.ExposeAttemptPrefix &&
+    !startsWith(Type, auth.AttemptPrefix) &&
+    !startsWith(Type, auth.AuthPrefix)
+  ) {
+    return `return this.${auth.AttemptPrefix + Type}(In)`;
+  }
   if (call.OptionalAuth) {
     // prettier-ignore
     return `if (In.token) {
