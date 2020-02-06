@@ -1,13 +1,17 @@
 import { CallMeta } from '../../types';
 
+export function quoteString(s: string): string {
+  return '`' + s.replace(/\\/g, '\\\\') + '`';
+}
+
 function callFieldToQuoteString(o: any): string {
   if (typeof o !== 'string') {
     return JSON.stringify(o, null, 2);
   }
-  return '`' + o.replace(/\\/g, '\\\\') + '`';
+  return quoteString(o);
 }
 
-function callToQuoteString(call: CallMeta): string {
+export function objectToQuoteString(call: object): string {
   return `{${Object.entries(call)
     .filter(([_key, value]) => value !== undefined)
     .map(
@@ -20,7 +24,7 @@ function callToQuoteString(call: CallMeta): string {
 
 export function callsToQuoteString(calls: CallMeta[]): string {
   return `[
-  ${calls.map(call => callToQuoteString(call)).join(`,
+  ${calls.map(call => objectToQuoteString(call)).join(`,
   `)}
 ]`;
 }

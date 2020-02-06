@@ -1,5 +1,6 @@
 import { hasFile, readFile, writeFile } from '@beenotung/tslib/fs';
 import * as path from 'path';
+import { objectToQuoteString } from '../gen/helpers/quote-string';
 import { CancelSubscribe } from '../helpers/gen-project-helpers';
 import { getIO } from './helpers';
 // @ts-ignore
@@ -120,7 +121,7 @@ authConfig.AppId = app_id;
 // authConfig.ExposeAttemptPrefix = true; // for legacy API
 
 if ('enableSubscription') {
-  commandTypes.push(${JSON.stringify(CancelSubscribe, null, 2)});
+  commandTypes.push(${objectToQuoteString(CancelSubscribe)});
 }
 
 commandTypes.push(
