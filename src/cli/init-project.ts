@@ -113,7 +113,10 @@ import {
   Duplicated,
 } from 'cqrs-exp/dist/helpers/constants';
 
-authConfig.AppId = ${JSON.stringify(appId)};
+const app_id = ${JSON.stringify(appId)};
+def({ app_id });
+
+authConfig.AppId = app_id;
 // authConfig.ExposeAttemptPrefix = true; // for legacy API
 
 if ('enableSubscription') {
