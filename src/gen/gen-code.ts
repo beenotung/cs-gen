@@ -540,7 +540,7 @@ function genConstant(constants: Constants): string {
     .map(([name, constant]) => {
       let type: string | undefined;
       let value: string;
-      if (typeof constant === 'string') {
+      if (typeof constant === 'string' || typeof constant === 'number') {
         type = value = JSON.stringify(constant);
       } else {
         type = constant.type;

@@ -34,7 +34,10 @@ export let constants: Constants = {};
 
 const ref = (constantVal: any): string => {
   for (const [name, constant] of Object.entries(constants)) {
-    const value = typeof constant === 'string' ? constant : constant.value;
+    const value =
+      typeof constant === 'string' || typeof constant === 'number'
+        ? constant
+        : constant.value;
     if (constantVal === value) {
       return name;
     }

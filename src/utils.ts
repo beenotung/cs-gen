@@ -81,6 +81,7 @@ export interface TypeAlias {
 
 export type Constant =
   | string
+  | number
   | {
       value: any;
       type?: string;
