@@ -263,6 +263,186 @@ export function isInternalCall(Type: ${callTypeName}['Type']): boolean {
 `.trim();
 }
 
+/**
+ * replay the commands and queries if needed
+ * */
+function genInitSyncCode({
+  statusName,
+  asyncLogicProcessor,
+  serviceClassName,
+  callTypeName,
+  commandTypeName,
+  queryTypeName,
+  replayCommand,
+  replayQuery,
+}: {
+  statusName: string;
+  asyncLogicProcessor: boolean;
+  serviceClassName: string;
+  callTypeName: string;
+  commandTypeName: string;
+  queryTypeName: string;
+  replayCommand: boolean;
+  replayQuery: boolean;
+}): string {
+  const serviceObjectName = firstCharToLowerCase(serviceClassName);
+  const replayCallTypes: string[] = [];
+  if (replayCommand) {
+    replayCallTypes.push(commandTypeName);
+  }
+  if (replayQuery) {
+    replayCallTypes.push(queryTypeName);
+  }
+  // prettier-ignore
+  return `
+  private${asyncLogicProcessor ? ` async` : ``} initSync() {
+    ${statusName}.isReplay = true;
+    const start = Date.now();
+    console.log('start init sync');
+    const bar = new Bar({
+      format:
+        'init sync progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
+    });
+    bar.start(0, 0);
+    for (const { key, content, estimateTotal } of iterateSnapshot<
+      CallInput<Call>
+    >(this.logService)) {
+      bar.setTotal(estimateTotal);
+      if (${replayCallTypes.map(CallType => `!key.endsWith('-${CallType}')`).join(' && ')}) {
+        bar.increment(1);
+        continue;
+      }
+      const call = content();
+      if (call === null) {
+        console.warn('failed to load call from log:', key);
+        bar.increment(1);
+        continue;
+      }
+      if (${replayCallTypes.map(CallType => `call.CallType !== ${JSON.stringify(CallType)}`).join(' && ')}) {
+        bar.increment(1);
+        continue;
+      }
+      try {${!asyncLogicProcessor ? `
+        this.${serviceObjectName}.${callTypeName}(call);` : `
+        const out = this.${serviceObjectName}.${callTypeName}(call);
+        if (isPromise(out)) {
+          await out;
+        }`}
+      } catch (e) {
+        console.error(\`failed when call '\${call.CallType}' '\${call.Type}':\`, e);
+      }
+      bar.increment(1);
+    }
+    bar.stop();
+    console.log('finished init sync');
+    const end = Date.now();
+    console.log('used:', (end - start) / 1000, 'seconds');
+  }
+`.trim();
+}
+
+/**
+ * listen to calls from primus client
+ * */
+function genUsePrimusCode({
+  controllerClassName,
+  callApiPath,
+  callTypeName,
+  injectTimestampField,
+  timestampFieldName,
+  asyncLogicProcessor,
+}: {
+  controllerClassName: string;
+  callApiPath: string;
+  callTypeName: string;
+  injectTimestampField: boolean;
+  timestampFieldName: string;
+  asyncLogicProcessor: boolean;
+}): string {
+  // prettier-ignore
+  return `
+  private${asyncLogicProcessor ? ` async` : ''} usePrimus() {
+    usePrimus(primus => {
+      primus.on('connection', (_spark: ISpark) => {
+        const spark: Spark = _spark as any;
+        newConnection(spark);
+        spark.on('end', () => closeConnection(spark));
+        spark.on('${callApiPath}', (async (call: CallInput<${callTypeName}>, ack: (data: any) => void) => {${
+    injectTimestampField
+      ? `
+          call.In.${timestampFieldName} = Date.now();`
+      : ``
+  }
+          startSparkCall(spark, call);
+          try {
+            await ready;
+            let out = this.storeAndCall({ call, from: 'client' });${
+    !asyncLogicProcessor
+      ? ''
+      : `
+            if (isPromise(out)) {
+              out = await out;
+            }`
+  }
+            ack(out);
+          } catch (e) {
+            console.error(e);
+            ack({
+              error: e.toString(),
+              response: e.response,
+              status: e.status,
+              message: e.message,
+            });
+          } finally {
+            endSparkCall(spark, call);
+          }
+        }) as any);
+      });
+    });
+    console.log('connected primus to ${controllerClassName}');
+  }
+`.trim();
+}
+
+/**
+ * replay the commands, than start primus listener
+ * (init sync was previously called as restore)
+ * */
+function genControllerInitMethod(args: {
+  statusName: string;
+  asyncLogicProcessor: boolean;
+  serviceClassName: string;
+  callTypeName: string;
+  commandTypeName: string;
+  queryTypeName: string;
+  replayCommand: boolean;
+  replayQuery: boolean;
+  controllerClassName: string;
+  ws: boolean;
+  callApiPath: string;
+  injectTimestampField: boolean;
+  timestampFieldName: string;
+}): string {
+  const {
+    statusName,
+    asyncLogicProcessor,
+    ws,
+    replayCommand,
+    replayQuery,
+  } = args;
+  const needInitSync = replayCommand || replayQuery;
+  // prettier-ignore
+  return `
+  ${needInitSync ? genInitSyncCode(args) + '\n' : ''}
+  ${ws ? genUsePrimusCode(args) + '\n' : ''}
+  async init() {${needInitSync ? `
+    ${asyncLogicProcessor ? `await ` : ''}this.initSync();` : ``}
+    ${statusName}.isReplay = false;${ws ? `
+    this.usePrimus();` : ``}
+  }
+`.trim();
+}
+
 export function genControllerCode(args: {
   typeDirname: string;
   typeFilename: string;
@@ -281,6 +461,7 @@ export function genControllerCode(args: {
   statusName: string;
   ws: boolean;
   asyncLogicProcessor: boolean;
+  replayCommand: boolean;
   replayQuery: boolean;
   storeQuery: boolean;
   timestampFieldName: string;
@@ -289,7 +470,6 @@ export function genControllerCode(args: {
   const {
     callsFilename,
     callTypeName,
-    commandTypeName,
     queryTypeName,
     serviceClassName,
     serviceFilename,
@@ -302,7 +482,6 @@ export function genControllerCode(args: {
     statusFilename,
     ws,
     asyncLogicProcessor,
-    replayQuery,
     storeQuery,
     timestampFieldName,
     injectTimestampField,
@@ -354,103 +533,10 @@ export class ${controllerClassName} {${
       : `
     ${controllerClassName}.instance = this;`
   }
-    ready = this.restore();
+    ready = this.init();
   }
 
-  async restore() {
-    const start = Date.now();
-    console.log('start to restore');
-    // const keys = this.logService.getKeysSync();
-    const bar = new Bar({
-      format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
-    });
-    ${statusName}.isReplay = true;
-    // bar.start(keys.length, 0);
-    // for (const key of keys) {
-    bar.start(0, 0);
-    for (const { key, content, estimateTotal } of iterateSnapshot<
-      CallInput<Call>
-    >(this.logService)) {
-      bar.setTotal(estimateTotal);
-      if (!key.endsWith('-${commandTypeName}')${
-    !replayQuery ? '' : ` && !key.endsWith('-${queryTypeName}')`
-  }) {
-        bar.increment(1);
-        continue;
-      }
-      // const call = this.logService.getObjectSync<CallInput<${callTypeName}>>(key);
-      const call = content();
-      if (call === null) {
-        continue;
-      }
-      if (call.CallType !== '${commandTypeName}'${
-    !replayQuery ? '' : ` && call.CallType !== '${queryTypeName}'`
-  }) {
-        bar.increment(1);
-        continue;
-      }
-      try {${
-    !asyncLogicProcessor
-      ? `
-        this.${serviceObjectName}.${callTypeName}(call);`
-      : `
-        const out = this.${serviceObjectName}.${callTypeName}(call);
-        if (isPromise(out)) {
-          await out;
-        }`
-  }
-      } catch (e) {
-        console.error(\`failed when call '\${call.CallType}' '\${call.Type}':\`, e);
-      }
-      bar.increment(1);
-    }
-    ${statusName}.isReplay = false;
-    bar.stop();
-    console.log('finished restore');
-    const end = Date.now();
-    console.log('used:', (end - start) / 1000, 'seconds');${
-    !ws
-      ? ''
-      : `
-    usePrimus(primus => {
-      primus.on('connection', (_spark: ISpark) => {
-        const spark: Spark = _spark as any;
-        newConnection(spark);
-        spark.on('end', () => closeConnection(spark));
-        spark.on('${callApiPath}', (async (call: CallInput<${callTypeName}>, ack: (data: any) => void) => {${
-        injectTimestampField
-          ? `
-          call.In.${timestampFieldName} = Date.now();`
-          : ``
-      }
-          startSparkCall(spark, call);
-          try {
-            await ready;
-            let out = this.storeAndCall({ call, from: 'client' });${
-        !asyncLogicProcessor
-          ? ''
-          : `
-            if (isPromise(out)) {
-              out = await out;
-            }`
-      }
-            ack(out);
-          } catch (e) {
-            console.error(e);
-            ack({
-              error: e.toString(),
-              response: e.response,
-              status: e.status,
-              message: e.message,
-            });
-          } finally {
-            endSparkCall(spark, call);
-          }
-        }) as any);
-      });
-    });`
-  }
-  }
+  ${genControllerInitMethod(args)}
 
   storeAndCall<C extends ${callTypeName}>({ call, from }: { call: CallInput<C>, from: 'server' | 'client' }): ${async_type(
     `C['Out']`,

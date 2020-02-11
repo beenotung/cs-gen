@@ -150,6 +150,7 @@ catchMain(genProject({
   serverOrigin: ${JSON.stringify(serverOrigin, null, 2)},
   typeAlias,
   constants,
+  // replayCommand: false,
   // replayQuery: true,
   // storeQuery: false,
   plugins: { auth: authConfig },
