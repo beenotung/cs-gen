@@ -894,13 +894,18 @@ export class ${serviceClassName} {
 }
 
 export function startAPI(options: {
-  mode: 'local' | 'test' | 'prod',
+  localhost: string
+} | {
+  mode: 'local' | 'test' | 'prod'
 } | {
   baseUrl: string
 }) {
   const baseUrl: string = (() => {
     if ('baseUrl' in options) {
       return options.baseUrl
+    }
+    if ('localhost' in options) {
+      return \`http://\${options.localhost}:${serverOrigin.port}\`;
     }
     switch (options.mode) {
       case 'local':
