@@ -157,6 +157,7 @@ catchMain(genProject({
   constants,
   // replayCommand: false,
   // replayQuery: true,
+  // storeCommand: false,
   // storeQuery: false,
   plugins: { auth: authConfig },
 }));

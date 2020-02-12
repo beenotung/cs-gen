@@ -443,6 +443,70 @@ function genControllerInitMethod(args: {
 `.trim();
 }
 
+function genStoreMethodBody(args: {
+  storeCommand: boolean;
+  storeQuery: boolean;
+  callTypes: CallMeta[];
+  commandTypeName: string;
+  queryTypeName: string;
+}): string {
+  const {
+    storeCommand,
+    storeQuery,
+    callTypes,
+    commandTypeName,
+    queryTypeName,
+  } = args;
+  // prettier-ignore
+  const callStoreCode = `
+    this.logService.storeObjectSync(
+      call,
+      this.logService.nextKey() + '-' + call.CallType,
+    );`.trim();
+  const needStoreCommand =
+    storeCommand && callTypes.some(call => call.CallType === commandTypeName);
+  const needStoreQuery =
+    storeQuery && callTypes.some(call => call.CallType === queryTypeName);
+  const shouldStore = needStoreCommand || needStoreQuery;
+  const isStoreAll = needStoreCommand && needStoreQuery;
+  if (!shouldStore || isStoreAll) {
+    return callStoreCode;
+  }
+  const storeCallTypes: string[] = [];
+  if (needStoreCommand) {
+    storeCallTypes.push(commandTypeName);
+  }
+  if (needStoreQuery) {
+    storeCallTypes.push(queryTypeName);
+  }
+  // prettier-ignore
+  return `
+    if (${storeCallTypes.map(CallType => `call.CallType === ${JSON.stringify(CallType)}`).join(' || ')}) {
+    ${addIndentation(callStoreCode, '  ')}
+    }
+`;
+}
+
+function genStoreAndCallMethodBody(args: {
+  storeCommand: boolean;
+  storeQuery: boolean;
+  callTypes: CallMeta[];
+  callTypeName: string;
+  commandTypeName: string;
+  queryTypeName: string;
+}): string {
+  const { storeCommand, storeQuery, callTypeName } = args;
+  const shouldStore = storeQuery || storeCommand;
+  // prettier-ignore
+  return `
+    if (from !== 'server' && isInternalCall(call.Type)) {
+      throw new HttpException('The call is not from authentic caller', HttpStatus.FORBIDDEN);
+    }${shouldStore ? `
+    ${genStoreMethodBody(args)}` : ``}
+    return this.coreService.${callTypeName}<C>(call);
+`.trim();
+}
+
 export function genControllerCode(args: {
   typeDirname: string;
   typeFilename: string;
@@ -450,6 +514,7 @@ export function genControllerCode(args: {
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
+  callTypes: CallMeta[];
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;
@@ -463,6 +528,7 @@ export function genControllerCode(args: {
   asyncLogicProcessor: boolean;
   replayCommand: boolean;
   replayQuery: boolean;
+  storeCommand: boolean;
   storeQuery: boolean;
   timestampFieldName: string;
   injectTimestampField: boolean;
@@ -470,7 +536,6 @@ export function genControllerCode(args: {
   const {
     callsFilename,
     callTypeName,
-    queryTypeName,
     serviceClassName,
     serviceFilename,
     serviceApiPath,
@@ -482,7 +547,6 @@ export function genControllerCode(args: {
     statusFilename,
     ws,
     asyncLogicProcessor,
-    storeQuery,
     timestampFieldName,
     injectTimestampField,
   } = args;
@@ -540,28 +604,8 @@ export class ${controllerClassName} {${
 
   storeAndCall<C extends ${callTypeName}>({ call, from }: { call: CallInput<C>, from: 'server' | 'client' }): ${async_type(
     `C['Out']`,
-  )} {${(() => {
-    const checkInternalCall = `if (from !== 'server' && isInternalCall(call.Type)) {
-      throw new HttpException('The call is not from authentic caller', HttpStatus.FORBIDDEN);
-    }`;
-    const store = `this.logService.storeObjectSync(
-      call,
-      this.logService.nextKey() + '-' + call.CallType,
-    );`;
-    const call = `return this.coreService.${callTypeName}<C>(call);`;
-    if (storeQuery) {
-      return `
-    ${checkInternalCall}
-    ${store}
-    ${call}`;
-    }
-    return `
-    ${checkInternalCall}
-    if (call.CallType !== '${queryTypeName}') {
-    ${addIndentation(store, '  ')}
-    }
-    ${call}`;
-  })()}
+  )} {
+    ${genStoreAndCallMethodBody(args)}
   }
 
   @Post('${callApiPath}')

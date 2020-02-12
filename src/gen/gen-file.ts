@@ -169,6 +169,7 @@ async function genControllerFile(args: {
   typeFilename: string;
   callsFilename: string;
   callTypeName: string;
+  callTypes: CallMeta[];
   commandTypeName: string;
   queryTypeName: string;
   serviceClassName: string;
@@ -185,6 +186,7 @@ async function genControllerFile(args: {
   asyncLogicProcessor: boolean;
   replayCommand: boolean;
   replayQuery: boolean;
+  storeCommand: boolean;
   storeQuery: boolean;
   timestampFieldName: string;
   injectTimestampField: boolean;
@@ -938,6 +940,7 @@ export const defaultGenProjectArgs = {
   asyncLogicProcessor: false,
   replayCommand: true,
   replayQuery: false,
+  storeCommand: true,
   storeQuery: true,
   typeAlias: {},
   constants: {} as Constants,
@@ -995,6 +998,7 @@ export async function genProject(_args: {
   asyncLogicProcessor?: boolean;
   replayCommand?: boolean;
   replayQuery?: boolean;
+  storeCommand?: boolean;
   storeQuery?: boolean;
   typeAlias?: TypeAlias;
   constants?: Constants;
