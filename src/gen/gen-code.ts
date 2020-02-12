@@ -453,29 +453,21 @@ function genControllerInitMethod(args: {
   }
 `.trim();
 }
-
-function genStoreMethodBody(args: {
+function populateStoreMethodParam({
+  storeCommand,
+  storeQuery,
+  callTypes,
+  commandTypeName,
+  queryTypeName,
+  subscribeTypeName,
+}: {
   storeCommand: boolean;
   storeQuery: boolean;
   callTypes: CallMeta[];
   commandTypeName: string;
   queryTypeName: string;
   subscribeTypeName: string;
-}): string {
-  const {
-    storeCommand,
-    storeQuery,
-    callTypes,
-    commandTypeName,
-    queryTypeName,
-    subscribeTypeName,
-  } = args;
-  // prettier-ignore
-  const callStoreCode = `
-    this.logService.storeObjectSync(
-      call,
-      this.logService.nextKey() + '-' + call.CallType,
-    );`.trim();
+}) {
   const needStoreCommand =
     storeCommand && callTypes.some(call => call.CallType === commandTypeName);
   const hasQuery = callTypes.some(call => call.CallType === queryTypeName);
@@ -484,6 +476,36 @@ function genStoreMethodBody(args: {
   );
   const needStoreQuery = storeQuery && (hasQuery || hasSubscribe);
   const shouldStore = needStoreCommand || needStoreQuery;
+  return {
+    needStoreCommand,
+    needStoreQuery,
+    shouldStore,
+    hasQuery,
+    hasSubscribe,
+  };
+}
+function genStoreMethodBody(args: {
+  storeCommand: boolean;
+  storeQuery: boolean;
+  callTypes: CallMeta[];
+  commandTypeName: string;
+  queryTypeName: string;
+  subscribeTypeName: string;
+}): string {
+  const { commandTypeName, queryTypeName, subscribeTypeName } = args;
+  // prettier-ignore
+  const callStoreCode = `
+    this.logService.storeObjectSync(
+      call,
+      this.logService.nextKey() + '-' + call.CallType,
+    );`.trim();
+  const {
+    needStoreCommand,
+    needStoreQuery,
+    shouldStore,
+    hasQuery,
+    hasSubscribe,
+  } = populateStoreMethodParam(args);
   const isStoreAll = needStoreCommand && needStoreQuery;
   if (!shouldStore || isStoreAll) {
     return callStoreCode;
@@ -517,8 +539,8 @@ function genStoreAndCallMethodBody(args: {
   queryTypeName: string;
   subscribeTypeName: string;
 }): string {
-  const { storeCommand, storeQuery, callTypeName } = args;
-  const shouldStore = storeQuery || storeCommand;
+  const { callTypeName } = args;
+  const { shouldStore } = populateStoreMethodParam(args);
   // prettier-ignore
   return `
     if (from !== 'server' && isInternalCall(call.Type)) {
