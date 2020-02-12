@@ -273,6 +273,8 @@ function genInitSyncCode({
   callTypeName,
   commandTypeName,
   queryTypeName,
+  subscribeTypeName,
+  callTypes,
   replayCommand,
   replayQuery,
 }: {
@@ -282,6 +284,8 @@ function genInitSyncCode({
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
+  subscribeTypeName: string;
+  callTypes: CallMeta[];
   replayCommand: boolean;
   replayQuery: boolean;
 }): string {
@@ -291,7 +295,12 @@ function genInitSyncCode({
     replayCallTypes.push(commandTypeName);
   }
   if (replayQuery) {
-    replayCallTypes.push(queryTypeName);
+    if (callTypes.some(call => call.CallType === queryTypeName)) {
+      replayCallTypes.push(queryTypeName);
+    }
+    if (callTypes.some(call => call.CallType === subscribeTypeName)) {
+      replayCallTypes.push(subscribeTypeName);
+    }
   }
   // prettier-ignore
   return `
@@ -415,6 +424,8 @@ function genControllerInitMethod(args: {
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
+  subscribeTypeName: string;
+  callTypes: CallMeta[];
   replayCommand: boolean;
   replayQuery: boolean;
   controllerClassName: string;
