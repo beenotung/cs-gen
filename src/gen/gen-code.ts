@@ -905,7 +905,12 @@ export function genClientLibCode(args: {
         `/${typeDirname}`;
   const typeFilePath = `'${relativeDir}/${removeTsExtname(typeFilename)}'`;
   let code = `
-import { Body, Controller, injectNestClient, Post } from 'nest-client';
+import { Body, Controller, injectNestClient, Post } from 'nest-client';${
+    ws
+      ? `
+import { Primus } from 'typestub-primus';`
+      : ``
+  }
 import {
   ${[
     `${callTypeName} as CallType`,
@@ -918,12 +923,10 @@ import {
     .filter(s => s)
     .sort().join(`,
   `)},
-} from ${typeFilePath};
-${
-  !ws
-    ? ''
-    : `
-import { Primus } from 'typestub-primus';
+} from ${typeFilePath};${
+    !ws
+      ? ''
+      : `
 
 export interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;
@@ -939,8 +942,8 @@ export function usePrimus(f: (primus: IPrimus) => void): void {
   }
   pfs.push(f);
 }
-`.trim()
-}
+`
+  }
 
 let ${serviceObjectName}: ${serviceClassName};
 
