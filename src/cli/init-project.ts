@@ -5,6 +5,7 @@ import { CancelSubscribe } from '../helpers/gen-project-helpers';
 import { getIO } from './helpers';
 // @ts-ignore
 const mkdirp = require('async-mkdirp');
+
 async function ask(name: string, defaultAnswer: string): Promise<string> {
   const io = getIO();
   return new Promise<string>((resolve, reject) => {
@@ -30,7 +31,7 @@ async function initPackageJson(name: string) {
   };
   packageJson.dependencies = {
     ...packageJson.dependencies,
-    '@beenotung/tslib': '^14.35.0',
+    '@beenotung/tslib': '^' + require('@beenotung/tslib/package.json').version,
     'cqrs-exp': path.join(
       process.env.HOME!,
       'workspace',
@@ -48,6 +49,7 @@ async function initPackageJson(name: string) {
   };
   await writeFile('package.json', JSON.stringify(packageJson, null, 2));
 }
+
 const tslibDir = path.join(
   process.env.HOME!,
   'workspace',
@@ -55,11 +57,13 @@ const tslibDir = path.join(
   'beenotung',
   'tslib',
 );
+
 async function copyTslibFile(filename: string) {
   if (!(await hasFile(filename))) {
     await writeFile(filename, await readFile(path.join(tslibDir, filename)));
   }
 }
+
 async function initGitIgnore() {
   const lines = [
     'node_modules',
