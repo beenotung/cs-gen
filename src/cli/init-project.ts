@@ -40,6 +40,7 @@ async function initPackageJson(name: string) {
       'cqrs-exp',
     ),
     'gen-ts-type': '^1.3.1',
+    tslib: '^' + require('tslib/package.json').version,
   };
   packageJson.devDependencies = {
     ...packageJson.devDependencies,
