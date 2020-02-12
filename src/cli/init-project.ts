@@ -151,6 +151,7 @@ catchMain(genProject({
     queryTypes,
     subscribeTypes,
   }),
+  // ws: false,
   // web: true,
   serverOrigin: ${JSON.stringify(serverOrigin, null, 2)},
   typeAlias,
