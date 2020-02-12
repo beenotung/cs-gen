@@ -172,6 +172,7 @@ async function genControllerFile(args: {
   callTypes: CallMeta[];
   commandTypeName: string;
   queryTypeName: string;
+  subscribeTypeName: string;
   serviceClassName: string;
   serviceFilename: string;
   controllerClassName: string;

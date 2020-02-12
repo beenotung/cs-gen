@@ -449,6 +449,7 @@ function genStoreMethodBody(args: {
   callTypes: CallMeta[];
   commandTypeName: string;
   queryTypeName: string;
+  subscribeTypeName: string;
 }): string {
   const {
     storeCommand,
@@ -456,6 +457,7 @@ function genStoreMethodBody(args: {
     callTypes,
     commandTypeName,
     queryTypeName,
+    subscribeTypeName,
   } = args;
   // prettier-ignore
   const callStoreCode = `
@@ -465,8 +467,11 @@ function genStoreMethodBody(args: {
     );`.trim();
   const needStoreCommand =
     storeCommand && callTypes.some(call => call.CallType === commandTypeName);
-  const needStoreQuery =
-    storeQuery && callTypes.some(call => call.CallType === queryTypeName);
+  const hasQuery = callTypes.some(call => call.CallType === queryTypeName);
+  const hasSubscribe = callTypes.some(
+    call => call.CallType === subscribeTypeName,
+  );
+  const needStoreQuery = storeQuery && (hasQuery || hasSubscribe);
   const shouldStore = needStoreCommand || needStoreQuery;
   const isStoreAll = needStoreCommand && needStoreQuery;
   if (!shouldStore || isStoreAll) {
@@ -477,7 +482,12 @@ function genStoreMethodBody(args: {
     storeCallTypes.push(commandTypeName);
   }
   if (needStoreQuery) {
-    storeCallTypes.push(queryTypeName);
+    if (hasQuery) {
+      storeCallTypes.push(queryTypeName);
+    }
+    if (hasSubscribe) {
+      storeCallTypes.push(subscribeTypeName);
+    }
   }
   // prettier-ignore
   return `
@@ -494,6 +504,7 @@ function genStoreAndCallMethodBody(args: {
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
+  subscribeTypeName: string;
 }): string {
   const { storeCommand, storeQuery, callTypeName } = args;
   const shouldStore = storeQuery || storeCommand;
@@ -514,6 +525,7 @@ export function genControllerCode(args: {
   callTypeName: string;
   commandTypeName: string;
   queryTypeName: string;
+  subscribeTypeName: string;
   callTypes: CallMeta[];
   serviceClassName: string;
   serviceFilename: string;
