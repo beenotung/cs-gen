@@ -41,6 +41,7 @@ export function genAuthServiceMethod({
 }): string {
   const { Type } = call;
   if (
+    !call.OptionalAuth &&
     !call.Internal &&
     !auth.ExposeAttemptPrefix &&
     !startsWith(Type, auth.AttemptPrefix) &&
