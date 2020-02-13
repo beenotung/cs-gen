@@ -39,6 +39,10 @@ export function genAuthServiceMethod({
   invokeCode: string;
   subscribeTypeName: string;
 }): string {
+  const isRelatedToAuth = call.OptionalAuth || call.RequiredAuth;
+  if (!isRelatedToAuth) {
+    return invokeCode;
+  }
   const { Type } = call;
   if (
     !call.OptionalAuth &&
