@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Req, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { Bar } from 'cli-progress';
 import { Request, Response } from 'express-serve-static-core';
-import { ok, rest_return } from 'nestlib';
+import { bad_request, ok } from 'nestlib';
 import { ISpark } from 'typestub-primus';
 import { Call, CallInput } from '../domain/types';
 import { LogService } from '../lib/log.service';
@@ -19,8 +19,6 @@ import {
 import { CoreService } from './core.service';
 import { status } from './status';
 
-let ready: Promise<void>;
-
 @Controller('core')
 export class CoreController {
 
@@ -28,19 +26,17 @@ export class CoreController {
     public coreService: CoreService,
     public logService: LogService,
   ) {
-    ready = this.restore();
+    this.init();
   }
 
-  async restore() {
-    const start = Date.now();
-    console.log('start to restore');
-    // const keys = this.logService.getKeysSync();
-    const bar = new Bar({
-      format: 'restore progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
-    });
+  private initSync() {
     status.isReplay = true;
-    // bar.start(keys.length, 0);
-    // for (const key of keys) {
+    const start = Date.now();
+    console.log('start init sync');
+    const bar = new Bar({
+      format:
+        'init sync progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
+    });
     bar.start(0, 0);
     for (const { key, content, estimateTotal } of iterateSnapshot<
       CallInput<Call>
@@ -50,12 +46,13 @@ export class CoreController {
         bar.increment(1);
         continue;
       }
-      // const call = this.logService.getObjectSync<CallInput<Call>>(key);
       const call = content();
       if (call === null) {
+        console.warn('failed to load call from log:', key);
+        bar.increment(1);
         continue;
       }
-      if (call.CallType !== 'Command') {
+      if (call.CallType !== "Command") {
         bar.increment(1);
         continue;
       }
@@ -66,21 +63,22 @@ export class CoreController {
       }
       bar.increment(1);
     }
-    status.isReplay = false;
     bar.stop();
-    console.log('finished restore');
+    console.log('finished init sync');
     const end = Date.now();
     console.log('used:', (end - start) / 1000, 'seconds');
+  }
+
+  private usePrimus() {
     usePrimus(primus => {
       primus.on('connection', (_spark: ISpark) => {
         const spark: Spark = _spark as any;
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
-        spark.on('Call', (async (call: CallInput<Call>, ack: (data: any) => void) => {
+        spark.on('Call', ((call: CallInput<Call>, ack: (data: any) => void) => {
           call.In.Timestamp = Date.now();
           startSparkCall(spark, call);
           try {
-            await ready;
             let out = this.storeAndCall({ call, from: 'client' });
             ack(out);
           } catch (e) {
@@ -97,6 +95,13 @@ export class CoreController {
         }) as any);
       });
     });
+    console.log('connected primus to CoreController');
+  }
+
+  init() {
+    this.initSync();
+    status.isReplay = false;
+    this.usePrimus();
   }
 
   storeAndCall<C extends Call>({ call, from }: { call: CallInput<C>, from: 'server' | 'client' }): C['Out'] {
@@ -111,20 +116,20 @@ export class CoreController {
   }
 
   @Post('Call')
-  async Call<C extends Call>(
+  Call<C extends Call>(
     @Req() req: Request,
     @Res() res: Response,
     @Body() call: CallInput<C>,
-  ): Promise<C['Out']> {
+  ): C['Out'] {
     call.In.Timestamp = Date.now();
-    await ready;
     try {
       startRestCall(req, res, call);
       let out = this.storeAndCall<C>({ call, from: 'client' });
       ok(res, out);
       return out;
     } catch (e) {
-      return rest_return(res, Promise.reject(e));
+      bad_request(res, e);
+      return e;
     } finally {
       endRestCall(call);
     }

@@ -31,7 +31,7 @@
     "engine.io-client": "^3.3.2",
     "graceful-fs": "^4.1.15",
     "mkdirp-sync": "^0.0.3",
-    "nestlib": "^0.3.1",
+    "nestlib": "^0.5.1",
     "primus": "^7.3.3",
     "primus-emitter": "^3.1.1",
     "reflect-metadata": "^0.1.12",

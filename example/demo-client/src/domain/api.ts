@@ -1,4 +1,5 @@
 import { Body, Controller, injectNestClient, Post } from 'nest-client';
+import { Primus } from 'typestub-primus';
 import {
   Call as CallType,
   CallInput,
@@ -10,7 +11,6 @@ import {
   Subscribe as SubscribeType,
   SubscribeItems,
 } from './types';
-import { Primus } from 'typestub-primus';
 
 export interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;
@@ -26,6 +26,7 @@ export function usePrimus(f: (primus: IPrimus) => void): void {
   }
   pfs.push(f);
 }
+
 
 let coreService: CoreService;
 
@@ -46,13 +47,18 @@ export class CoreService {
 }
 
 export function startAPI(options: {
-  mode: 'local' | 'test' | 'prod',
+  localhost: string
+} | {
+  mode: 'local' | 'test' | 'prod'
 } | {
   baseUrl: string
 }) {
   const baseUrl: string = (() => {
     if ('baseUrl' in options) {
       return options.baseUrl
+    }
+    if ('localhost' in options) {
+      return `http://${options.localhost}:3000`;
     }
     switch (options.mode) {
       case 'local':
