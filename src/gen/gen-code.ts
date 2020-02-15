@@ -376,15 +376,15 @@ function genUsePrimusCode({
         const spark: Spark = _spark as any;
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
-        spark.on('${callApiPath}', (async (call: CallInput<${callTypeName}>, ack: (data: any) => void) => {${
+        spark.on('${callApiPath}', (${asyncLogicProcessor ? `async ` : ''}(call: CallInput<${callTypeName}>, ack: (data: any) => void) => {${
     injectTimestampField
       ? `
           call.In.${timestampFieldName} = Date.now();`
       : ``
   }
           startSparkCall(spark, call);
-          try {
-            await ready;
+          try {${asyncLogicProcessor ? `
+            await ready;` : ''}
             let out = this.storeAndCall({ call, from: 'client' });${
     !asyncLogicProcessor
       ? ''
@@ -446,13 +446,14 @@ function genControllerInitMethod(args: {
   return `
   ${needInitSync ? genInitSyncCode(args) + '\n' : ''}
   ${ws ? genUsePrimusCode(args) + '\n' : ''}
-  async init() {${needInitSync ? `
+  ${asyncLogicProcessor ? 'async ' : ''}init() {${needInitSync ? `
     ${asyncLogicProcessor ? `await ` : ''}this.initSync();` : ``}
     ${statusName}.isReplay = false;${ws ? `
     this.usePrimus();` : ``}
   }
 `.trim();
 }
+
 function populateStoreMethodParam({
   storeCommand,
   storeQuery,
@@ -484,6 +485,7 @@ function populateStoreMethodParam({
     hasSubscribe,
   };
 }
+
 function genStoreMethodBody(args: {
   storeCommand: boolean;
   storeQuery: boolean;
@@ -604,7 +606,7 @@ export function genControllerCode(args: {
 import { Body, Controller, Post, Req, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { Bar } from 'cli-progress';
 import { Request, Response } from 'express-serve-static-core';
-import { ok, rest_return } from 'nestlib';${ws ? `
+import { bad_request, ok } from 'nestlib';${ws ? `
 import { ISpark } from 'typestub-primus';` : ''}
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
@@ -622,9 +624,9 @@ import {
 } from './connection';` : ''}
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { ${statusName} } from './${removeTsExtname(statusFilename)}';
-
+${asyncLogicProcessor ? `
 let ready: Promise<void>;
-
+` : ''}
 @Controller('${serviceApiPath}')
 export class ${controllerClassName} {${
     !staticControllerReference
@@ -642,7 +644,7 @@ export class ${controllerClassName} {${
       : `
     ${controllerClassName}.instance = this;`
   }
-    ready = this.init();
+    ${asyncLogicProcessor ? `ready = ` : ''}this.init();
   }
 
   ${genControllerInitMethod(args)}
@@ -654,17 +656,17 @@ export class ${controllerClassName} {${
   }
 
   @Post('${callApiPath}')
-  async ${callApiPath}<C extends ${callTypeName}>(
+  ${asyncLogicProcessor ? `async ` : ''}${callApiPath}<C extends ${callTypeName}>(
     @Req() req: Request,
     @Res() res: Response,
     @Body() call: CallInput<C>,
-  ): Promise<C['Out']> {${
+  ): ${asyncLogicProcessor ? `Promise<` : ''}C['Out']${asyncLogicProcessor ? `>` : ''} {${
     injectTimestampField
       ? `
     call.In.${timestampFieldName} = Date.now();`
       : ``
-  }
-    await ready;
+  }${asyncLogicProcessor ? `
+    await ready;` : ''}
     try {
       startRestCall(req, res, call);
       let out = this.storeAndCall<C>({ call, from: 'client' });${
@@ -678,7 +680,8 @@ export class ${controllerClassName} {${
       ok(res, out);
       return out;
     } catch (e) {
-      return rest_return(res, Promise.reject(e));
+      bad_request(res, e);
+      return e;
     } finally {
       endRestCall(call);
     }
