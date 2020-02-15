@@ -471,13 +471,19 @@ async function setTsconfig(args: {
   await copyFile(path.join(tslib_dirname, filename), destFile);
 }
 
-async function setServerTsconfig(args: { projectDirname: string }) {
-  const { projectDirname } = args;
+async function setServerTsconfig(args: {
+  projectDirname: string;
+  web: boolean;
+}) {
+  const { projectDirname, web } = args;
   for (let filename of ['tsconfig.json', 'tsconfig.build.json']) {
     filename = path.join(projectDirname, filename);
     const tsconfig = JSON.parse((await readFile(filename)).toString());
     tsconfig.exclude = tsconfig.exclude || [];
     tsconfig.exclude.push('scripts');
+    if (web) {
+      tsconfig.exclude.push('www');
+    }
     tsconfig.exclude = unique(tsconfig.exclude);
     await writeFile(filename, JSON.stringify(tsconfig, null, 2));
   }
