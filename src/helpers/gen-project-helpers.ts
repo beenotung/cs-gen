@@ -171,6 +171,7 @@ function authCall(
       Admin,
       Internal: false,
       OptionalAuth,
+      RequiredAuth: !authConfig.ExposeAttemptPrefix && !OptionalAuth,
     });
   }
 }
