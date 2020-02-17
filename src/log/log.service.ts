@@ -11,10 +11,19 @@ const writeFile: typeof fs.writeFile.__promisify__ = util.promisify(
 );
 const readFile: typeof fs.readFile.__promisify__ = util.promisify(fs.readFile);
 
-function fixFS() {
+function patchFS() {
   const realFs = require('fs');
   const gracefulFs = require('graceful-fs');
   gracefulFs.gracefulify(realFs);
+}
+
+function patchError() {
+  Object.assign(Error.prototype, {
+    toJSON() {
+      // tslint:disable-next-line no-invalid-this
+      return this.toString();
+    },
+  });
 }
 
 @Injectable()
@@ -26,7 +35,8 @@ export class LogService {
   // private fsPool = new NonVoidResultPool(8000);
 
   constructor(private dataDirname: string) {
-    fixFS();
+    patchFS();
+    patchError();
     mkdirp(dataDirname);
     // this.store = CachedObjectStore.create(dataDirname);
     // this.store = Store.create(getLocalStorage(dataDirname));

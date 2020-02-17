@@ -17,10 +17,6 @@ export class Db {
   connectionOptions: r.ConnectionOptions;
   cursorSessions = new Map<r.Cursor, boolean>();
 
-  get db(): string {
-    return this.connectionOptions.db || 'test';
-  }
-
   constructor(args: { connectionOptions: r.ConnectionOptions }) {
     const { connectionOptions } = args;
     this.connectionOptions = connectionOptions;
@@ -32,6 +28,10 @@ export class Db {
       }
       return conn;
     });
+  }
+
+  get db(): string {
+    return this.connectionOptions.db || 'test';
   }
 
   /**
