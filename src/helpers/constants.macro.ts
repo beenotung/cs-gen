@@ -20,6 +20,7 @@ let trues = extract(`
 Admin
 Internal
 OptionalAuth
+RequiredAuth
 `);
 `${trues.map(name => `export const ${name} = true;`).join('\n')}
 /** @deprecated use Admin or Internal flag instead */
