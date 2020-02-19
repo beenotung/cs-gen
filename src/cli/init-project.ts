@@ -125,6 +125,8 @@ def({ app_id });
 authConfig.AppId = app_id;
 // authConfig.ExposeAttemptPrefix = true; // for legacy API
 
+let { type, typeArray } = alias({});
+
 if ('enableSubscription') {
   commandTypes.push(${objectToQuoteString(CancelSubscribe)});
 }
