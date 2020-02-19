@@ -32,6 +32,7 @@ export function makeSnapshot(log: LogService) {
     if (batch.length === 1 && batch[0][0].endsWith(suffixPattern)) {
       batch = [];
       batchKeys = [];
+      size = 0;
       return;
     }
     const key = LogService.makeKey({
@@ -48,6 +49,7 @@ export function makeSnapshot(log: LogService) {
       bar.increment(1);
     }
     batchKeys = [];
+    size = 0;
   }
 
   for (const key of keys) {
@@ -62,12 +64,12 @@ export function makeSnapshot(log: LogService) {
     }
     // this object can be patched into snapshot
     if (batch.length === 0) {
-      // first object
+      // first object, extract timestamp and acc for snapshot filename
       const ss = key.split(LogService.keySeparator);
       timestamp = +ss[0];
       acc = +ss[1];
-      size += objectSize;
     }
+    size += objectSize;
     batch.push([key, bin.toString()]);
     batchKeys.push(key);
   }
