@@ -22,7 +22,7 @@
     "typestub-primus": "^1.0.0"
   },
   "dependencies": {
-    "nest-client": "^0.5.4",
+    "nest-client": "^0.5.5",
     "typestub-primus": "^1.0.0"
   }
 }

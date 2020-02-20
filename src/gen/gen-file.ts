@@ -583,7 +583,7 @@ async function setServerPackage(args: {
   // for generator in snapshot.ts
   devDep.typescript = '^3.7.2';
   if (injectNestClient) {
-    dep['nest-client'] = '^0.5.4';
+    dep['nest-client'] = '^0.5.5';
   }
   if (ws) {
     dep['typestub-primus'] = '^1.1.3';
@@ -617,7 +617,7 @@ async function setClientPackage(args: {
   setPackageJson({ ...args, packageJson: json });
   const dep = json[dependencies] || {};
   const devDep = json[devDependencies] || {};
-  dep['nest-client'] = '^0.5.4';
+  dep['nest-client'] = '^0.5.5';
   if (ws) {
     dep['typestub-primus'] = '^1.0.0';
   }
