@@ -51,6 +51,21 @@ export function def(_constants: Constants) {
   return { ref };
 }
 
+/**
+ * example:
+ *  let reasons: {
+ *    PostNotFound: '',
+ *    UserNotFound: '',
+ *  }
+ *  defEnumString(reasons);
+ *
+ *  this will define each key as constant
+ * */
+export function defEnumString(enumObject: Record<string, string>) {
+  Object.keys(enumObject).forEach(s => (enumObject[s] = s));
+  def(enumObject);
+}
+
 export let commandTypes: PartialCallMeta[] = [];
 export let queryTypes: PartialCallMeta[] = [];
 export let subscribeTypes: PartialCallMeta[] = [];
