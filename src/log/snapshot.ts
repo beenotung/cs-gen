@@ -1,7 +1,7 @@
 import { Bar } from 'cli-progress';
 import { LogService } from './log.service';
 // [key, content]
-type batch = Array<[string, string]>;
+export type batch = Array<[string, string]>;
 export type Snapshot = {
   key: string;
   size: number;
@@ -169,24 +169,28 @@ export function countSnapshot(log: LogService): number {
 }
 
 export function deduplicateSnapshot(log: LogService) {
-  const snapshotKeys = new Set<string>();
+  const batchedKeys = new Set<string>();
   const keys = log.getKeysSync();
   const bar = new Bar({
     format:
       'deduplicateSnapshot progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
   });
   bar.start(keys.length * 2, 0);
-  for (const key of keys) {
-    if (key.endsWith(suffixPattern)) {
-      const batch = log.getObjectSync<batch>(key);
+  for (const filename of keys) {
+    if (filename.endsWith(suffixPattern)) {
+      const batch = log.getObjectSync<batch>(filename);
       if (batch) {
-        batch.forEach(([key]) => snapshotKeys.add(key));
+        batch.forEach(([key]) => {
+          if (key !== filename) {
+            batchedKeys.add(key);
+          }
+        });
       }
     }
     bar.increment(1);
   }
   for (const key of keys) {
-    if (snapshotKeys.has(key)) {
+    if (batchedKeys.has(key)) {
       log.removeObjectSync(key);
     }
     bar.increment(1);
