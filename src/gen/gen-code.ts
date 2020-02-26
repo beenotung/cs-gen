@@ -376,15 +376,11 @@ function genUsePrimusCode({
         const spark: Spark = _spark as any;
         newConnection(spark);
         spark.on('end', () => closeConnection(spark));
-        spark.on('${callApiPath}', (${asyncLogicProcessor ? `async ` : ''}(call: CallInput<${callTypeName}>, ack: (data: any) => void) => {${
-    injectTimestampField
-      ? `
-          call.In.${timestampFieldName} = Date.now();`
-      : ``
-  }
-          startSparkCall(spark, call);
+        spark.on('${callApiPath}', (${asyncLogicProcessor ? `async ` : ''}(call: CallInput<${callTypeName}>, ack: (data: any) => void) => {
           try {${asyncLogicProcessor ? `
-            await ready;` : ''}
+            await ready;` : ''}${injectTimestampField ? `
+            call.In.${timestampFieldName} = Date.now();` : ''}
+            startSparkCall(spark, call);
             let out = this.storeAndCall({ call, from: 'client' });${
     !asyncLogicProcessor
       ? ''
@@ -660,14 +656,10 @@ export class ${controllerClassName} {${
     @Req() req: Request,
     @Res() res: Response,
     @Body() call: CallInput<C>,
-  ): ${asyncLogicProcessor ? `Promise<` : ''}C['Out']${asyncLogicProcessor ? `>` : ''} {${
-    injectTimestampField
-      ? `
-    call.In.${timestampFieldName} = Date.now();`
-      : ``
-  }${asyncLogicProcessor ? `
-    await ready;` : ''}
-    try {
+  ): ${asyncLogicProcessor ? `Promise<` : ''}C['Out']${asyncLogicProcessor ? `>` : ''} {
+    try {${asyncLogicProcessor ? `
+      await ready;` : ``}${injectTimestampField ? `
+      call.In.${timestampFieldName} = Date.now();` : ''}
       startRestCall(req, res, call);
       let out = this.storeAndCall<C>({ call, from: 'client' });${
     !asyncLogicProcessor
