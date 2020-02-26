@@ -39,7 +39,7 @@ async function initPackageJson(name: string) {
       'beenotung',
       'cqrs-exp',
     ),
-    'gen-ts-type': '^1.3.1',
+    'gen-ts-type': '^1.6.1',
     tslib: '^' + require('tslib/package.json').version,
   };
   packageJson.devDependencies = {
