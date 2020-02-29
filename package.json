@@ -20,7 +20,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "postformat": "tslint -p . --fix",
     "prebuild": "npm run clean && tsc-macro",
-    "build": "tsc",
+    "build": "ctsc",
     "pretest": "npm run format && npm run build",
     "rawtest": "ts-node test/index.ts",
     "prepublishOnly": "npm run rawtest && npm run build"
@@ -60,6 +60,7 @@
     "@types/graceful-fs": "^4.1.3",
     "@types/node": "^8.10.59",
     "@types/rethinkdb": "^2.3.14",
+    "ctsc": "^1.1.0",
     "husky": "^2.7.0",
     "prettier": "^1.19.1",
     "rimraf": "^2.7.1",

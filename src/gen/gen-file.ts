@@ -480,12 +480,19 @@ async function setServerTsconfig(args: {
   for (let filename of ['tsconfig.json', 'tsconfig.build.json']) {
     filename = path.join(projectDirname, filename);
     const tsconfig = JSON.parse((await readFile(filename)).toString());
-    tsconfig.exclude = tsconfig.exclude || [];
-    tsconfig.exclude.push('scripts');
+
+    const exclude = tsconfig.exclude || [];
+    exclude.push('scripts');
     if (web) {
-      tsconfig.exclude.push('www');
+      exclude.push('www');
     }
-    tsconfig.exclude = unique(tsconfig.exclude);
+    tsconfig.exclude = unique(exclude);
+
+    // for ctsc
+    const include = tsconfig.include || [];
+    include.push('src/main.ts');
+    tsconfig.include = unique(include);
+
     await writeFile(filename, JSON.stringify(tsconfig, null, 2));
   }
 }
@@ -558,13 +565,20 @@ function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
 }
 
 async function setServerPackage(args: {
+  baseProjectName: string;
   serverProjectDirname: string;
   ws: boolean;
   web: boolean;
   injectFormat: boolean;
   injectNestClient: boolean;
 }) {
-  const { serverProjectDirname, ws, web, injectNestClient } = args;
+  const {
+    baseProjectName,
+    serverProjectDirname,
+    ws,
+    web,
+    injectNestClient,
+  } = args;
   const filename = path.join(serverProjectDirname, 'package.json');
   const bin = await readFile(filename);
   const text = bin.toString();
@@ -583,6 +597,12 @@ async function setServerPackage(args: {
   dep['mkdirp-sync'] = '^0.0.3';
   // for generator in snapshot.ts
   devDep.typescript = '^3.7.2';
+
+  // for quick compilation
+  devDep.ctsc = '^1.1.0';
+  json.scripts.pm2 = `pm2 restart ${baseProjectName} || pm2 start --name ${baseProjectName} dist/main.js`;
+  json.scripts.serve = 'ctsc && npm run pm2';
+
   if (injectNestClient) {
     dep['nest-client'] = '^0.5.5';
   }
