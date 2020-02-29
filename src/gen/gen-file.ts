@@ -353,6 +353,7 @@ async function updateGitIgnore(args: { projectDirname: string }) {
   }
 
   add('data/log/');
+  add('data/log_*/');
   text = lines.join('\n');
   await writeFile(filePath, text);
 }
