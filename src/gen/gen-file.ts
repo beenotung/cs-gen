@@ -337,8 +337,8 @@ async function updateMainFile(args: {
 }
 
 // only use for server
-async function updateGitIgnore(args: { projectDirname: string }) {
-  const { projectDirname } = args;
+async function updateGitIgnore(args: { projectDirname: string; web: boolean }) {
+  const { projectDirname, web } = args;
   const filePath = path.join(projectDirname, '.gitignore');
   let text = (await readFile(filePath)).toString();
   const lines = text.split('\n').filter(s => s !== '/.idea');
@@ -352,6 +352,9 @@ async function updateGitIgnore(args: { projectDirname: string }) {
 
   add('data/log/');
   add('data/log_*/');
+  if (web) {
+    add('www/');
+  }
   text = lines.join('\n');
   await writeFile(filePath, text);
 }
