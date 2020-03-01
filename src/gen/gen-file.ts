@@ -489,11 +489,7 @@ async function setServerTsconfig(args: {
     filename = path.join(projectDirname, filename);
     const tsconfig = JSON.parse((await readFile(filename)).toString());
 
-    insert(tsconfig, 'exclude', [
-      'scripts',
-      '**/*spec.ts',
-      '**/*.macro.ts',
-    ]);
+    insert(tsconfig, 'exclude', ['scripts', '**/*spec.ts', '**/*.macro.ts']);
     if (web) {
       insert(tsconfig, 'exclude', ['www']);
     }
