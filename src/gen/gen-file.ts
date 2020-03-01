@@ -1124,7 +1124,7 @@ export async function genProject(_args: {
       ...args,
     }),
     updateMainFile({ ...args, projectDirname: serverProjectDirname, port }),
-    updateGitIgnore({ projectDirname: serverProjectDirname }),
+    updateGitIgnore({ ...args, projectDirname: serverProjectDirname }),
     genTypeFile({
       ...args,
       projectDirname: serverProjectDirname,
