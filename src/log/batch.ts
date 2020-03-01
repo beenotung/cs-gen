@@ -195,7 +195,9 @@ export function deduplicateBatch(log: LogService) {
   bar = createBar('delete duplicate keys');
   bar.start(standaloneKeys.size, 0);
   for (const key of standaloneKeys) {
-    log.removeObjectSync(key);
+    if (batchedKeys.has(key)) {
+      log.removeObjectSync(key);
+    }
     bar.increment(1);
   }
   bar.stop();
