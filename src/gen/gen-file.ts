@@ -607,7 +607,7 @@ async function setServerPackage(args: {
   devDep.ctsc = '^1.1.0';
   const build = 'ctsc';
   if (json.scripts.build && json.scripts.build !== build) {
-    json.scripts['build:nest'] = json.scripts.build;
+    json.scripts['build:nest'] = 'npm run prebuild && ' + json.scripts.build;
   }
   json.scripts.build = build;
   json.scripts.pm2 = `pm2 restart ${baseProjectName} || pm2 start --name ${baseProjectName} dist/main.js`;
