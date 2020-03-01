@@ -35,17 +35,20 @@ export function makeSnapshot(log: LogService) {
       size = 0;
       return;
     }
-    const key = LogService.makeKey({
+    const batchKey = LogService.makeKey({
       timestamp,
       acc,
       suffix,
     });
-    log.storeObjectSync(batch, key);
+    log.storeObjectSync(batch, batchKey);
     batch = [];
     // tslint:disable-next-line:prefer-for-of
     for (let i = 0; i < batchKeys.length; i++) {
       const key = batchKeys[i];
-      log.removeObjectSync(key);
+      // avoid deleting the batch itself when appending
+      if (key !== batchKey) {
+        log.removeObjectSync(key);
+      }
       bar.increment(1);
     }
     batchKeys = [];
