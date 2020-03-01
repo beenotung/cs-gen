@@ -251,7 +251,9 @@ export type CallMeta = {
   RequiredAuth?: boolean;
 };
 
+// tslint:disable max-line-length
 export const calls: CallMeta[] = ${callsToQuoteString(callTypes)};
+// tslint:enable max-line-length
 
 export function isInternalCall(Type: ${callTypeName}['Type']): boolean {
   const call = calls.find(call => call.Type === Type)
