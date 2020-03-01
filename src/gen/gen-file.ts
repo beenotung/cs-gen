@@ -473,6 +473,13 @@ async function setTsconfig(args: {
   await copyFile(path.join(tslib_dirname, filename), destFile);
 }
 
+function insert(o: object, key: string, values: any[]) {
+  let array = (o as any)[key] || [];
+  array = array.concat(values);
+  array = unique(array);
+  (o as any)[key] = array;
+}
+
 async function setServerTsconfig(args: {
   projectDirname: string;
   web: boolean;
@@ -482,17 +489,16 @@ async function setServerTsconfig(args: {
     filename = path.join(projectDirname, filename);
     const tsconfig = JSON.parse((await readFile(filename)).toString());
 
-    const exclude = tsconfig.exclude || [];
-    exclude.push('scripts');
+    insert(tsconfig, 'exclude', [
+      'scripts',
+      'src/**/*spec.ts',
+      'src/**/*.macro.ts',
+    ]);
     if (web) {
-      exclude.push('www');
+      insert(tsconfig, 'exclude', ['www']);
     }
-    tsconfig.exclude = unique(exclude);
 
-    // for ctsc
-    const include = tsconfig.include || [];
-    include.push('src/main.ts');
-    tsconfig.include = unique(include);
+    insert(tsconfig, 'include', ['src']);
 
     await writeFile(filename, JSON.stringify(tsconfig, null, 2));
   }
@@ -603,8 +609,14 @@ async function setServerPackage(args: {
 
   // for quick compilation
   devDep.ctsc = '^1.1.0';
+  const build = 'ctsc';
+  if (json.scripts.build || json.scripts.build !== build) {
+    json.scripts['build:nest'] = json.scripts.build;
+  }
+  json.scripts.build = build;
   json.scripts.pm2 = `pm2 restart ${baseProjectName} || pm2 start --name ${baseProjectName} dist/main.js`;
-  json.scripts.serve = 'ctsc && npm run pm2';
+  json.scripts.preserve = 'npm run build';
+  json.scripts.serve = 'npm run pm2';
 
   if (injectNestClient) {
     dep['nest-client'] = '^0.5.5';
