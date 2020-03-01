@@ -491,8 +491,8 @@ async function setServerTsconfig(args: {
 
     insert(tsconfig, 'exclude', [
       'scripts',
-      'src/**/*spec.ts',
-      'src/**/*.macro.ts',
+      '**/*spec.ts',
+      '**/*.macro.ts',
     ]);
     if (web) {
       insert(tsconfig, 'exclude', ['www']);
