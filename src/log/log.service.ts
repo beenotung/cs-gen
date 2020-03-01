@@ -26,6 +26,32 @@ function patchError() {
   });
 }
 
+// inline @beenotung/tslib/string.compare_string
+export function compareKeys(a: string, b: string): 1 | 0 | -1 {
+  const as = a.split('-');
+  const bs = b.split('-');
+  const an = as.length;
+  const bn = bs.length;
+  const n = Math.min(an, bn);
+  for (let i = 0; i < n; i++) {
+    const a = as[i];
+    const b = bs[i];
+    if (a < b) {
+      return -1;
+    }
+    if (a > b) {
+      return 1;
+    }
+  }
+  if (an < bn) {
+    return -1;
+  }
+  if (an > bn) {
+    return 1;
+  }
+  return 0;
+}
+
 @Injectable()
 export class LogService {
   static readonly keySeparator = '-';
@@ -74,8 +100,15 @@ export class LogService {
   /**
    * key cannot contains dot '.'
    * */
+  storeStringSync(value: string, key: string): void {
+    fs.writeFileSync(this.keyToPath(key), value);
+  }
+
+  /**
+   * key cannot contains dot '.'
+   * */
   storeObjectSync(value: any, key: string): void {
-    fs.writeFileSync(this.keyToPath(key), JSON.stringify(value));
+    return this.storeStringSync(JSON.stringify(value), key);
   }
 
   /**
@@ -99,6 +132,10 @@ export class LogService {
 
   getBinSync(key: string): Buffer {
     return fs.readFileSync(this.keyToPath(key));
+  }
+
+  getBinSizeSync(key: string): number {
+    return fs.statSync(this.keyToPath(key)).size;
   }
 
   async getObject<T>(key: string): Promise<T | null> {
@@ -131,32 +168,8 @@ export class LogService {
     return path.join(this.dataDirname, key);
   }
 
-  // inline @beenotung/tslib/string.compare_string
   private sortKeys(ss: string[]): string[] {
-    return ss.sort((a, b) => {
-      const as = a.split('-');
-      const bs = b.split('-');
-      const an = as.length;
-      const bn = bs.length;
-      const n = Math.min(an, bn);
-      for (let i = 0; i < n; i++) {
-        const a = as[i];
-        const b = bs[i];
-        if (a < b) {
-          return -1;
-        }
-        if (a > b) {
-          return 1;
-        }
-      }
-      if (an < bn) {
-        return -1;
-      }
-      if (an > bn) {
-        return 1;
-      }
-      return 0;
-    });
+    return ss.sort(compareKeys);
   }
 
   static makeKey(args: {

@@ -2,7 +2,9 @@ import { unique } from '@beenotung/tslib/array';
 import { exec } from '@beenotung/tslib/child_process';
 import {
   copyFile,
+  exists,
   hasFile,
+  readdir,
   readFile,
   writeFile as _writeFile,
 } from '@beenotung/tslib/fs';
@@ -16,13 +18,11 @@ import {
   genClientLibCode,
   genConnectionCode,
   genControllerCode,
-  genDeduplicateSnapshotCode,
   genDocumentationHtmlCode,
   genMainCode,
   genModuleCode,
   GenProjectPlugins,
   genServiceCode,
-  genSnapshotCallCode,
   genStatusCode,
 } from './gen-code';
 
@@ -32,6 +32,7 @@ async function writeFile(filename: string, code: string) {
   await _writeFile(filename, code);
 }
 
+// tslint:disable-next-line no-unused-declaration
 async function writeBinFile(filename: string, code: string) {
   code = code.trim();
   code += '\n';
@@ -215,10 +216,7 @@ async function injectServerLibFiles(args: {
       path.join(src, 'log', 'log.service.ts'),
       path.join(dest, 'log.service.ts'),
     ),
-    copyFile(
-      path.join(src, 'log', 'snapshot.ts'),
-      path.join(dest, 'snapshot.ts'),
-    ),
+    copyFile(path.join(src, 'log', 'batch.ts'), path.join(dest, 'batch.ts')),
     readFile(path.join(src, 'utils.ts')).then(bin => {
       const blocks = bin
         .toString()
@@ -500,25 +498,27 @@ async function setServerTsconfig(args: {
 async function setServerScripts(args: {
   projectDirname: string;
   libDirname: string;
-  omits: Array<'snapshot'>;
 }) {
-  const { projectDirname, omits } = args;
-  const dirname = path.join(projectDirname, 'scripts');
-  await mkdirp(dirname);
-  const ps: Array<Promise<any>> = [];
-  if (!omits.includes('snapshot')) {
-    ps.push(
-      writeBinFile(
-        path.join(dirname, 'snapshot-calls.ts'),
-        genSnapshotCallCode(args),
-      ),
-      writeBinFile(
-        path.join(dirname, 'deduplicate-snapshots.ts'),
-        genDeduplicateSnapshotCode(args),
-      ),
-    );
-  }
-  await Promise.all(ps);
+  const { projectDirname } = args;
+  const destDir = path.join(projectDirname, 'scripts');
+  const srcDir = path.join(
+    __dirname, // gen
+    '..', // src
+    '..', // root
+    'inject-files',
+    'scripts',
+  );
+  const [filenames] = await Promise.all([readdir(srcDir), mkdirp(destDir)]);
+  await Promise.all(
+    filenames.map(async filename => {
+      const dest = path.join(destDir, filename);
+      if (await exists(dest)) {
+        return;
+      }
+      const src = path.join(srcDir, filename);
+      await copyFile(src, dest);
+    }),
+  );
 }
 
 const dependencies: 'dependencies' = 'dependencies';
@@ -586,7 +586,7 @@ async function setServerPackage(args: {
   setPackageJson({ ...args, packageJson: json });
   const dep = json[dependencies] || {};
   const devDep = json[devDependencies] || {};
-  // for core controller and snapshot.ts
+  // for core controller and batch.ts
   dep['cli-progress'] = '^2.1.1';
   dep.nestlib = '^0.5.1';
   dep['engine.io'] = '^3.3.2';
@@ -595,7 +595,7 @@ async function setServerPackage(args: {
   dep['graceful-fs'] = '^4.1.15';
   devDep['@types/graceful-fs'] = '^4.1.3';
   dep['mkdirp-sync'] = '^0.0.3';
-  // for generator in snapshot.ts
+  // for generator in batch.ts
   devDep.typescript = '^3.7.2';
 
   // for quick compilation
@@ -973,7 +973,6 @@ export const defaultGenProjectArgs = {
   typeAlias: {},
   constants: {} as Constants,
   plugins: {} as GenProjectPlugins,
-  omits: [],
 };
 
 export async function genProject(_args: {
@@ -1031,7 +1030,6 @@ export async function genProject(_args: {
   typeAlias?: TypeAlias;
   constants?: Constants;
   plugins?: GenProjectPlugins;
-  omits?: Array<'snapshot'>;
 }) {
   const __args = {
     ...defaultGenProjectArgs,

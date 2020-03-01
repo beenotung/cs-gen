@@ -313,15 +313,12 @@ function genInitSyncCode({
         'init sync progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}',
     });
     bar.start(0, 0);
-    for (const { key, content, estimateTotal } of iterateSnapshot<
-      CallInput<Call>
-    >(this.logService)) {
+    for (const { key, content: call, estimateTotal } of iterateBatch<CallInput<Call>>(this.logService)) {
       bar.setTotal(estimateTotal);
       if (${replayCallTypes.map(CallType => `!key.endsWith('-${CallType}')`).join(' && ')}) {
         bar.increment(1);
         continue;
       }
-      const call = content();
       if (call === null) {
         console.warn('failed to load call from log:', key);
         bar.increment(1);
@@ -608,7 +605,7 @@ import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
 import { isInternalCall } from './${removeTsExtname(callsFilename)}';
-import { iterateSnapshot } from '../lib/snapshot';${ws ? `
+import { iterateBatch } from '../lib/batch';${ws ? `
 import { usePrimus } from '../main';` : ''}
 import { endRestCall, startRestCall } from './connection';${ws ? `
 import {
@@ -1402,37 +1399,5 @@ window.onhashchange=function(){
 </script>
 </body>
 </html>
-`.trim();
-}
-
-export function genSnapshotCallCode(args: { libDirname: string }) {
-  const { libDirname } = args;
-  // prettier-ignore
-  return `
-#!/usr/bin/env ts-node
-import * as path from 'path';
-import { LogService } from '../src/${libDirname}/log.service';
-import { makeSnapshot } from '../src/${libDirname}/snapshot';
-
-let log = new LogService(path.join('data', 'log'));
-console.log('begin make snapshot');
-makeSnapshot(log);
-console.log('finished make snapshot');
-`.trim();
-}
-
-export function genDeduplicateSnapshotCode(args: { libDirname: string }) {
-  const { libDirname } = args;
-  // prettier-ignore
-  return `
-#!/usr/bin/env ts-node
-import * as path from 'path';
-import { LogService } from '../src/${libDirname}/log.service';
-import { deduplicateSnapshot } from '../src/${libDirname}/snapshot';
-
-let log = new LogService(path.join('data', 'log'));
-console.log('begin deduplicate snapshot');
-deduplicateSnapshot(log);
-console.log('finished deduplicate snapshot');
 `.trim();
 }
