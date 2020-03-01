@@ -610,7 +610,7 @@ async function setServerPackage(args: {
   // for quick compilation
   devDep.ctsc = '^1.1.0';
   const build = 'ctsc';
-  if (json.scripts.build || json.scripts.build !== build) {
+  if (json.scripts.build && json.scripts.build !== build) {
     json.scripts['build:nest'] = json.scripts.build;
   }
   json.scripts.build = build;
