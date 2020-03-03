@@ -948,15 +948,14 @@ export interface IPrimus extends Primus {
   send(command: string, data: any, cb?: (data: any) => void): void;
 }
 
-let primus: IPrimus;
-let pfs: Array<(primus: IPrimus) => void> = [];
+let resolvePrimus: (primus: IPrimus) => void;
+export let primusPromise = new Promise<IPrimus>(resolve => {
+  resolvePrimus = resolve;
+});
 
+/**@deprecated use primusPromise instead */
 export function usePrimus(f: (primus: IPrimus) => void): void {
-  if (primus) {
-    f(primus);
-    return;
-  }
-  pfs.push(f);
+  primusPromise.then(f);
 }
 `
   }
@@ -1012,10 +1011,7 @@ export function startAPI(options: {
     return;
   }
   const w = window as any;
-  primus = new w.${primusGlobalName}(baseUrl);
-
-  pfs.forEach(f => f(primus));
-  pfs = [];
+  const primus: IPrimus = new w.${primusGlobalName}(baseUrl);
 
   primus.on('close', () => {
     console.log('disconnected with server');
@@ -1023,6 +1019,8 @@ export function startAPI(options: {
   primus.on('open', () => {
     console.log('connected with server');
   });
+
+  resolvePrimus(primus);
 
   return primus;
   `.trim()
@@ -1049,7 +1047,7 @@ export function ${callTypeName}<C extends CallType>(
     return ${serviceObjectName}.${callApiPath}<C>(callInput);
   }
   return new Promise((resolve, reject) => {
-    usePrimus(primus => {
+    primusPromise.then(primus => {
       primus.send('Call', callInput, data => {
         if ('error' in data) {
           reject(data);
