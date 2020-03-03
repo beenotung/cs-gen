@@ -370,7 +370,7 @@ function genUsePrimusCode({
   // prettier-ignore
   return `
   private${asyncLogicProcessor ? ` async` : ''} usePrimus() {
-    usePrimus(primus => {
+    primusPromise.then(primus => {
       primus.on('connection', (_spark: ISpark) => {
         const spark: Spark = _spark as any;
         newConnection(spark);
@@ -608,7 +608,7 @@ import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor 
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
 import { isInternalCall } from './${removeTsExtname(callsFilename)}';
 import { iterateBatch } from '../lib/batch';${ws ? `
-import { usePrimus } from '../main';` : ''}
+import { primusPromise  } from '../main';` : ''}
 import { endRestCall, startRestCall } from './connection';${ws ? `
 import {
   closeConnection,
@@ -826,19 +826,18 @@ import { ${ModuleClass} } from './${entryModule}.module';${ws ? `
 import { Server } from 'http';
 import { Primus } from 'typestub-primus';
 
-let primus: Primus;
-const pfs: Array<(primus: Primus) => void> = [];
+let resolvePrimus: (primus: Primus) => void;
+export let primusPromise = new Promise<Primus>(resolve => {
+  resolvePrimus = resolve;
+});
 
+/**@deprecated use primusPromise instead */
 export function usePrimus(f: (primus: Primus) => void): void {
-  if (primus) {
-    f(primus);
-    return;
-  }
-  pfs.push(f);
+  primusPromise.then(f);
 }
 
 function attachServer(server: Server) {
-  primus = new Primus(server, {
+  const primus = new Primus(server, {
     pathname: ${JSON.stringify(primusPath)},
     global: ${JSON.stringify(primusGlobalName)},
     parser: 'JSON',
@@ -847,11 +846,12 @@ function attachServer(server: Server) {
   });
   primus.plugin('emitter', require('primus-emitter'));
   // primus.save('primus.js');
-  pfs.forEach(f => f(primus));
 
   primus.on('connection', spark => {
     console.log(spark.id, 'connected');
   });
+
+  resolvePrimus(primus);
 }` : ''}
 
 async function bootstrap() {
@@ -1101,7 +1101,7 @@ export function ${subscribeTypeName}<C extends SubscribeType>(
   };
   let cancelled = false;
   const res: SubscribeResult = { cancel: () => cancelled = true };
-  usePrimus(primus => {
+  primusPromise.then(primus => {
     primus.send('${callTypeName}', callInput, data => {
       if ('error' in data) {
         options.onError(data);
