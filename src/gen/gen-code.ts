@@ -640,7 +640,11 @@ export class ${controllerClassName} {${
     ${controllerClassName}.instance = this;`
   }
     ${asyncLogicProcessor ? `ready = ` : ''}this.init();
-  }
+  }${asyncLogicProcessor ? `
+
+  get ready() {
+    return ready;
+  }` : ''}
 
   ${genControllerInitMethod(args)}
 
