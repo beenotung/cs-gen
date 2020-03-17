@@ -628,9 +628,10 @@ async function setServerPackage(args: {
   if (web) {
     dep.express = '^4.17.1';
     devDep['@types/express'] = '^4.17.1';
+    devDep['@types/express-serve-static-core'] = '^4.16.7';
+    devDep['@types/serve-static'] = '^1.13.3';
   }
   devDep['@types/cli-progress'] = '^1.8.1';
-  devDep['@types/express-serve-static-core'] = '^4.16.7';
   json[dependencies] = sortObjectKey(dep);
   json[devDependencies] = sortObjectKey(devDep);
   const newText = JSON.stringify(json, null, 2);
