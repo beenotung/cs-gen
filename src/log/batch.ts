@@ -216,6 +216,16 @@ export function expandBatch<T>(log: LogService) {
   }
   bar.stop();
 
+  function expand(batch: batch<T>) {
+    for (const [key, content] of batch) {
+      if (key.endsWith(SuffixPattern)) {
+        expand(content as batch<T>);
+      } else {
+        log.storeObjectSync(content, key);
+      }
+    }
+  }
+
   bar = createBar('expand-batch');
   bar.start(totalSize, 0);
   for (const key of keys) {
@@ -224,9 +234,7 @@ export function expandBatch<T>(log: LogService) {
       continue;
     }
     const batch = JSON.parse(bin.toString()) as batch<T>;
-    for (const [key, value] of batch) {
-      log.storeObjectSync(value, key);
-    }
+    expand(batch);
     bar.increment(bin.length);
     log.removeObjectSync(key);
   }
