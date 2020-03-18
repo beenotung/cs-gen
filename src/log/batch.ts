@@ -18,6 +18,7 @@ function createBar(name: string) {
 const EmptyBatchSize = 2;
 
 export function batchCalls<T>(log: LogService) {
+  console.log('batchCalls');
   const bar = createBar('batchCalls');
   const keys = log.getKeysSync();
   bar.start(keys.length, 0);
@@ -203,10 +204,11 @@ export function deduplicateBatch(log: LogService) {
 }
 
 export function expandBatch<T>(log: LogService) {
+  console.log('expandBatch');
   const keys = log.getKeysSync().filter(key => key.endsWith(SuffixPattern));
 
   let totalSize = 0;
-  let bar = createBar('scan files size');
+  let bar = createBar('scan-files-size');
   bar.start(keys.length, 0);
   for (const key of keys) {
     totalSize += log.getBinSizeSync(key);
@@ -214,7 +216,7 @@ export function expandBatch<T>(log: LogService) {
   }
   bar.stop();
 
-  bar = createBar('expandBatch');
+  bar = createBar('expand-batch');
   bar.start(totalSize, 0);
   for (const key of keys) {
     const bin = log.getBinSync(key);
