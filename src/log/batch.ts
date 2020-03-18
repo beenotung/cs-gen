@@ -18,7 +18,6 @@ function createBar(name: string) {
 const EmptyBatchSize = 2;
 
 export function batchCalls<T>(log: LogService) {
-  // expandBatch(log); // FIXME use a more efficient way for scalability
   const bar = createBar('batchCalls');
   const keys = log.getKeysSync();
   bar.start(keys.length, 0);
