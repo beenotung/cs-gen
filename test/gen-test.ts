@@ -1,7 +1,7 @@
 import { catchMain } from '@beenotung/tslib/node';
 import * as path from 'path';
-import { flattenCallMetas } from '../src';
 import { genProject } from '../src/gen/gen-file';
+import { flattenCallMetas } from '../src/utils';
 
 const rimraf = require('rimraf');
 
