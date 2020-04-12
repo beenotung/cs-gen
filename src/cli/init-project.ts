@@ -77,7 +77,14 @@ async function initGitIgnore() {
     'dist/',
   ];
   if (await hasFile('.gitignore')) {
-    lines.push(...(await readFile('.gitignore')).toString().split('\n'));
+    (await readFile('.gitignore'))
+      .toString()
+      .split('\n')
+      .forEach(line => {
+        if (!line || !lines.includes(line)) {
+          lines.push(line);
+        }
+      });
   }
   await writeFile('.gitignore', lines.join('\n') + '\n');
 }
