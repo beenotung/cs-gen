@@ -51,7 +51,9 @@ export function compareKeys(a: string, b: string): 1 | 0 | -1 {
   }
   return 0;
 }
-
+export function parseLogObject<T>(content: string | null): T | null {
+  return content ? JSON.parse(content) : null;
+}
 @Injectable()
 export class LogService {
   static readonly keySeparator = '-';
@@ -126,8 +128,7 @@ export class LogService {
 
   getObjectSync<T>(key: string): T | null {
     const bin = fs.readFileSync(this.keyToPath(key));
-    const text = bin ? bin.toString() : null;
-    return JSON.parse(text!);
+    return parseLogObject(bin.toString());
   }
 
   getBinSync(key: string): Buffer {
@@ -141,8 +142,7 @@ export class LogService {
   async getObject<T>(key: string): Promise<T | null> {
     // return this.store.getObject(key);
     const bin = await readFile(this.keyToPath(key));
-    const text = bin ? bin.toString() : null;
-    return JSON.parse(text!);
+    return parseLogObject(bin.toString());
   }
 
   nextKey(suffix?: string): string {

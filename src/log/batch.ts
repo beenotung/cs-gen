@@ -1,12 +1,12 @@
 import { Bar } from 'cli-progress';
-import { LogService } from './log.service';
+import { LogService, parseLogObject } from './log.service';
 
 const MaxBatchSize = 8 * 1024 * 1024;
 const Suffix = 'Batch';
 const SuffixPattern = LogService.keySeparator + Suffix;
 
 // [key, content]
-type batch<T> = Array<[string, T | batch<T>]>;
+type batch<T> = Array<[string, T | batch<T> | null]>;
 
 function createBar(name: string) {
   return new Bar({
@@ -90,7 +90,7 @@ export function batchCalls<T>(log: LogService) {
       acc = +ss[1];
     }
     batchKeys.push(key);
-    batch.push([key, JSON.parse(bin.toString())]);
+    batch.push([key, parseLogObject(bin.toString())]);
     size += objectSize;
   }
   flush();
@@ -233,8 +233,10 @@ export function expandBatch<T>(log: LogService) {
     if (bin === null) {
       continue;
     }
-    const batch = JSON.parse(bin.toString()) as batch<T>;
-    expand(batch);
+    const batch = parseLogObject<batch<T>>(bin.toString());
+    if (batch) {
+      expand(batch);
+    }
     bar.increment(bin.length);
     log.removeObjectSync(key);
   }
