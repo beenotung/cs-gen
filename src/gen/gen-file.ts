@@ -1090,6 +1090,19 @@ export async function genProject(_args: {
     callTypes,
   );
 
+  callTypes.forEach(call => {
+    if (
+      (args.replayCommand &&
+        call.CallType === args.commandTypeName &&
+        typeof call.Replay !== 'boolean') ||
+      (args.replayQuery &&
+        call.CallType === args.queryTypeName &&
+        typeof call.Replay !== 'boolean')
+    ) {
+      call.Replay = true;
+    }
+  });
+
   if (!(await hasNestProject(args))) {
     await runNestCommand({
       cwd: outDirname,

@@ -22,6 +22,7 @@ export type CallMeta = Call<string, string, string, string> & {
   Internal?: boolean;
   OptionalAuth?: boolean;
   RequiredAuth?: boolean;
+  Replay?: boolean;
 };
 /*
 export type Call<

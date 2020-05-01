@@ -249,18 +249,27 @@ export type CallMeta = {
   Internal?: boolean;
   OptionalAuth?: boolean;
   RequiredAuth?: boolean;
+  Replay?: boolean;
 };
 
 // tslint:disable max-line-length
 export const calls: CallMeta[] = ${callsToQuoteString(callTypes)};
 // tslint:enable max-line-length
 
+export const callMap = new Map<Call['Type'], CallMeta>(
+  calls.map(call => [call.Type, call]),
+);
+
 export function isInternalCall(Type: ${callTypeName}['Type']): boolean {
-  const call = calls.find(call => call.Type === Type)
+  const call = callMap.get(Type);
   if (!call) {
     return false
   }
   return !!call.Internal
+}
+
+export function shouldReply(Type: Call['Type']): boolean {
+  return !!callMap.get(Type)?.Replay;
 }
 `.trim();
 }
@@ -292,18 +301,25 @@ function genInitSyncCode({
   replayQuery: boolean;
 }): string {
   const serviceObjectName = firstCharToLowerCase(serviceClassName);
-  const replayCallTypes: string[] = [];
+  const replayCallTypes = new Set<string>();
   if (replayCommand) {
-    replayCallTypes.push(commandTypeName);
+    if (callTypes.some(call => call.CallType === commandTypeName)) {
+      replayCallTypes.add(commandTypeName);
+    }
   }
   if (replayQuery) {
     if (callTypes.some(call => call.CallType === queryTypeName)) {
-      replayCallTypes.push(queryTypeName);
+      replayCallTypes.add(queryTypeName);
     }
     if (callTypes.some(call => call.CallType === subscribeTypeName)) {
-      replayCallTypes.push(subscribeTypeName);
+      replayCallTypes.add(subscribeTypeName);
     }
   }
+  callTypes.forEach(call => {
+    if (call.Replay) {
+      replayCallTypes.add(call.CallType);
+    }
+  });
   // prettier-ignore
   return `
   private${asyncLogicProcessor ? ` async` : ``} initSync() {
@@ -317,7 +333,7 @@ function genInitSyncCode({
     bar.start(0, 0);
     for (const { key, content: call, estimateTotal } of iterateBatch<CallInput<Call>>(this.logService)) {
       bar.setTotal(estimateTotal);
-      if (${replayCallTypes.map(CallType => `!key.endsWith('-${CallType}')`).join(' && ')}) {
+      if (${Array.from(replayCallTypes).map(CallType => `!key.endsWith('-${CallType}')`).join(' && ')}) {
         bar.increment(1);
         continue;
       }
@@ -326,7 +342,7 @@ function genInitSyncCode({
         bar.increment(1);
         continue;
       }
-      if (${replayCallTypes.map(CallType => `call.CallType !== ${JSON.stringify(CallType)}`).join(' && ')}) {
+      if (!shouldReply(call.Type)) {
         bar.increment(1);
         continue;
       }
@@ -606,7 +622,7 @@ import { ISpark } from 'typestub-primus';` : ''}
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
-import { isInternalCall } from './${removeTsExtname(callsFilename)}';
+import { isInternalCall, shouldReply } from './${removeTsExtname(callsFilename)}';
 import { iterateBatch } from '../lib/batch';${ws ? `
 import { primusPromise  } from '../main';` : ''}
 import { endRestCall, startRestCall } from './connection';${ws ? `

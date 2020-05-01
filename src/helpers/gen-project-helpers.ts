@@ -140,6 +140,7 @@ function authCall(
     Out?: string;
     Admin?: boolean;
     OptionalAuth?: boolean;
+    Replay?: boolean;
   },
 ) {
   const { Type, Reasons, Out, Admin, OptionalAuth } = call;
@@ -162,6 +163,7 @@ function authCall(
     Admin,
     Internal: !authConfig.ExposeAttemptPrefix || OptionalAuth,
     RequiredAuth: true,
+    Replay: false,
   });
 
   // Internal Auth Call for Server Side State
@@ -172,6 +174,7 @@ function authCall(
     Out: ResultType(Reasons, Out),
     Admin,
     Internal: true,
+    Replay: call.Replay,
   });
 
   // Attempt Call for Client API
@@ -187,6 +190,7 @@ function authCall(
       Internal: false,
       OptionalAuth,
       RequiredAuth: !authConfig.ExposeAttemptPrefix && !OptionalAuth,
+      Replay: call.Replay,
     });
   }
 }
@@ -198,6 +202,7 @@ export function authCommand(call: {
   ExtraAuthReasons?: string[];
   Admin?: boolean;
   OptionalAuth?: boolean;
+  Replay?: boolean;
 }) {
   return authCall(commandTypes, call);
 }
@@ -210,6 +215,7 @@ export function authQuery(call: {
   Out: string;
   Admin?: boolean;
   OptionalAuth?: boolean;
+  Replay?: boolean;
 }) {
   return authCall(queryTypes, call);
 }
@@ -222,6 +228,7 @@ export function authSubscribe(call: {
   Out: string;
   Admin?: boolean;
   OptionalAuth?: boolean;
+  Replay?: boolean;
 }) {
   return authCall(subscribeTypes, call);
 }

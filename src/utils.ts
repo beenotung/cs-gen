@@ -31,6 +31,7 @@ export interface PartialCallMeta {
   Internal?: boolean;
   OptionalAuth?: boolean;
   RequiredAuth?: boolean;
+  Replay?: boolean;
 }
 
 export interface CallInput<C extends Call = Call> {
