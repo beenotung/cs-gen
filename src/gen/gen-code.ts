@@ -724,6 +724,12 @@ export type ${callTypeName} = ${callTypes.map(({ Type }) => Type).join(' | ')};
 `.trim();
 }
 
+function hasFields(o: any, fields: string[]) {
+  return (
+    typeof o === 'object' && o !== null && fields.every(field => field in o)
+  );
+}
+
 function genConstant(constants: Constants): string {
   return Object.entries(constants)
     .map(([name, constant]) => {
@@ -731,9 +737,11 @@ function genConstant(constants: Constants): string {
       let value: string;
       if (typeof constant === 'string' || typeof constant === 'number') {
         type = value = JSON.stringify(constant);
-      } else {
+      } else if (hasFields(constant, ['type', 'value'])) {
         type = constant.type;
         value = JSON.stringify(constant.value, null, 2);
+      } else {
+        value = JSON.stringify(constant, null, 2);
       }
       return `export const ${name}${type ? `: ${type}` : ''} = ${value};`;
     })

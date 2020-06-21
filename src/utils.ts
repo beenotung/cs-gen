@@ -86,7 +86,8 @@ export type Constant =
   | {
       value: any;
       type?: string;
-    };
+    }
+  | any;
 
 export interface Constants {
   [name: string]: Constant;
