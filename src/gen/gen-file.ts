@@ -593,7 +593,7 @@ async function setServerPackage(args: {
   const devDep = json[devDependencies] || {};
   // for core controller and batch.ts
   dep['cli-progress'] = '^2.1.1';
-  dep.nestlib = '^0.5.1';
+  dep.nestlib = '^0.5.2';
   dep['engine.io'] = '^3.3.2';
   dep['engine.io-client'] = '^3.3.2';
   // for log.service.ts
