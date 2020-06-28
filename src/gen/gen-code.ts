@@ -730,6 +730,13 @@ function hasFields(o: any, fields: string[]) {
   );
 }
 
+function valueToString(value: any) {
+  if (typeof value === 'function') {
+    return value.toString();
+  }
+  return JSON.stringify(value, null, 2);
+}
+
 function genConstant(constants: Constants): string {
   return Object.entries(constants)
     .map(([name, constant]) => {
@@ -739,9 +746,9 @@ function genConstant(constants: Constants): string {
         type = value = JSON.stringify(constant);
       } else if (hasFields(constant, ['type', 'value'])) {
         type = constant.type;
-        value = JSON.stringify(constant.value, null, 2);
+        value = valueToString(constant.value);
       } else {
-        value = JSON.stringify(constant, null, 2);
+        value = valueToString(constant);
       }
       return `export const ${name}${type ? `: ${type}` : ''} = ${value};`;
     })
