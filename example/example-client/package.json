@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "parcel src/index.html",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "postformat": "tslint --fix -p ."
   },
@@ -12,12 +13,13 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "*",
+    "parcel": "^1.12.4",
     "prettier": "^1.19.1",
     "tslint": "^6.0.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-eslint-rules": "^5.4.0",
     "tslint-etc": "^1.10.0",
-    "typescript": "^3.7.5"
+    "typescript": "^3.9.5"
   },
   "dependencies": {
     "nest-client": "^0.5.5",
