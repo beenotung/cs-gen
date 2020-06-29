@@ -1,0 +1,26 @@
+{
+  "name": "example-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "postformat": "tslint --fix -p ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "*",
+    "prettier": "^1.19.1",
+    "tslint": "^6.0.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "tslint-etc": "^1.10.0",
+    "typescript": "^3.7.5"
+  },
+  "dependencies": {
+    "nest-client": "^0.5.5",
+    "typestub-primus": "^1.1.3"
+  }
+}

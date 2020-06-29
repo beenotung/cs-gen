@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-tap-highlight" content="no">
+  <style>
+    pre {
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+<h2>Command / Query</h2>
+<table>
+  <tr>
+    <td><label>Key</label></td>
+    <td><input id="key"></td>
+  </tr>
+  <tr>
+    <td><label>Value</label></td>
+    <td><input id="value"></td>
+  </tr>
+  <tr>
+    <td><label>APIs</label></td>
+    <td>
+      <input type="button" value="SetKV" id="SetKV">
+      <input type="button" value="GetValue" id="GetValue">
+      <input type="button" value="SubscribeByKey" id="SubscribeByKey">
+    </td>
+  </tr>
+  <tr>
+    <td><label>Result</label></td>
+    <td>
+      <pre id="result"></pre>
+    </td>
+  </tr>
+</table>
+<h2>Subscriptions</h2>
+<table id="subs">
+  <tr>
+    <th>Key</th>
+    <th>Event</th>
+    <th>Timestamp</th>
+    <th>Control</th>
+  </tr>
+</table>
+<script src="http://localhost:3000/primus/primus.js"></script>
+<script src="app.ts" defer>
+  // this will be transpiled and bundled by parcel.js
+</script>
+</body>
+</html>
