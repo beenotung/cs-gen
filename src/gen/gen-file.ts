@@ -10,6 +10,8 @@ import {
 } from '@beenotung/tslib/fs';
 import mkdirp from 'async-mkdirp';
 import * as path from 'path';
+import rimraf from 'rimraf';
+import * as util from 'util';
 import { CallMeta } from '../types';
 import { Constants, defaultTypeName, TypeAlias } from '../utils';
 import {
@@ -1109,6 +1111,8 @@ export async function genProject(_args: {
       cmd: `nest new --skip-install ${serverProjectName}`,
       errorMsg: `Failed to create nest project`,
     });
+    const serverGitDir = path.join(args.serverProjectDirname, '.git');
+    await util.promisify(rimraf)(serverGitDir);
   }
   const serverSrcDirname = getSrcDirname({
     projectDirname: serverProjectDirname,
