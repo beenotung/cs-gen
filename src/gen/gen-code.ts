@@ -891,7 +891,15 @@ function attachServer(server: Server) {
 
 async function bootstrap() {
   const app = await NestFactory.create(${ModuleClass});${web ? `
-  app.use('/', express.static(path.join(process.cwd(), 'www')));` : ''}
+  app.use(
+    '/',
+    express.static(path.join(process.cwd(), 'www'), {
+      setHeaders: res => {
+        res.setHeader('Connection', 'Keep-Alive')
+        // res.setHeader('Keep-Alive','timeout=5, max=1000')
+      },
+    }),
+  );` : ''}
   app.enableCors();${ws ? `
   attachServer(app.getHttpServer());` : ''}
   await app.listen(${port});
