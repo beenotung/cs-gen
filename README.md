@@ -157,3 +157,7 @@ The myapp-client, myapp-server, and myapp-admin projects will be created / updat
 - Subscription (live query)
 - Auto reconnect when network restore from failure
 - Auto setup project formatting and package dependencies (tsconfig, tslint, prettier, npm scripts, e.t.c.)
+
+## Todo
+- Rewrite string-based code generation to use TypeDraft
+- Change the example APIs from UpperCase to javascript convention
