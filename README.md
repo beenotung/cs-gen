@@ -2,14 +2,16 @@
 
 Code generated and helper library for rapid development using CQRS (Command Query Responsibility Segregation) design pattern.
 
-This is not a framework, instead it's a tool and library to reduce the burden of boilerplate for common tasks in development.
+**This is not a framework**, instead it's a code generation tool and library to reduce the burden of boilerplate for common tasks in development.
 
 __Under active development.__
 
 ## Installation
 ```bash
-> pnpm i || npm i
-> npm i -g .
+git clone https://gitlab.com/beenotung/cqrs-exp
+cd cqrs-exp
+pnpm i || npm i
+npm i -g .
 ```
 The `cqrs-exp` command will be installed for cli
 
@@ -31,8 +33,11 @@ Commands:
 
 > cqrs-exp init
 project name [myapp]:
-server domain [example.com]:
+production server domain [example.com]:
 server origin [https://myapp.example.com]:
+test server domain [example.net]:
+server origin [https://myapp.example.net]:
+port [8080]:
 app id [com.example.myapp]:
 initializing gen-project for 'myapp'
 generated skeleton.
