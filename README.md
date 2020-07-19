@@ -8,10 +8,10 @@ __Under active development.__
 
 ## Installation
 ```bash
-git clone https://gitlab.com/beenotung/cqrs-exp
-cd cqrs-exp
-pnpm i || npm i
-npm i -g .
+> git clone https://gitlab.com/beenotung/cqrs-exp
+> cd cqrs-exp
+> pnpm i || npm i
+> npm i -g .
 ```
 The `cqrs-exp` command will be installed for cli
 
@@ -81,23 +81,34 @@ catchMain(genProject({
     queryTypes,
     subscribeTypes,
   }),
-  serverOrigin: "https://myapp.example.com",
-  typeAlias,
+  serverOrigin: {
+    port: 8080,
+    prod: "https://myapp.example.com",
+    test: "https://myapp.example.net",
+  },
+  /* default is the inverse, uncomment to reverse the setting */
+  // replayCommand: false,
   // replayQuery: true,
+  // storeCommand: false,
+  // storeQuery: false,
   plugins: { auth: authConfig },
 }));
 ```
 
-#### Declare Type Alias and authentication plugin
+#### Declare Type Alias, constant, and authentication plugin
 ```typescript
 import {
   alias,
   authConfig,
+  def,
   typeAlias,
   authCommand as _authCommand,
   authQuery as _authQuery,
-  queryTypes, commandTypes, subscribeTypes,
 } from 'cqrs-exp/dist/helpers/gen-project-helpers';
+import { genProject } from 'cqrs-exp';
+
+const app_id = "com.example.myapp";
+def({ app_id });
 
 let ProfileType = `{
   UserId: string
@@ -111,18 +122,18 @@ let { type, typeArray } = alias({
 });
 
 // custom wrapper is possible
-function authCommand(Type: string, In: string, Reasons: string[]) {
+function authCommand(Type: string, In: string, Reasons: string[] = []) {
   _authCommand({ Type, In, Reasons });
 }
-function authQuery(Type: string, In: string, Reasons: string[], DataType: string) {
+function authQuery(Type: string, In: string, DataType: string, Reasons: string[] = []) {
   _authQuery({ Type, In, Reasons, Out: DataType });
 }
 
 // token will be injected as part of API params
-authCommand('SetProfile', `{Profile: ${type(ProfileType)}}`, []);
+authCommand('SetProfile', `{Profile: ${type(ProfileType)}}`, ['UserNotFound']);
 
 // similar for queries
-authQuery('GetProfile', `{ProfileUserId: string}`, [QuotaExcess, UserNotFound], `{Profile: ${type(ProfileType)}}`);
+authQuery('GetProfile', `{ProfileUserId: string}`, `{Profile: ${type(ProfileType)}}`, [QuotaExcess, UserNotFound]);
 
 genProject({
   ...
@@ -131,20 +142,6 @@ genProject({
     plugins: { auth: authConfig },
   ...
 })
-```
-
-#### Declare API with auth plugin
-
-```typescript
-import {
-  alias,
-  authConfig,
-  typeAlias,
-  authCommand as _authCommand,
-  authQuery as _authQuery,
-  queryTypes, commandTypes, subscribeTypes, checkAppId,
-} from 'cqrs-exp/dist/helpers/gen-project-helpers';
-authCommand('SetProfile', `{Profile: ${type(ProfileType)}}`, []);
 ```
 
 ### Generate client-side SDK and server side stub code
