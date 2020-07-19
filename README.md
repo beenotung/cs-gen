@@ -88,7 +88,7 @@ catchMain(genProject({
 }));
 ```
 
-#### Decalre Type Alias and authentication plugin
+#### Declare Type Alias and authentication plugin
 ```typescript
 import {
   alias,
