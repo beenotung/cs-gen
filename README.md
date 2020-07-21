@@ -1,10 +1,46 @@
 # cqrs-exp
 
-Code generated and helper library for rapid development using CQRS (Command Query Responsibility Segregation) design pattern.
+Code generator for rapid development using CQRS (Command Query Responsibility Segregation) design pattern.
 
-**This is not a framework**, instead it's a code generation tool and library to reduce the burden of boilerplate for common tasks in development.
+**This is not a framework**, instead it's a code generation tool to reduce the burden of boilerplate for common tasks in the development of web server and backend system with Typescript.
+
+Any required library are injected to the target project, hence the resulting project does not have runtime dependency on this package.
+
+This toolkit has been used in production by 26+ projects / micro-services for over 1 year.
+The rough edges are getting polished and patched overtime hence it is considered to be "production-ready" for small to middle scale of application.
 
 __Under active development.__
+
+## System Architecture
+
+Details analysis can be found in https://github.com/beenotung/cqrs-documents
+
+### Background: The typical architecture
+Typical applications follows 3-tier web architecture
+which consists of the presentation tier, logic tier, and data tier.
+Namely, the web/app client, web server, and database (usually RDBMs or NoSQL Database).
+
+The business logic is usually handled by the domain model on the web server and validation constraints in the RDBMs.
+
+The web server usually implements the domain model using Object-Oriented-Programming (OOP)
+while the database usually model the dataset in normalized format.
+
+### The Problem with typical architecture
+
+Database is optimized for writing
+but typical application area read-heavy.
+Usually over 90% traffics are read nature.
+reference: [1% rule (Internet culture)](https://en.wikipedia.org/wiki/1%25_rule_(Internet_culture))
+
+### Solution: A simplified architecture
+
+## Features
+- Model API calls as command, query, and subscription (live query)
+- Auto store API calls
+- Auto replay API calls when server restart
+- Customize which API calls to be stored and replayed
+- Auto reconnect when network restore from failure
+- Auto setup package dependencies and formatting (tsconfig, tslint, prettier, npm scripts, e.t.c.)
 
 ## Installation
 ```bash
@@ -53,8 +89,8 @@ generated skeleton.
 ```
 
 ### Declare Project APIs
-The APIs can be declared in `./scripts/gen-project.ts`.
-Depending the on project scale, the apis can be declared across multiple files, then imported from the `gen-project.ts`.
+The APIs of the project can be declared in `./scripts/gen-project.ts`.
+Depending on project the scale, the APIs can be declared across multiple files, then imported from the `gen-project.ts`.
 
 When the project skeleton is generated, there are some example Commands and Queries.
 Below shows a part of `gen-project.ts`:
@@ -73,14 +109,7 @@ catchMain(genProject({
   baseProjectName: "myapp",
   injectTimestampField: true,
   timestampFieldName: 'Timestamp',
-  asyncLogicProcessor: true,
-  staticControllerReference: true,
-  injectFormat: true,
-  callTypes: flattenCallMetas({
-    commandTypes,
-    queryTypes,
-    subscribeTypes,
-  }),
+  callTypes: flattenCallMetas({ commandTypes, queryTypes, subscribeTypes }),
   serverOrigin: {
     port: 8080,
     prod: "https://myapp.example.com",
@@ -91,13 +120,13 @@ catchMain(genProject({
   // replayQuery: true,
   // storeCommand: false,
   // storeQuery: false,
-  plugins: { auth: authConfig },
 }));
 ```
 
 #### Declare Type Alias, constant, and authentication plugin
 ```typescript
 import {
+  commandTypes, queryTypes, subscribeTypes,
   alias,
   authConfig,
   def,
@@ -105,7 +134,7 @@ import {
   authCommand as _authCommand,
   authQuery as _authQuery,
 } from 'cqrs-exp/dist/helpers/gen-project-helpers';
-import { genProject } from 'cqrs-exp';
+import { flattenCallMetas, genProject } from 'cqrs-exp'
 
 const app_id = "com.example.myapp";
 def({ app_id });
@@ -137,12 +166,18 @@ authQuery('GetProfile', `{ProfileUserId: string}`, `{Profile: ${type(ProfileType
 
 genProject({
   ...
-    asyncLogicProcessor: true, // for async auth check with external service / database
-    typeAlias,
-    plugins: { auth: authConfig },
+  asyncLogicProcessor: true, // for async auth check with external service / database
+  callTypes: flattenCallMetas({ commandTypes, queryTypes, subscribeTypes }),
+  typeAlias,
+  plugins: { auth: authConfig },
   ...
 })
 ```
+
+#### Options of genProject
+The complete list of options can be found in `cqrs-exp/dist/gen/gen-file.d.ts` in the node.js module, or [src/gen/gen-file.ts](src/gen/gen-file.ts) in the source code.
+
+Some of them are optional with default value stored in `defaultGenProjectArgs` in the same file.
 
 ### Generate client-side SDK and server side stub code
 ```bash
@@ -151,12 +186,6 @@ genProject({
 
 The myapp-client, myapp-server, and myapp-admin projects will be created / updated accordingly.
 (The paths and controller names are configurable in the `./scripts/gen-project.ts`)
-
-## Features
-- Command, Query pattern
-- Subscription (live query)
-- Auto reconnect when network restore from failure
-- Auto setup project formatting and package dependencies (tsconfig, tslint, prettier, npm scripts, e.t.c.)
 
 ## Todo
 - Rewrite string-based code generation to use TypeDraft
