@@ -964,7 +964,7 @@ export function genClientLibCode(args: {
         `/${typeDirname}`;
   const typeFilePath = `'${relativeDir}/${removeTsExtname(typeFilename)}'`;
   let code = `
-import { Body, Controller, injectNestClient, Post } from 'nest-client';${
+import { Body, Controller, injectNestClient, Post } from 'nest-client/rest';${
     ws
       ? `
 import { Primus } from 'typestub-primus';`
