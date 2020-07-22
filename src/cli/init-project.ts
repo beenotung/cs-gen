@@ -170,6 +170,7 @@ catchMain(genProject({
   // replayQuery: true,
   // storeCommand: false,
   // storeQuery: false,
+  // jsonSizeLimit: '10mb',
   plugins: { auth: authConfig },
 }));
 `.trim() + '\n';

@@ -326,6 +326,7 @@ async function updateMainFile(args: {
   ws: boolean;
   port: number;
   web: boolean;
+  jsonSizeLimit: string | undefined;
 }) {
   const srcPath = getSrcDirname(args);
   const mainPath = path.join(srcPath, 'main.ts');
@@ -576,6 +577,7 @@ async function setServerPackage(args: {
   serverProjectDirname: string;
   ws: boolean;
   web: boolean;
+  jsonSizeLimit: string | undefined;
   injectFormat: boolean;
   injectNestClient: boolean;
 }) {
@@ -584,6 +586,7 @@ async function setServerPackage(args: {
     serverProjectDirname,
     ws,
     web,
+    jsonSizeLimit,
     injectNestClient,
   } = args;
   const filename = path.join(serverProjectDirname, 'package.json');
@@ -627,10 +630,12 @@ async function setServerPackage(args: {
     dep['typestub-primus'] = '^1.1.3';
     dep['primus-emitter'] = '^3.1.1';
   }
-  if (web) {
+  if (web || jsonSizeLimit) {
     dep.express = '^4.17.1';
     devDep['@types/express'] = '^4.17.1';
-    devDep['@types/serve-static'] = '^1.13.3';
+    if (web) {
+      devDep['@types/serve-static'] = '^1.13.3';
+    }
   }
   devDep['@types/express-serve-static-core'] = '^4.16.7';
   devDep['@types/cli-progress'] = '^1.8.1';
@@ -982,6 +987,7 @@ export const defaultGenProjectArgs = {
   primusPath: '/primus',
   ws: true,
   web: false,
+  jsonSizeLimit: undefined,
   injectFormat: true,
   asyncLogicProcessor: false,
   replayCommand: true,
@@ -1034,6 +1040,7 @@ export async function genProject(_args: {
   primusPath?: string;
   ws?: boolean;
   web?: boolean;
+  jsonSizeLimit?: string;
   serverOrigin: {
     port: number;
     test: string;

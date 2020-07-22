@@ -844,8 +844,17 @@ export function genMainCode(args: {
   ws: boolean;
   port: number;
   web: boolean;
+  jsonSizeLimit: string | undefined;
 }): string {
-  const { primusGlobalName, primusPath, ws, port, web, entryModule } = args;
+  const {
+    primusGlobalName,
+    primusPath,
+    ws,
+    port,
+    web,
+    entryModule,
+    jsonSizeLimit,
+  } = args;
   const ModuleClass =
     entryModule[0].toUpperCase() + entryModule.substring(1) + 'Module';
   let protocol = 'http';
@@ -859,7 +868,9 @@ import * as path from 'path';` : ''}
 import { NestFactory } from '@nestjs/core';
 import { ${ModuleClass} } from './${entryModule}.module';${ws ? `
 import { Server } from 'http';
-import { Primus } from 'typestub-primus';
+import { Primus } from 'typestub-primus';${jsonSizeLimit ? `
+import { json } from 'express'
+` : ''}
 
 let resolvePrimus: (primus: Primus) => void;
 export let primusPromise = new Promise<Primus>(resolve => {
@@ -899,7 +910,8 @@ async function bootstrap() {
         // res.setHeader('Keep-Alive','timeout=5, max=1000')
       },
     }),
-  );` : ''}
+  );` : ''}${jsonSizeLimit ? `
+  app.use(json({ limit: ${JSON.stringify(jsonSizeLimit)} }))` : ''}
   app.enableCors();${ws ? `
   attachServer(app.getHttpServer());` : ''}
   await app.listen(${port});
