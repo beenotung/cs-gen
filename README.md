@@ -190,3 +190,6 @@ The myapp-client, myapp-server, and myapp-admin projects will be created / updat
 ## Todo
 - Rewrite string-based code generation to use TypeDraft
 - Change the example APIs from UpperCase to javascript convention
+- Write as express middleware
+- Explain it's good at supporting testing snapshot of data with different version of build,
+  ref: [wiki](https://en.m.wikipedia.org/wiki/Software_release_life_cycle)
