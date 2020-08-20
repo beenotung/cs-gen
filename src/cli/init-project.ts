@@ -164,6 +164,7 @@ catchMain(genProject({
   constants,
   serverOrigin: ${JSON.stringify(serverOrigin, null, 2)},
   /* default is the inverse, uncomment to reverse the setting */
+  // forceOptionalToUndefined: true,
   // ws: false,
   // web: true,
   // replayCommand: false,

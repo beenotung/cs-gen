@@ -12,6 +12,7 @@ import mkdirp from 'async-mkdirp';
 import * as path from 'path';
 import rimraf from 'rimraf';
 import * as util from 'util';
+import { typeAlias } from '../helpers/gen-project-helpers';
 import { CallMeta } from '../types';
 import { Constants, defaultTypeName, TypeAlias } from '../utils';
 import {
@@ -952,6 +953,10 @@ async function genDocumentationHtmlFile(args: {
   ]);
 }
 
+function forceOptionalField(type: string) {
+  return type.replace(/\?:/g, ': undefined |');
+}
+
 export const defaultGenProjectArgs = {
   outDirname: 'out',
   docDirname: '',
@@ -997,9 +1002,9 @@ export const defaultGenProjectArgs = {
   typeAlias: {},
   constants: {} as Constants,
   plugins: {} as GenProjectPlugins,
+  forceOptionalToUndefined: false,
 };
-
-export async function genProject(_args: {
+export type GenProjectOptions = {
   outDirname?: string;
   docDirname?: string;
   clientDocFilename?: string;
@@ -1055,7 +1060,9 @@ export async function genProject(_args: {
   typeAlias?: TypeAlias;
   constants?: Constants;
   plugins?: GenProjectPlugins;
-}) {
+  forceOptionalToUndefined?: boolean;
+};
+export async function genProject(_args: GenProjectOptions) {
   const __args = {
     ...defaultGenProjectArgs,
     ..._args,
@@ -1085,8 +1092,18 @@ export async function genProject(_args: {
     callTypes,
     serverOrigin,
     plugins,
+    forceOptionalToUndefined,
   } = __args;
   const { port } = serverOrigin;
+  if (forceOptionalToUndefined) {
+    callTypes.forEach(call => {
+      call.In = forceOptionalField(call.In);
+      call.Out = forceOptionalField(call.Out);
+    });
+    Object.entries(typeAlias).forEach(([name, type]) => {
+      typeAlias[name] = forceOptionalField(type);
+    });
+  }
   await mkdirp(outDirname);
   const serverProjectDirname = path.join(outDirname, serverProjectName);
   const clientProjectDirname = path.join(outDirname, clientProjectName);

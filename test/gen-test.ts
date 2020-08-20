@@ -6,7 +6,7 @@ import { flattenCallMetas } from '../src/utils';
 const rimraf = require('rimraf');
 
 const userIdType = '{ UserId: string }';
-const userType = '{ UserId: string, UserName: string }';
+const userType = '{ UserId: string, UserName?: string }';
 const successType = '({ Success: true } | { Success: false; Reason: string })';
 const subscribeOutType = '{ id: string }';
 export let callTypes = flattenCallMetas({
@@ -55,6 +55,7 @@ async function test() {
     // optional
     clientProjectName: 'demo-client',
     callTypes: callTypes,
+    // forceOptionalToUndefined: true,
     // injectTimestampField: false,
     // primusGlobalName: 'AppPrimus',
     // primusPath: 'app-primus',
