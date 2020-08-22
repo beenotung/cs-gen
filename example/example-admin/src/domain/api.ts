@@ -1,4 +1,4 @@
-import { Body, Controller, injectNestClient, Post } from 'nest-client'
+import { Body, Controller, injectNestClient, Post } from 'nest-client/rest'
 import { Primus } from 'typestub-primus'
 import { Call as CallType, CallInput, DeleteByKey, ListKeys } from './types'
 
