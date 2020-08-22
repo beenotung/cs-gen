@@ -6,7 +6,7 @@ Code generator for rapid development using CQRS (Command Query Responsibility Se
 
 Any required library are injected to the target project, hence the resulting project does not have runtime dependency on this package.
 
-This toolkit has been used in production by 26+ projects / micro-services for over 1 year.
+This toolkit has been used in production by 30+ projects and micro-services for over 1 year.
 The rough edges are getting polished and patched overtime hence it is considered to be "production-ready" for small to middle scale of application.
 
 __Under active development.__
