@@ -418,8 +418,8 @@ function genUsePrimusCode({
           }
         }) as any);
       });
+      console.log('connected primus to ${controllerClassName}');
     });
-    console.log('connected primus to ${controllerClassName}');
   }
 `.trim();
 }

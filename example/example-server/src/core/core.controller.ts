@@ -167,7 +167,7 @@ export class CoreController {
           }
         }) as any)
       })
+      console.log('connected primus to CoreController')
     })
-    console.log('connected primus to CoreController')
   }
 }
