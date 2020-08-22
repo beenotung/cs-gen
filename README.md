@@ -188,8 +188,9 @@ The myapp-client, myapp-server, and myapp-admin projects will be created / updat
 (The paths and controller names are configurable in the `./scripts/gen-project.ts`)
 
 ## Todo
-- Rewrite string-based code generation to use TypeDraft
+- Rewrite string-based code generation to use macro (e.g. tsc-macro or TypeDraft)
 - Change the example APIs from UpperCase to javascript convention
-- Write as express middleware
-- Explain it's good at supporting testing snapshot of data with different version of build,
+- Expose as express middleware
+- Expose as koa middleware
+- Explain it's good at supporting testing snapshot of data with different versions of build,
   ref: [wiki](https://en.m.wikipedia.org/wiki/Software_release_life_cycle)
