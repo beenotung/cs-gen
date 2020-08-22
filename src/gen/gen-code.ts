@@ -21,11 +21,11 @@ export function removeTailingSpace(s: string): string {
     .join('\n');
 }
 
-function removeTsExtname(s: string): string {
+export function removeTsExtname(s: string): string {
   return s.replace(/\.ts$/, '');
 }
 
-function getTypeFileImportPath(args: {
+export function getTypeFileImportPath(args: {
   typeDirname: string;
   typeFilename: string;
 }) {

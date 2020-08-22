@@ -28,6 +28,7 @@ import {
   genServiceCode,
   genStatusCode,
 } from './gen-code';
+import { genServerHelperFile } from './template/server/core/helpers';
 
 async function writeFile(filename: string, code: string) {
   code = code.trim();
@@ -47,8 +48,7 @@ function getSrcDirname(args: { projectDirname: string }): string {
   const { projectDirname } = args;
   return path.join(projectDirname, 'src');
 }
-
-function getModuleDirname(args: {
+export function getModuleDirname(args: {
   outDirname: string;
   serverProjectDirname: string;
   moduleDirname: string;
@@ -975,6 +975,7 @@ export const defaultGenProjectArgs = {
   serviceClassName: 'CoreService',
   controllerFilename: 'core.controller.ts',
   controllerClassName: 'CoreController',
+  serverHelperFilename: 'helpers.ts',
   staticControllerReference: false,
   statusFilename: 'status.ts',
   statusName: 'status',
@@ -1028,6 +1029,7 @@ export type GenProjectOptions = {
   serviceClassName?: string;
   controllerFilename?: string;
   controllerClassName?: string;
+  serverHelperFilename?: string;
   staticControllerReference?: boolean;
   statusFilename?: string;
   statusName?: string;
@@ -1218,6 +1220,7 @@ export async function genProject(_args: GenProjectOptions) {
       ...args,
       logicProcessorCode: dataWrapper.logicProcessorCode,
     }),
+    genServerHelperFile(args),
     genStatusFile(args),
     genCallsFile(args),
     genControllerFile(args),
