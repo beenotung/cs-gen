@@ -25,6 +25,8 @@
     "serve": "npm run pm2"
   },
   "dependencies": {
+    "@babel/traverse": "^7.10.4",
+    "@babel/types": "^7.11.0",
     "@beenotung/tslib": "^16.22.1",
     "@nestjs/common": "^6.10.14",
     "@nestjs/core": "^6.10.14",
@@ -69,6 +71,7 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-eslint-rules": "^5.4.0",
     "tslint-etc": "^1.10.0",
+    "typedraft": "^0.2.2",
     "typescript": "^3.7.2"
   },
   "jest": {
