@@ -1,8 +1,8 @@
-import { writeFile } from '@beenotung/tslib/fs';
+
 import path from 'path';
-import { getTypeFileImportPath, removeTsExtname } from '../../../gen-code';
+import { getTypeFileImportPath } from '../../../gen-code';
 import { getModuleDirname } from '../../../gen-file';
-import { wrapResult } from '../../helpers';
+import { saveCode, wrapResult } from '../../helpers';
 
 export async function genServerHelperFile(
   args: {
@@ -14,39 +14,82 @@ export async function genServerHelperFile(
   const filename = path.join(getModuleDirname(args), serverHelperFilename);
   const code = genServerHelperCode(args);
 
-  await writeFile(filename, code);
+  await saveCode(filename, code);
 }
 
 export function genServerHelperCode(args: {
   callTypeName: string;
   typeDirname: string;
   typeFilename: string;
-  controllerFilename: string;
-  controllerClassName: string;
   libDirname: string;
   asyncLogicProcessor: boolean;
   staticControllerReference: boolean;
+  ws: boolean;
 }) {
   const {
     callTypeName,
-    controllerFilename,
-    controllerClassName,
     libDirname,
     asyncLogicProcessor,
     staticControllerReference,
+    ws,
   } = args;
-  // prettier-ignore
-  return `
-import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};${asyncLogicProcessor ? `
-import { Result } from '../${libDirname}/result';` : ``}
-import { ${controllerClassName} } from './${removeTsExtname(controllerFilename)}';
-${staticControllerReference ? `
+  let code = ``;
+
+  // import statements
+  if (ws) {
+    code += `
+import { Primus } from 'typestub-primus';`;
+  }
+  if (staticControllerReference) {
+    code += `
+import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};`;
+  }
+  if (asyncLogicProcessor) {
+    code += `
+import { Result } from '../${libDirname}/result';`;
+  }
+
+  // body
+  if (code) {
+    code += '\n';
+  }
+  code += `
+export const ok: { Success: true } = { Success: true };
+`;
+  if (ws) {
+    // prettier-ignore
+    code += `
+export let resolvePrimus: (primus: Primus) => void
+export let primusPromise = new Promise<Primus>(resolve => {
+  resolvePrimus = resolve
+})
+
+export function usePrimus(f: (primus: Primus) => void): void {
+  primusPromise.then(f)
+}
+`;
+  }
+  if (staticControllerReference) {
+    // prettier-ignore
+    code += `
+interface Instance {
+  storeAndCall<C extends ${callTypeName}>({
+    call,
+    from,
+  }: {
+    call: CallInput<C>
+    from: 'server' | 'client'
+  }): ${wrapResult(`C['Out']`, args)}
+}
+
+export let instance: Instance = {} as any
+
 export function storeAndCall<C extends ${callTypeName}>(
   call: CallInput<C>,
-): ${wrapResult(`<C['Out']>`, args)} {
-  return ${controllerClassName}.instance.storeAndCall({ call, from: 'server' });
+): ${wrapResult(`C['Out']`, args)} {
+  return instance.storeAndCall({ call, from: 'server' });
 }
-` : ``}
-export const ok: { Success: true } = { Success: true };
-`.trim();
+`;
+  }
+  return code;
 }

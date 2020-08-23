@@ -60,7 +60,8 @@ async function test() {
     // primusGlobalName: 'AppPrimus',
     // primusPath: 'app-primus',
     // ws: false,
-    // staticControllerReference:true,
+    staticControllerReference: true,
+    asyncLogicProcessor: true,
     // serverOrigin: 'https://api.example.com'
     serverOrigin: {
       port: 3000,
