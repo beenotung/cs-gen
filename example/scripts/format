@@ -1,0 +1,20 @@
+#!/bin/bash
+set -e
+set -o pipefail
+function run {
+  cd "$1"
+  if [ ! -d node_modules ]; then
+    hash pnpm 2>/dev/null \
+      && pnpm i --prefer-offline \
+      || npm i
+  fi
+  npm run format &
+  cd ..
+}
+run "example-server"
+run "example-client"
+run "example-admin"
+for job in `jobs -p`; do
+  wait $job
+done
+echo "done format."

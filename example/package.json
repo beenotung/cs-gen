@@ -1,7 +1,8 @@
 {
   "name": "example",
   "scripts": {
-    "gen": "ts-node scripts/gen-project"
+    "gen": "ts-node scripts/gen-project",
+    "format": "bash scripts/format"
   },
   "dependencies": {
     "@beenotung/tslib": "^16.6.0",
