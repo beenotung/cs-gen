@@ -50,10 +50,8 @@ async function test() {
   await genProject({
     outDirname,
     baseProjectName: 'demo',
-    // optional
-    serverProjectName: 'demo-server',
-    // optional
-    clientProjectName: 'demo-client',
+    serverProjectName: 'demo-server', // optional
+    clientProjectName: 'demo-client', // optional
     callTypes: callTypes,
     // forceOptionalToUndefined: true,
     // injectTimestampField: false,
