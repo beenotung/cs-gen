@@ -22,13 +22,13 @@ import {
   genConnectionCode,
   genControllerCode,
   genDocumentationHtmlCode,
-  genMainCode,
   genModuleCode,
   GenProjectPlugins,
   genServiceCode,
   genStatusCode,
 } from './gen-code';
 import { genServerHelperFile } from './template/server/core/helpers';
+import { updateMainFile } from './template/server/main';
 
 async function writeFile(filename: string, code: string) {
   code = code.trim();
@@ -44,7 +44,7 @@ async function writeBinFile(filename: string, code: string) {
   await exec('chmod +x ' + JSON.stringify(filename));
 }
 
-function getSrcDirname(args: { projectDirname: string }): string {
+export function getSrcDirname(args: { projectDirname: string }): string {
   const { projectDirname } = args;
   return path.join(projectDirname, 'src');
 }
@@ -317,27 +317,6 @@ async function genModuleFile(args: {
     });
   }
   await writeFile(filename, code);
-}
-
-async function updateMainFile(args: {
-  projectDirname: string;
-  entryModule: string;
-  primusGlobalName: string;
-  primusPath: string;
-  ws: boolean;
-  port: number;
-  web: boolean;
-  jsonSizeLimit: string | undefined;
-}) {
-  const srcPath = getSrcDirname(args);
-  const mainPath = path.join(srcPath, 'main.ts');
-  const originalCode = (await readFile(mainPath)).toString();
-  const newMainCode = genMainCode({
-    ...args,
-  });
-  if (originalCode.trim() !== newMainCode.trim()) {
-    await writeFile(mainPath, newMainCode);
-  }
 }
 
 // only use for server

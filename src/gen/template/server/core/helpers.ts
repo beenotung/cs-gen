@@ -1,4 +1,3 @@
-
 import path from 'path';
 import { getTypeFileImportPath } from '../../../gen-code';
 import { getModuleDirname } from '../../../gen-file';
@@ -69,21 +68,26 @@ export function usePrimus(f: (primus: Primus) => void): void {
 }
 `;
   }
-  if (staticControllerReference) {
+  if (staticControllerReference || asyncLogicProcessor) {
     // prettier-ignore
     code += `
-interface Instance {
+interface Instance {${asyncLogicProcessor ? `
+  ready: Promise<void>` : ''}${staticControllerReference ? `
   storeAndCall<C extends ${callTypeName}>({
     call,
     from,
   }: {
     call: CallInput<C>
     from: 'server' | 'client'
-  }): ${wrapResult(`C['Out']`, args)}
+  }): ${wrapResult(`C['Out']`, args)}` : ''}
 }
 
 export let instance: Instance = {} as any
-
+`;
+  }
+  if (staticControllerReference) {
+    // prettier-ignore
+    code += `
 export function storeAndCall<C extends ${callTypeName}>(
   call: CallInput<C>,
 ): ${wrapResult(`C['Out']`, args)} {

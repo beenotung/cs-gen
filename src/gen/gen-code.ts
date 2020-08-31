@@ -394,7 +394,7 @@ function genUsePrimusCode({
         spark.on('${callApiPath}', (${asyncLogicProcessor ? `async ` : ''}(call: CallInput<${callTypeName}>, ack: (data: any) => void) => {
           try {${injectTimestampField ? `
             call.In.${timestampFieldName} = Date.now();` : ''}${asyncLogicProcessor ? `
-            await ready;` : ''}
+            await instance.ready;` : ''}
             startSparkCall(spark, call);
             let out = this.storeAndCall({ call, from: 'client' });${
     !asyncLogicProcessor
@@ -624,7 +624,8 @@ import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor 
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
 import { isInternalCall, shouldReply } from './${removeTsExtname(callsFilename)}';
 import { iterateBatch } from '../lib/batch';${ws ? `
-import { primusPromise  } from '../main';` : ''}
+import { primusPromise } from './helpers';` : ''}${staticControllerReference || asyncLogicProcessor ? `
+import { instance } from './helpers';` : ''}
 import { endRestCall, startRestCall } from './connection';${ws ? `
 import {
   closeConnection,
@@ -635,32 +636,16 @@ import {
 } from './connection';` : ''}
 import { ${serviceClassName} } from './${removeTsExtname(serviceFilename)}';
 import { ${statusName} } from './${removeTsExtname(statusFilename)}';
-${asyncLogicProcessor ? `
-let ready: Promise<void>;
-` : ''}
-@Controller('${serviceApiPath}')
-export class ${controllerClassName} {${
-    !staticControllerReference
-      ? ''
-      : `
-  static instance: ${controllerClassName};`
-  }
 
+@Controller('${serviceApiPath}')
+export class ${controllerClassName} {
   constructor(
     public ${serviceObjectName}: ${serviceClassName},
     public logService: LogService,
-  ) {${
-    !staticControllerReference
-      ? ''
-      : `
-    ${controllerClassName}.instance = this;`
+  ) {${staticControllerReference ? `
+    instance.storeAndCall = this.storeAndCall.bind(this);` : ''}
+    ${asyncLogicProcessor ? `instance.ready = ` : ''}this.init();
   }
-    ${asyncLogicProcessor ? `ready = ` : ''}this.init();
-  }${asyncLogicProcessor ? `
-
-  get ready() {
-    return ready;
-  }` : ''}
 
   ${genControllerInitMethod(args)}
 
@@ -678,7 +663,7 @@ export class ${controllerClassName} {${
   ): ${asyncLogicProcessor ? `Promise<` : ''}C['Out']${asyncLogicProcessor ? `>` : ''} {
     try {${injectTimestampField ? `
       call.In.${timestampFieldName} = Date.now();` : ''}${asyncLogicProcessor ? `
-      await ready;` : ``}
+      await instance.ready;` : ``}
       startRestCall(req, res, call);
       let out = this.storeAndCall<C>({ call, from: 'client' });${
     !asyncLogicProcessor
@@ -834,90 +819,6 @@ export function genTypeCode(name: string, demo: any): string {
 ${JSON.stringify(demo, null, 2)}
  */
 export type ${name} = ${genTsType(demo)};
-`.trim();
-}
-
-export function genMainCode(args: {
-  entryModule: string;
-  primusGlobalName: string;
-  primusPath: string;
-  ws: boolean;
-  port: number;
-  web: boolean;
-  jsonSizeLimit: string | undefined;
-}): string {
-  const {
-    primusGlobalName,
-    primusPath,
-    ws,
-    port,
-    web,
-    entryModule,
-    jsonSizeLimit,
-  } = args;
-  const ModuleClass =
-    entryModule[0].toUpperCase() + entryModule.substring(1) + 'Module';
-  let protocol = 'http';
-  if (ws) {
-    protocol += ' and ws';
-  }
-  // prettier-ignore
-  return `${web ? `
-import * as express from 'express';
-import * as path from 'path';` : ''}
-import { NestFactory } from '@nestjs/core';
-import { ${ModuleClass} } from './${entryModule}.module';${ws ? `
-import { Server } from 'http';
-import { Primus } from 'typestub-primus';${jsonSizeLimit ? `
-import { json } from 'express'
-` : ''}
-
-let resolvePrimus: (primus: Primus) => void;
-export let primusPromise = new Promise<Primus>(resolve => {
-  resolvePrimus = resolve;
-});
-
-/**@deprecated use primusPromise instead */
-export function usePrimus(f: (primus: Primus) => void): void {
-  primusPromise.then(f);
-}
-
-function attachServer(server: Server) {
-  const primus = new Primus(server, {
-    pathname: ${JSON.stringify(primusPath)},
-    global: ${JSON.stringify(primusGlobalName)},
-    parser: 'JSON',
-    compression: true,
-    transformer: 'engine.io',
-  });
-  primus.plugin('emitter', require('primus-emitter'));
-  // primus.save('primus.js');
-
-  primus.on('connection', spark => {
-    console.log(spark.id, 'connected');
-  });
-
-  resolvePrimus(primus);
-}` : ''}
-
-async function bootstrap() {
-  const app = await NestFactory.create(${ModuleClass});${web ? `
-  app.use(
-    '/',
-    express.static(path.join(process.cwd(), 'www'), {
-      setHeaders: res => {
-        res.setHeader('Connection', 'Keep-Alive')
-        // res.setHeader('Keep-Alive','timeout=5, max=1000')
-      },
-    }),
-  );` : ''}${jsonSizeLimit ? `
-  app.use(json({ limit: ${JSON.stringify(jsonSizeLimit)} }))` : ''}
-  app.enableCors();${ws ? `
-  attachServer(app.getHttpServer());` : ''}
-  await app.listen(${port});
-  console.log('listening ${protocol} on port ${port}');
-}
-bootstrap();
 `.trim();
 }
 
