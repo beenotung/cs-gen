@@ -27,6 +27,9 @@ import {
   genServiceCode,
   genStatusCode,
 } from './gen-code';
+import { getModuleDirname, getSrcDirname, Package } from './template/helpers';
+import { updateRootPackageFile } from './template/package';
+import { genFormatScriptFile } from './template/scripts/format';
 import { genServerHelperFile } from './template/server/core/helpers';
 import { updateMainFile } from './template/server/main';
 
@@ -34,30 +37,6 @@ async function writeFile(filename: string, code: string) {
   code = code.trim();
   code += '\n';
   await _writeFile(filename, code);
-}
-
-// tslint:disable-next-line no-unused-declaration
-async function writeBinFile(filename: string, code: string) {
-  code = code.trim();
-  code += '\n';
-  await _writeFile(filename, code);
-  await exec('chmod +x ' + JSON.stringify(filename));
-}
-
-export function getSrcDirname(args: { projectDirname: string }): string {
-  const { projectDirname } = args;
-  return path.join(projectDirname, 'src');
-}
-export function getModuleDirname(args: {
-  outDirname: string;
-  serverProjectDirname: string;
-  moduleDirname: string;
-}): string {
-  const { moduleDirname, serverProjectDirname } = args;
-  return path.join(
-    getSrcDirname({ projectDirname: serverProjectDirname }),
-    moduleDirname,
-  );
 }
 
 async function genLogicProcessorFile(args: {
@@ -371,11 +350,6 @@ async function genClientLibFile(args: {
   const filePath = path.join(dirPath, apiFilename);
   const code = genClientLibCode(args);
   await writeFile(filePath, code);
-}
-
-interface Package {
-  scripts: { [name: string]: string };
-  devDependencies: { [name: string]: string };
 }
 
 const tslib_dirname = path.join(
@@ -1123,6 +1097,7 @@ export async function genProject(_args: GenProjectOptions) {
     projectDirname: serverProjectDirname,
   });
   await Promise.all([
+    mkdirp(path.join(outDirname, 'scripts')),
     mkdirp(path.join(serverProjectDirname, '.idea')),
     mkdirp(path.join(clientProjectDirname, '.idea')),
     mkdirp(path.join(adminProjectDirname, '.idea')),
@@ -1132,6 +1107,8 @@ export async function genProject(_args: GenProjectOptions) {
   ]);
   const dataWrapper: { logicProcessorCode: string } = {} as any;
   await Promise.all([
+    updateRootPackageFile(args),
+    genFormatScriptFile(args),
     genDocumentationHtmlFile({
       ...args,
       clientCallTypes,

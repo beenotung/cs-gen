@@ -1,7 +1,6 @@
 import { readFile } from '@beenotung/tslib/fs';
 import path from 'path';
-import { getSrcDirname } from '../../gen-file';
-import { saveCode } from '../helpers';
+import { getSrcDirname, saveCode } from '../helpers';
 
 export async function updateMainFile(
   args: {

@@ -1,7 +1,6 @@
 import path from 'path';
 import { getTypeFileImportPath } from '../../../gen-code';
-import { getModuleDirname } from '../../../gen-file';
-import { saveCode, wrapResult } from '../../helpers';
+import { getModuleDirname, saveCode, wrapResult } from '../../helpers';
 
 export async function genServerHelperFile(
   args: {
