@@ -15,7 +15,6 @@ import { Call, CallInput } from '../domain/types'
 import { iterateBatch } from '../lib/batch'
 import { LogService } from '../lib/log.service'
 import { isPromise, Result } from '../lib/result'
-import { primusPromise } from '../main'
 import { isInternalCall, shouldReply } from './calls'
 import { endRestCall, startRestCall } from './connection'
 import {
@@ -26,21 +25,15 @@ import {
   startSparkCall,
 } from './connection'
 import { CoreService } from './core.service'
+import { primusPromise } from './helpers'
+import { instance } from './helpers'
 import { status } from './status'
-
-let ready: Promise<void>
 
 @Controller('core')
 export class CoreController {
-  static instance: CoreController
-
   constructor(public coreService: CoreService, public logService: LogService) {
-    CoreController.instance = this
-    ready = this.init()
-  }
-
-  get ready() {
-    return ready
+    instance.storeAndCall = this.storeAndCall.bind(this)
+    instance.ready = this.init()
   }
 
   async init() {
@@ -77,7 +70,7 @@ export class CoreController {
   ): Promise<C['Out']> {
     try {
       call.In.Timestamp = Date.now()
-      await ready
+      await instance.ready
       startRestCall(req, res, call)
       let out = this.storeAndCall<C>({ call, from: 'client' })
       if (isPromise(out)) {
@@ -147,7 +140,7 @@ export class CoreController {
         ) => {
           try {
             call.In.Timestamp = Date.now()
-            await ready
+            await instance.ready
             startSparkCall(spark, call)
             let out = this.storeAndCall({ call, from: 'client' })
             if (isPromise(out)) {

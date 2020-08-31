@@ -2,16 +2,7 @@ import { NestFactory } from '@nestjs/core'
 import { Server } from 'http'
 import { Primus } from 'typestub-primus'
 import { AppModule } from './app.module'
-
-let resolvePrimus: (primus: Primus) => void
-export let primusPromise = new Promise<Primus>(resolve => {
-  resolvePrimus = resolve
-})
-
-/**@deprecated use primusPromise instead */
-export function usePrimus(f: (primus: Primus) => void): void {
-  primusPromise.then(f)
-}
+import { resolvePrimus } from './core/helpers'
 
 function attachServer(server: Server) {
   const primus = new Primus(server, {
