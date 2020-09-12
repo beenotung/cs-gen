@@ -71,39 +71,21 @@ export class ${logicProcessorClassName} {
   dataWrapper.logicProcessorCode = code;
 }
 
-async function genConnectionFile(args: {
-  outDirname: string;
-  serverProjectDirname: string;
-  moduleDirname: string;
-  typeDirname: string;
-  typeFilename: string;
-  statusFilename: string;
-  statusName: string;
-}): Promise<void> {
+async function genConnectionFile(
+  args: Parameters<typeof getModuleDirname>[0] &
+    Parameters<typeof genConnectionCode>[0],
+): Promise<void> {
   const filename = path.join(getModuleDirname(args), 'connection.ts');
   const code = genConnectionCode(args);
   await writeFile(filename, code);
 }
 
-async function genServiceFile(args: {
-  outDirname: string;
-  serverProjectDirname: string;
-  moduleDirname: string;
-  serviceFilename: string;
-  serviceClassName: string;
-  typeDirname: string;
-  typeFilename: string;
-  callTypes: CallMeta[];
-  callTypeName: string;
-  subscribeTypeName: string;
-  logicProcessorDirname: string;
-  logicProcessorFilename: string;
-  logicProcessorClassName: string;
-  logicProcessorCode: string;
-  asyncLogicProcessor: boolean;
-  libDirname: string;
-  plugins: GenProjectPlugins;
-}) {
+async function genServiceFile(
+  args: {
+    serviceFilename: string;
+  } & Parameters<typeof genServiceCode>[0] &
+    Parameters<typeof getModuleDirname>[0],
+) {
   const { serviceFilename } = args;
   const code = genServiceCode(args);
   const filename = path.join(getModuleDirname(args), serviceFilename);
@@ -111,29 +93,25 @@ async function genServiceFile(args: {
   await writeFile(filename, code);
 }
 
-async function genStatusFile(args: {
-  statusFilename: string;
-  statusName: string;
-  outDirname: string;
-  serverProjectDirname: string;
-  moduleDirname: string;
-}) {
+async function genStatusFile(
+  args: {
+    statusFilename: string;
+  } & Parameters<typeof getModuleDirname>[0] &
+    Parameters<typeof genStatusCode>[0],
+) {
   const { statusFilename } = args;
   const filename = path.join(getModuleDirname(args), statusFilename);
   const code = genStatusCode(args);
   await writeFile(filename, code);
 }
 
-async function genCallsFile(args: {
-  outDirname: string;
-  serverProjectDirname: string;
-  moduleDirname: string;
-  typeDirname: string;
-  typeFilename: string;
-  callTypeName: string;
-  callsFilename: string;
-  callTypes: CallMeta[];
-}) {
+async function genCallsFile(
+  args: {
+    moduleDirname: string;
+    callsFilename: string;
+    serverProjectDirname: string;
+  } & Parameters<typeof genCallsCode>[0],
+) {
   const code = genCallsCode(args);
 
   const { moduleDirname, callsFilename, serverProjectDirname } = args;
@@ -144,37 +122,12 @@ async function genCallsFile(args: {
   await writeFile(pathname, code);
 }
 
-async function genControllerFile(args: {
-  outDirname: string;
-  serverProjectDirname: string;
-  moduleDirname: string;
-  typeDirname: string;
-  typeFilename: string;
-  callsFilename: string;
-  callTypeName: string;
-  callTypes: CallMeta[];
-  commandTypeName: string;
-  queryTypeName: string;
-  subscribeTypeName: string;
-  serviceClassName: string;
-  serviceFilename: string;
-  controllerClassName: string;
-  libDirname: string;
-  staticControllerReference: boolean;
-  serviceApiPath: string;
-  callApiPath: string;
-  controllerFilename: string;
-  statusFilename: string;
-  statusName: string;
-  ws: boolean;
-  asyncLogicProcessor: boolean;
-  replayCommand: boolean;
-  replayQuery: boolean;
-  storeCommand: boolean;
-  storeQuery: boolean;
-  timestampFieldName: string;
-  injectTimestampField: boolean;
-}) {
+async function genControllerFile(
+  args: {
+    controllerFilename: string;
+  } & Parameters<typeof genControllerCode>[0] &
+    Parameters<typeof getModuleDirname>[0],
+) {
   const { controllerFilename } = args;
   const code = genControllerCode(args);
   const filename = path.join(getModuleDirname(args), controllerFilename);
@@ -232,18 +185,13 @@ async function injectServerLibFiles(args: {
   ]);
 }
 
-async function genTypeFile(args: {
-  projectDirname: string;
-  typeDirname: string;
-  typeFilename: string;
-  callTypes: CallMeta[];
-  callTypeName: string;
-  queryTypeName: string;
-  commandTypeName: string;
-  subscribeTypeName: string;
-  typeAlias: TypeAlias;
-  constants: Constants;
-}) {
+async function genTypeFile(
+  args: {
+    projectDirname: string;
+    typeDirname: string;
+    typeFilename: string;
+  } & Parameters<typeof genCallTypeCode>[0],
+) {
   const code = genCallTypeCode(args);
 
   const { typeDirname, typeFilename, projectDirname } = args;
@@ -273,18 +221,14 @@ async function runNestCommand(args: {
   }
 }
 
-async function genModuleFile(args: {
-  outDirname: string;
-  serverProjectDirname: string;
-  moduleDirname: string;
-  moduleFilename: string;
-  moduleClassName: string;
-  serviceFilename: string;
-  serviceClassName: string;
-  controllerFilename: string;
-  controllerClassName: string;
-  libDirname: string;
-}) {
+async function genModuleFile(
+  args: {
+    serverProjectDirname: string;
+    moduleDirname: string;
+    moduleFilename: string;
+  } & Parameters<typeof genModuleCode>[0] &
+    Parameters<typeof getModuleDirname>[0],
+) {
   const { serverProjectDirname, moduleDirname, moduleFilename } = args;
   const code = genModuleCode(args);
   const filename = path.join(getModuleDirname(args), moduleFilename);
@@ -321,29 +265,14 @@ async function updateGitIgnore(args: { projectDirname: string; web: boolean }) {
   await writeFile(filePath, text);
 }
 
-async function genClientLibFile(args: {
-  outDirname: string;
-  typeDirname: string;
-  typeFilename: string;
-  apiDirname: string;
-  apiFilename: string;
-  serverProjectName: string;
-  clientProjectName: string;
-  serviceApiPath: string;
-  serviceClassName: string;
-  callApiPath: string;
-  callTypeName: string;
-  subscribeTypeName: string;
-  callTypes: CallMeta[];
-  primusGlobalName: string;
-  primusPath: string;
-  ws: boolean;
-  serverOrigin: {
-    port: number;
-    test: string;
-    prod: string;
-  };
-}) {
+async function genClientLibFile(
+  args: {
+    outDirname: string;
+    clientProjectName: string;
+    apiDirname: string;
+    apiFilename: string;
+  } & Parameters<typeof genClientLibCode>[0],
+) {
   const { outDirname, clientProjectName, apiDirname, apiFilename } = args;
   const dirPath = path.join(outDirname, clientProjectName, 'src', apiDirname);
   await mkdirp(dirPath);
@@ -457,10 +386,7 @@ async function setServerTsconfig(args: {
   }
 }
 
-async function setServerScripts(args: {
-  projectDirname: string;
-  libDirname: string;
-}) {
+async function setServerScripts(args: { projectDirname: string }) {
   const { projectDirname } = args;
   const destDir = path.join(projectDirname, 'scripts');
   const srcDir = path.join(
@@ -526,15 +452,16 @@ function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
     .forEach(name => (devDep[name] = devDep[name] || tslib_devDep[name]));
 }
 
-async function setServerPackage(args: {
-  baseProjectName: string;
-  serverProjectDirname: string;
-  ws: boolean;
-  web: boolean;
-  jsonSizeLimit: string | undefined;
-  injectFormat: boolean;
-  injectNestClient: boolean;
-}) {
+async function setServerPackage(
+  args: {
+    baseProjectName: string;
+    serverProjectDirname: string;
+    ws: boolean;
+    web: boolean;
+    jsonSizeLimit: string | undefined;
+    injectNestClient: boolean;
+  } & Omit<Parameters<typeof setPackageJson>[0], 'packageJson'>,
+) {
   const {
     baseProjectName,
     serverProjectDirname,
@@ -599,11 +526,12 @@ async function setServerPackage(args: {
   await writeFile(filename, newText);
 }
 
-async function setClientPackage(args: {
-  projectDirname: string;
-  ws: boolean;
-  injectFormat: boolean;
-}) {
+async function setClientPackage(
+  args: {
+    projectDirname: string;
+    ws: boolean;
+  } & Omit<Parameters<typeof setPackageJson>[0], 'packageJson'>,
+) {
   const { projectDirname, ws } = args;
   const filename = path.join(projectDirname, 'package.json');
   if (!(await hasFile(filename))) {
@@ -841,21 +769,21 @@ function splitCallTypes(
   return { clientCallTypes, adminCallTypes, internalCallTypes };
 }
 
-async function genDocumentationHtmlFile(args: {
-  outDirname: string;
-  docDirname: string;
-  clientDocFilename: string;
-  adminDocFilename: string;
-  internalDocFilename: string;
-  baseProjectName: string;
-  commandTypeName: string;
-  queryTypeName: string;
-  subscribeTypeName: string;
-  clientCallTypes: CallMeta[];
-  adminCallTypes: CallMeta[];
-  internalCallTypes: CallMeta[];
-  typeAlias: TypeAlias;
-}) {
+async function genDocumentationHtmlFile(
+  args: {
+    outDirname: string;
+    docDirname: string;
+    clientDocFilename: string;
+    adminDocFilename: string;
+    internalDocFilename: string;
+    clientCallTypes: CallMeta[];
+    adminCallTypes: CallMeta[];
+    internalCallTypes: CallMeta[];
+  } & Omit<
+    Parameters<typeof genDocumentationHtmlCode>[0],
+    'role' | 'callTypes'
+  >,
+) {
   const {
     outDirname,
     docDirname,
@@ -1017,6 +945,7 @@ export type GenProjectOptions = {
   plugins?: GenProjectPlugins;
   forceOptionalToUndefined?: boolean;
 };
+
 export async function genProject(_args: GenProjectOptions) {
   const __args = {
     ...defaultGenProjectArgs,
