@@ -1,5 +1,6 @@
 import { readFile } from '@beenotung/tslib/fs';
 import path from 'path';
+import { removeTsExtname } from '../../gen-code';
 import { getSrcDirname, saveCode } from '../helpers';
 
 export async function updateMainFile(
@@ -55,7 +56,7 @@ import { ${ModuleClass} } from './${entryModule}.module';${ws ? `
 import { Server } from 'http';
 import { Primus } from 'typestub-primus';${jsonSizeLimit ? `
 import { json } from 'express';` : ''}
-import { resolvePrimus } from './${moduleDirname}/helpers'
+import { resolvePrimus } from './${moduleDirname}/${removeTsExtname(serverHelperFilename)}'
 
 function attachServer(server: Server) {
   const primus = new Primus(server, {
