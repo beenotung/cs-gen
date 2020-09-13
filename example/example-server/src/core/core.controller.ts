@@ -57,7 +57,7 @@ export class CoreController {
     }
     this.logService.storeObjectSync(
       call,
-      this.logService.nextKey() + '-' + call.CallType,
+      this.logService.nextKey(call.CallType),
     )
     return this.coreService.Call<C>(call)
   }

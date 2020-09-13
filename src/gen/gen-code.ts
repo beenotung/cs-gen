@@ -510,7 +510,7 @@ function genStoreMethodBody(args: {
   const callStoreCode = `
     this.logService.storeObjectSync(
       call,
-      this.logService.nextKey() + '-' + call.CallType,
+      this.logService.nextKey(call.CallType),
     );`.trim();
   const {
     needStoreCommand,
