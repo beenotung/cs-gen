@@ -34,8 +34,8 @@ export function compareKeys(a: string, b: string): 1 | 0 | -1 {
   const bn = bs.length
   const n = Math.min(an, bn)
   for (let i = 0; i < n; i++) {
-    const a = as[i]
-    const b = bs[i]
+    const a = +as[i] || as[i]
+    const b = +bs[i] || bs[i]
     if (a < b) {
       return -1
     }
@@ -51,9 +51,11 @@ export function compareKeys(a: string, b: string): 1 | 0 | -1 {
   }
   return 0
 }
+
 export function parseLogObject<T>(content: string | null): T | null {
   return content ? JSON.parse(content) : null
 }
+
 @Injectable()
 export class LogService {
   static readonly keySeparator = '-'
