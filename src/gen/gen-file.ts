@@ -152,36 +152,12 @@ async function injectServerLibFiles(args: {
       path.join(dest, 'log.service.ts'),
     ),
     copyFile(path.join(src, 'log', 'batch.ts'), path.join(dest, 'batch.ts')),
-    readFile(path.join(src, 'utils.ts')).then(bin => {
-      const blocks = bin
-        .toString()
-        .replace(/\r/g, '')
-        .split('\n\n');
-      const ps: Array<Promise<any>> = [];
-      // ps.push(
-      //   writeFile(
-      //     path.join(dest, 'call.type.ts'),
-      //     blocks.filter(s => s.includes('interface CallInput')).join('\n\n'),
-      //   ),
-      // );
-      if (asyncLogicProcessor) {
-        ps.push(
-          writeFile(
-            path.join(dest, 'result.ts'),
-            'export type Result<T> = T | Promise<T>;' +
-              '\n\n' +
-              blocks
-                .filter(
-                  block =>
-                    block.includes('function isPromise') ||
-                    block.includes('function then'),
-                )
-                .join('\n\n'),
-          ),
-        );
-      }
-      return Promise.all(ps);
-    }),
+    asyncLogicProcessor
+      ? copyFile(
+          path.join(src, 'utils', 'result.ts'),
+          path.join(dest, 'result.ts'),
+        )
+      : undefined,
   ]);
 }
 

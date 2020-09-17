@@ -55,8 +55,6 @@ export type Call<
   )
 */
 
-export type Result<T> = T | Promise<T>;
-
 export interface ICommand {
   command_id: string;
   version: string;
