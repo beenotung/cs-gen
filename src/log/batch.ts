@@ -1,12 +1,35 @@
 import { Bar } from 'cli-progress';
 import { LogService, parseLogObject } from './log.service';
 
-const MaxBatchSize = 8 * 1024 * 1024;
-const Suffix = 'Batch';
-const SuffixPattern = LogService.keySeparator + Suffix;
+const SampleCall = {
+  CallType: 'Query',
+  Type: 'AttemptGetProfile',
+  In: {
+    Timestamp: Date.now(),
+    token: new Array(32).fill(0).join(''),
+  },
+};
+const SampleKey = LogService.makeKey({
+  timestamp: Date.now(),
+  acc: 0,
+  suffix: SampleCall.CallType,
+});
 
 // [key, content]
-type batch<T> = Array<[string, T | batch<T> | null]>;
+type batch<T> = Array<[string, T | batch<T> | null]>
+
+const EmptyBatchSize = 2;
+const MaxBatchSize = 8 * 1024 * 1024;
+const MinItemSize =
+  calcBatchItemSize(SampleKey, JSON.stringify(SampleCall).length) + 32;
+
+const BatchSuffix = 'Batch';
+const BatchSuffixPattern = LogService.keySeparator + BatchSuffix;
+
+const KeysSuffix = 'Keys';
+
+const BatchKeysSuffix = BatchSuffix + KeysSuffix;
+const BatchKeysSuffixPattern = LogService.keySeparator + BatchKeysSuffix;
 
 function createBar(name: string) {
   return new Bar({
@@ -15,50 +38,63 @@ function createBar(name: string) {
   });
 }
 
-const EmptyBatchSize = 2;
+// `["key", content],`
+function calcBatchItemSize(key: string, binSize: number) {
+  return (
+    2 + // array brackets
+    2 + // key string quotes
+    key.length +
+    1 + // array comma
+    binSize +
+    1
+  ); // tailing comma
+}
 
 export function batchCalls<T>(log: LogService) {
   console.log('batchCalls');
-  const bar = createBar('batchCalls');
   const keys = log.getKeysSync();
-  bar.start(keys.length, 0);
-  let timestamp: number;
-  let acc: number;
+  const keySet = new Set(keys);
+
   let batch: batch<T> = [];
   let batchKeys: string[] = [];
   let size = EmptyBatchSize;
 
-  function reset(): void {
+  function flush(): void {
+    saveBatch();
     batch = [];
     batchKeys = [];
     size = EmptyBatchSize;
   }
 
-  function flush(): void {
+  function saveBatch(): void {
     if (batchKeys.length === 0) {
-      return reset();
+      return; // skip empty batch
     }
-    // skip nested narrow snapshot
-    if (batchKeys.length === 1 && batchKeys[0].endsWith(SuffixPattern)) {
-      return reset();
+    if (batchKeys.length === 1 && batchKeys[0].endsWith(BatchSuffixPattern)) {
+      return; // skip nested narrow snapshot
     }
+    const ss = batchKeys[0].split(LogService.keySeparator);
+    const timestamp = +ss[0];
+    const acc = +ss[1];
     const batchKey = LogService.makeKey({
       timestamp,
       acc,
-      suffix: Suffix,
+      suffix: BatchSuffix,
     });
-    log.storeObjectSync(batch, batchKey);
-    batch = []; // allow gc earlier
-    // tslint:disable-next-line:prefer-for-of
-    for (let i = 0; i < batchKeys.length; i++) {
-      const contentKey = batchKeys[i];
-      // do not delete the snapshot in case of appending
-      if (contentKey !== batchKey) {
-        log.removeObjectSync(contentKey);
-      }
-      bar.increment(1);
+    const batchKeysKey = batchKey + KeysSuffix;
+    if (keySet.has(batchKeysKey)) {
+      log.removeObjectSync(batchKeysKey);
     }
-    return reset();
+    const { newBatch, newBatchKeys } = flattenBatch(batch);
+    batch = []; // allow gc earlier
+    log.storeObjectSync(newBatch, batchKey);
+    log.storeObjectSync(newBatchKeys, batchKeysKey);
+    keySet.add(batchKeysKey);
+    for (const key of batchKeys) {
+      if (key !== batchKey) {
+        log.removeObjectSync(key);
+      }
+    }
   }
 
   function ensureBufferHasCapacity(objectSize: number) {
@@ -67,42 +103,35 @@ export function batchCalls<T>(log: LogService) {
     }
   }
 
-  for (const key of keys) {
-    const bin = log.getBinSync(key);
-    const objectSize =
-      2 + // array bracket
-      key.length +
-      2 + // string quote
-      1 + // array comma
-      bin.length +
-      1; // tailing comma
-    if (objectSize >= MaxBatchSize) {
+  const contentKeys = keys.filter(key => !key.endsWith(BatchKeysSuffixPattern));
+  const bar = createBar('batchCalls');
+  bar.start(contentKeys.length, 0);
+  for (const key of contentKeys) {
+    const binSize = log.getBinSizeSync(key);
+    const objectSize = calcBatchItemSize(key, binSize);
+    if (objectSize + MinItemSize >= MaxBatchSize) {
       flush();
       bar.increment(1);
       continue;
     }
+    // this object can be patched into batch
     ensureBufferHasCapacity(objectSize);
-    // this object can be patched into snapshot
-    if (batchKeys.length === 0) {
-      // first object, extract timestamp and acc for snapshot filename
-      const ss = key.split(LogService.keySeparator);
-      timestamp = +ss[0];
-      acc = +ss[1];
-    }
-    batchKeys.push(key);
-    batch.push([key, parseLogObject(bin.toString())]);
+    const content = log.getObjectSync<T>(key);
     size += objectSize;
+    batch.push([key, content]);
+    batchKeys.push(key);
+    bar.increment(1);
   }
   flush();
   bar.stop();
 }
 
 export type BatchYield<T> = {
-  key: string;
-  isFromBatch: boolean;
-  content: T | null;
-  estimateTotal: number;
-};
+  key: string
+  isFromBatch: boolean
+  content: T | null
+  estimateTotal: number
+}
 
 export function* iterateBatch<T>(log: LogService): Generator<BatchYield<T>> {
   const keys = log.getKeysSync();
@@ -115,15 +144,15 @@ export function* iterateBatch<T>(log: LogService): Generator<BatchYield<T>> {
   }
 
   function* iterate({
-    key,
-    content,
-    isFromBatch,
-  }: {
-    key: string;
-    content: T | batch<T> | null;
-    isFromBatch: boolean;
+                      key,
+                      content,
+                      isFromBatch,
+                    }: {
+    key: string
+    content: T | batch<T> | null
+    isFromBatch: boolean
   }): Generator<BatchYield<T>> {
-    if (key.endsWith(SuffixPattern)) {
+    if (key.endsWith(BatchSuffixPattern)) {
       estimateTotal--;
       if (!content) {
         return; // skip null batch
@@ -147,22 +176,71 @@ export function* iterateBatch<T>(log: LogService): Generator<BatchYield<T>> {
   }
 }
 
-function countBatchHelper<T>(
-  key: string,
-  content: T | batch<T> | null,
-): number {
-  if (!key.endsWith(SuffixPattern)) {
-    return 1;
+export type BatchKeyYield = {
+  key: string
+  isFromBatch: boolean
+  estimateTotal: number
+}
+
+export function* iterateBatchKeys(log: LogService): Generator<BatchKeyYield> {
+  const keys: string[] = log.getKeysSync();
+  const keySet: Set<string> = new Set(keys);
+  let estimateTotal = keys.length;
+
+  function* iterateBatchKey(batchKey: string): Generator<BatchKeyYield> {
+    const batchKeysKey = batchKey + KeysSuffix;
+    if (keySet.has(batchKeysKey)) {
+      const keys = log.getObjectSync<string[]>(batchKeysKey);
+      if (keys) {
+        yield* iterateBatchKeys(keys);
+        return;
+      }
+      // empty keys
+      log.removeObjectSync(batchKeysKey);
+    }
+    const batch = log.getObjectSync<batch<any>>(batchKey)!;
+    if (!batch) {
+      return;
+    }
+    const keys: string[] = [];
+    for (const entry of iterateBatch(batch)) {
+      yield entry;
+      keys.push(entry.key);
+    }
+    log.storeObjectSync(keys, batchKeysKey);
+    keySet.add(batchKeysKey);
   }
-  if (content === null) {
-    return 0;
+
+  function* iterateBatchKeys(keys: string[]): Generator<BatchKeyYield> {
+    estimateTotal += keys.length;
+    for (const key of keys) {
+      yield { key, estimateTotal, isFromBatch: true };
+    }
   }
-  const batch = content as batch<T>;
-  let acc = 0;
-  for (const [key, content] of batch) {
-    acc += countBatchHelper(key, content);
+
+  function* iterateBatch(batch: batch<any>): Generator<BatchKeyYield> {
+    estimateTotal += batch.length;
+    for (const [key, content] of batch) {
+      if (key.endsWith(BatchSuffixPattern)) {
+        yield* iterateBatch(content);
+        continue;
+      }
+      yield { key, estimateTotal, isFromBatch: true };
+    }
   }
-  return acc;
+
+  for (const key of keys) {
+    if (key.endsWith(BatchKeysSuffixPattern)) {
+      estimateTotal--;
+      continue;
+    }
+    if (key.endsWith(BatchSuffixPattern)) {
+      estimateTotal--;
+      yield* iterateBatchKey(key);
+      continue;
+    }
+    yield { key, estimateTotal, isFromBatch: false };
+  }
 }
 
 /**
@@ -170,11 +248,51 @@ function countBatchHelper<T>(
  * */
 export function countBatch(log: LogService): number {
   let acc = 0;
-  const keys = log.getKeysSync();
-  for (const key of keys) {
-    const content = log.getObjectSync(key);
-    acc += countBatchHelper(key, content);
+  const keys: string[] = log.getKeysSync();
+  const keySet: Set<string> = new Set(keys);
+
+  function countBatchKey(batchKey: string) {
+    const batchKeysKey = batchKey + KeysSuffix;
+    if (keySet.has(batchKeysKey)) {
+      const keys = log.getObjectSync<string[]>(batchKeysKey);
+      if (keys) {
+        acc += keys.length;
+        return;
+      }
+      // empty keys
+      log.removeObjectSync(batchKeysKey);
+    }
+    const batch = log.getObjectSync<batch<any>>(batchKey);
+    if (!batch) {
+      return; // skip empty batch
+    }
+    const keys: string[] = [];
+    iterateBatch(keys, batch);
+    log.storeObjectSync(keys, batchKeysKey);
+    acc += keys.length;
   }
+
+  function iterateBatch(keys: string[], batch: batch<any>) {
+    for (const [key, content] of batch) {
+      if (key.endsWith(BatchSuffixPattern)) {
+        iterateBatch(keys, content);
+        continue;
+      }
+      keys.push(key);
+    }
+  }
+
+  for (const key of keys) {
+    if (key.endsWith(BatchKeysSuffixPattern)) {
+      continue;
+    }
+    if (key.endsWith(BatchSuffixPattern)) {
+      countBatchKey(key);
+      continue;
+    }
+    acc++;
+  }
+
   return acc;
 }
 
@@ -185,27 +303,30 @@ export function deduplicateBatch(log: LogService) {
   bar.start(0, 0);
   const standaloneKeys = new Set<string>();
   const batchedKeys = new Set<string>();
-  for (const { key, isFromBatch, estimateTotal } of iterateBatch(log)) {
-    bar.setTotal(estimateTotal);
-    (isFromBatch ? batchedKeys : standaloneKeys).add(key);
+  for (const { key, isFromBatch, estimateTotal } of iterateBatchKeys(log)) {
+    bar.setTotal(estimateTotal)
+    ;(isFromBatch ? batchedKeys : standaloneKeys).add(key);
     bar.increment(1);
   }
   bar.stop();
 
-  bar = createBar('delete duplicate keys');
+  bar = createBar('delete duplicated keys');
   bar.start(standaloneKeys.size, 0);
+  let deleted = 0;
   for (const key of standaloneKeys) {
     if (batchedKeys.has(key)) {
       log.removeObjectSync(key);
+      deleted++;
     }
     bar.increment(1);
   }
   bar.stop();
+  console.log('deleted', deleted, 'deduplicated keys');
 }
 
 export function expandBatch<T>(log: LogService) {
   console.log('expandBatch');
-  const keys = log.getKeysSync().filter(key => key.endsWith(SuffixPattern));
+  const keys = log.getKeysSync().filter(key => key.endsWith(BatchSuffixPattern));
 
   let totalSize = 0;
   let bar = createBar('scan-files-size');
@@ -218,7 +339,7 @@ export function expandBatch<T>(log: LogService) {
 
   function expand(batch: batch<T>) {
     for (const [key, content] of batch) {
-      if (key.endsWith(SuffixPattern)) {
+      if (key.endsWith(BatchSuffixPattern)) {
         expand(content as batch<T>);
       } else {
         log.storeObjectSync(content, key);
@@ -241,4 +362,23 @@ export function expandBatch<T>(log: LogService) {
     log.removeObjectSync(key);
   }
   bar.stop();
+}
+
+function flattenBatch<T>(batch: batch<T>) {
+  const newBatch: batch<T> = [];
+  const newBatchKeys: string[] = [];
+
+  function walk(batch: batch<T>) {
+    for (const [key, content] of batch) {
+      if (key.endsWith(BatchSuffixPattern)) {
+        walk(content as batch<T>);
+        continue;
+      }
+      newBatch.push([key, content]);
+      newBatchKeys.push(key);
+    }
+  }
+
+  walk(batch);
+  return { newBatch, newBatchKeys };
 }
