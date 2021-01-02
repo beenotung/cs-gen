@@ -171,6 +171,10 @@ export function* iterateBatch<T>(log: LogService): Generator<BatchYield<T>> {
   }
 
   for (const key of keys) {
+    if (key.endsWith(BatchKeysSuffixPattern)) {
+      estimateTotal--;
+      continue;
+    }
     const content = log.getObjectSync<T | batch<T>>(key);
     yield* iterate({ key, content, isFromBatch: false });
   }
