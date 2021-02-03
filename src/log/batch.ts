@@ -16,7 +16,7 @@ const SampleKey = LogService.makeKey({
 });
 
 // [key, content]
-type batch<T> = Array<[string, T | batch<T> | null]>
+type batch<T> = Array<[string, T | batch<T> | null]>;
 
 const EmptyBatchSize = 2;
 const MaxBatchSize = 8 * 1024 * 1024;
@@ -127,11 +127,11 @@ export function batchCalls<T>(log: LogService) {
 }
 
 export type BatchYield<T> = {
-  key: string
-  isFromBatch: boolean
-  content: T | null
-  estimateTotal: number
-}
+  key: string;
+  isFromBatch: boolean;
+  content: T | null;
+  estimateTotal: number;
+};
 
 export function* iterateBatch<T>(log: LogService): Generator<BatchYield<T>> {
   const keys = log.getKeysSync();
@@ -144,13 +144,13 @@ export function* iterateBatch<T>(log: LogService): Generator<BatchYield<T>> {
   }
 
   function* iterate({
-                      key,
-                      content,
-                      isFromBatch,
-                    }: {
-    key: string
-    content: T | batch<T> | null
-    isFromBatch: boolean
+    key,
+    content,
+    isFromBatch,
+  }: {
+    key: string;
+    content: T | batch<T> | null;
+    isFromBatch: boolean;
   }): Generator<BatchYield<T>> {
     if (key.endsWith(BatchSuffixPattern)) {
       estimateTotal--;
@@ -181,10 +181,10 @@ export function* iterateBatch<T>(log: LogService): Generator<BatchYield<T>> {
 }
 
 export type BatchKeyYield = {
-  key: string
-  isFromBatch: boolean
-  estimateTotal: number
-}
+  key: string;
+  isFromBatch: boolean;
+  estimateTotal: number;
+};
 
 export function* iterateBatchKeys(log: LogService): Generator<BatchKeyYield> {
   const keys: string[] = log.getKeysSync();
@@ -308,8 +308,8 @@ export function deduplicateBatch(log: LogService) {
   const standaloneKeys = new Set<string>();
   const batchedKeys = new Set<string>();
   for (const { key, isFromBatch, estimateTotal } of iterateBatchKeys(log)) {
-    bar.setTotal(estimateTotal)
-    ;(isFromBatch ? batchedKeys : standaloneKeys).add(key);
+    bar.setTotal(estimateTotal);
+    (isFromBatch ? batchedKeys : standaloneKeys).add(key);
     bar.increment(1);
   }
   bar.stop();
@@ -330,7 +330,9 @@ export function deduplicateBatch(log: LogService) {
 
 export function expandBatch<T>(log: LogService) {
   console.log('expandBatch');
-  const keys = log.getKeysSync().filter(key => key.endsWith(BatchSuffixPattern));
+  const keys = log
+    .getKeysSync()
+    .filter(key => key.endsWith(BatchSuffixPattern));
 
   let totalSize = 0;
   let bar = createBar('scan-files-size');
