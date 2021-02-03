@@ -481,7 +481,7 @@ async function setServerPackage(
   json.scripts.serve = 'npm run pm2';
 
   if (injectNestClient) {
-    dep['nest-client'] = '^0.5.5';
+    dep['nest-client'] = '^0.6.1';
   }
   if (ws) {
     dep['typestub-primus'] = '^1.1.3';
@@ -519,7 +519,7 @@ async function setClientPackage(
   setPackageJson({ ...args, packageJson: json });
   const dep = json[dependencies] || {};
   const devDep = json[devDependencies] || {};
-  dep['nest-client'] = '^0.5.5';
+  dep['nest-client'] = '^0.6.1';
   if (ws) {
     dep['typestub-primus'] = '^1.1.3';
   }

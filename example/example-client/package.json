@@ -22,7 +22,7 @@
     "typescript": "^3.9.5"
   },
   "dependencies": {
-    "nest-client": "^0.5.5",
+    "nest-client": "^0.6.1",
     "typestub-primus": "^1.1.3"
   }
 }
