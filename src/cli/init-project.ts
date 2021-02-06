@@ -1,7 +1,12 @@
-import { hasFile, readFile, writeFile } from '@beenotung/tslib/fs';
+import {
+  hasFile,
+  readFile,
+  readJsonFile,
+  writeFile,
+} from '@beenotung/tslib/fs';
 import * as path from 'path';
-import { objectToQuoteString } from '../gen/helpers/quote-string';
 import { Package } from '../gen/helpers/package';
+import { objectToQuoteString } from '../gen/helpers/quote-string';
 import { CancelSubscribe } from '../helpers/gen-project-helpers';
 import { getIO } from './helpers';
 
@@ -33,7 +38,7 @@ async function ask(name: string, defaultAnswer: string): Promise<string> {
 async function initPackageJson(name: string) {
   let packageJson: any = {};
   if (await hasFile('package.json')) {
-    packageJson = JSON.parse((await readFile('package.json')).toString());
+    packageJson = await readJsonFile('package.json');
   }
   packageJson.name = packageJson.name || name;
   packageJson.scripts = {
