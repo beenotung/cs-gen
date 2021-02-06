@@ -1,4 +1,4 @@
-import { readJsonFile, writeFile } from '@beenotung/tslib/fs';
+import { hasFile, readJsonFile, writeFile } from '@beenotung/tslib/fs';
 import * as path from 'path';
 
 export interface Package {
@@ -15,9 +15,17 @@ export async function updateRootPackageFile(args: {
     return;
   }
   const filename = path.join(args.outDirname, 'package.json');
-  const json: Package = await readJsonFile(filename);
-  if (!json.scripts.format) {
-    json.scripts.format = 'bash scripts/format';
-    await writeFile(filename, JSON.stringify(json, null, 2));
+  let pkg: Package;
+  if (await hasFile(filename)) {
+    pkg = await readJsonFile(filename);
+  } else {
+    pkg = {} as any;
+  }
+  if (!pkg.scripts) {
+    pkg.scripts = {};
+  }
+  if (!pkg.scripts.format) {
+    pkg.scripts.format = 'bash scripts/format';
+    await writeFile(filename, JSON.stringify(pkg, null, 2));
   }
 }
