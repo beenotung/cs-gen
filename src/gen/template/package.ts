@@ -1,11 +1,6 @@
 import { hasFile, readJsonFile, writeFile } from '@beenotung/tslib/fs';
 import * as path from 'path';
-
-export interface Package {
-  scripts: { [name: string]: string };
-  dependencies: { [name: string]: string };
-  devDependencies: { [name: string]: string };
-}
+import { Package } from '../helpers/package';
 
 export async function updateRootPackageFile(args: {
   injectFormat: boolean;

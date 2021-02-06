@@ -27,8 +27,9 @@ import {
   genServiceCode,
   genStatusCode,
 } from './gen-code';
+import { sortObjectKey } from './helpers/object';
+import { addPackages, Package } from './helpers/package';
 import { getModuleDirname, getSrcDirname } from './template/helpers';
-import { Package } from './template/package';
 import { updateRootPackageFile } from './template/package';
 import { genFormatScriptFile } from './template/scripts/format';
 import { genServerHelperFile } from './template/server/core/helpers';
@@ -386,33 +387,21 @@ async function setServerScripts(args: { projectDirname: string }) {
   );
 }
 
-const dependencies: 'dependencies' = 'dependencies';
-const devDependencies: 'devDependencies' = 'devDependencies';
-
-function sortObjectKey<T extends object>(json: T): T {
-  const res = {} as T;
-  Object.keys(json)
-    .sort()
-    .forEach(x => ((res as any)[x] = (json as any)[x]));
-  return res;
-}
-
 function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
   if (!args.injectFormat) {
     return;
   }
-  const json = args.packageJson;
-  json.scripts = {
-    ...json.scripts,
+  const pkg = args.packageJson;
+  pkg.scripts = {
     format: tslib_package.scripts.format,
     postformat: tslib_package.scripts.postformat,
+    ...pkg.scripts,
   };
-  if (json.scripts.test === 'echo "Error: no test specified" && exit 1') {
-    delete json.scripts.test;
+  if (pkg.scripts.test === 'echo "Error: no test specified" && exit 1') {
+    delete pkg.scripts.test;
   }
-  const devDep = json[devDependencies] || {};
-  json[devDependencies] = devDep;
-  const tslib_devDep = tslib_package[devDependencies];
+  const devDep = pkg.devDependencies || {};
+  const tslib_devDep = tslib_package.devDependencies;
   Object.keys(tslib_devDep)
     .filter(name => {
       switch (name) {
@@ -427,6 +416,7 @@ function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
       }
     })
     .forEach(name => (devDep[name] = devDep[name] || tslib_devDep[name]));
+  pkg.devDependencies = sortObjectKey(devDep);
 }
 
 async function setServerPackage(
@@ -450,10 +440,10 @@ async function setServerPackage(
   const filename = path.join(serverProjectDirname, 'package.json');
   const bin = await readFile(filename);
   const text = bin.toString();
-  const json = JSON.parse(text);
-  setPackageJson({ ...args, packageJson: json });
-  const dep = json[dependencies] || {};
-  const devDep = json[devDependencies] || {};
+  const pkg: Package = JSON.parse(text);
+  setPackageJson({ ...args, packageJson: pkg });
+  const dep: Record<string, string> = {};
+  const devDep: Record<string, string> = {};
   // for core controller and batch.ts
   dep['cli-progress'] = '^2.1.1';
   dep.nestlib = '^0.5.2';
@@ -469,17 +459,17 @@ async function setServerPackage(
   // for quick compilation
   devDep.ctsc = '^1.1.0';
   const build = 'ctsc';
-  if (json.scripts.build && json.scripts.build !== build) {
-    let backup = json.scripts.build;
-    if (json.scripts.prebuild) {
+  if (pkg.scripts.build && pkg.scripts.build !== build) {
+    let backup = pkg.scripts.build;
+    if (pkg.scripts.prebuild) {
       backup = 'npm run prebuild && ' + backup;
     }
-    json.scripts['build:nest'] = backup;
+    pkg.scripts['build:nest'] = backup;
   }
-  json.scripts.build = build;
-  json.scripts.pm2 = `pm2 restart ${baseProjectName} || pm2 start --name ${baseProjectName} dist/main.js`;
-  json.scripts.preserve = 'npm run build';
-  json.scripts.serve = 'npm run pm2';
+  pkg.scripts.build = build;
+  pkg.scripts.pm2 = `pm2 restart ${baseProjectName} || pm2 start --name ${baseProjectName} dist/main.js`;
+  pkg.scripts.preserve = 'npm run build';
+  pkg.scripts.serve = 'npm run pm2';
 
   if (injectNestClient) {
     dep['nest-client'] = '^0.6.1';
@@ -497,9 +487,9 @@ async function setServerPackage(
   }
   devDep['@types/express-serve-static-core'] = '^4.16.7';
   devDep['@types/cli-progress'] = '^1.8.1';
-  json[dependencies] = sortObjectKey(dep);
-  json[devDependencies] = sortObjectKey(devDep);
-  const newText = JSON.stringify(json, null, 2);
+  addPackages(pkg, 'dependencies', dep);
+  addPackages(pkg, 'devDependencies', devDep);
+  const newText = JSON.stringify(pkg, null, 2);
   await writeFile(filename, newText);
 }
 
@@ -516,17 +506,17 @@ async function setClientPackage(
   }
   const bin = await readFile(filename);
   const text = bin.toString();
-  const json = JSON.parse(text);
-  setPackageJson({ ...args, packageJson: json });
-  const dep = json[dependencies] || {};
-  const devDep = json[devDependencies] || {};
+  const pkg: Package = JSON.parse(text);
+  setPackageJson({ ...args, packageJson: pkg });
+  const dep: Record<string, string> = {};
+  const devDep: Record<string, string> = {};
   dep['nest-client'] = '^0.6.1';
   if (ws) {
     dep['typestub-primus'] = '^1.1.3';
   }
-  json[dependencies] = sortObjectKey(dep);
-  json[devDependencies] = sortObjectKey(devDep);
-  const newText = JSON.stringify(json, null, 2);
+  addPackages(pkg, 'dependencies', dep);
+  addPackages(pkg, 'devDependencies', devDep);
+  const newText = JSON.stringify(pkg, null, 2);
   await writeFile(filename, newText);
 }
 
