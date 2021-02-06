@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "postformat": "tslint --fix -p ."
+    "postformat": "tslint -p . --fix"
   },
   "keywords": [],
   "author": "",

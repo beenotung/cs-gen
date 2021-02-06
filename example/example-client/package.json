@@ -6,7 +6,7 @@
   "scripts": {
     "start": "parcel src/index.html",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "postformat": "tslint --fix -p ."
+    "postformat": "tslint -p . --fix"
   },
   "keywords": [],
   "author": "",
