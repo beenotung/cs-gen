@@ -4,6 +4,7 @@ import path from 'path';
 
 export interface Package {
   scripts: { [name: string]: string };
+  dependencies: { [name: string]: string };
   devDependencies: { [name: string]: string };
 }
 

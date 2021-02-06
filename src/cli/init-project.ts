@@ -1,10 +1,21 @@
 import { hasFile, readFile, writeFile } from '@beenotung/tslib/fs';
 import * as path from 'path';
 import { objectToQuoteString } from '../gen/helpers/quote-string';
+import { Package } from '../gen/template/helpers';
 import { CancelSubscribe } from '../helpers/gen-project-helpers';
 import { getIO } from './helpers';
-// @ts-ignore
+
+const pkg: Package = require('../../package.json');
 const mkdirp = require('async-mkdirp');
+
+function copyPkgDep(name: string) {
+  let version = pkg.dependencies[name] || pkg.devDependencies[name];
+  if (!version) {
+    console.warn('unknown package:', name);
+    version = '@latest';
+  }
+  return { [name]: version };
+}
 
 async function ask(name: string, defaultAnswer: string): Promise<string> {
   const io = getIO();
@@ -39,14 +50,14 @@ async function initPackageJson(name: string) {
       'beenotung',
       'cqrs-exp',
     ),
-    'gen-ts-type': '^1.6.1',
+    ...copyPkgDep('gen-ts-type'),
     tslib: '^' + require('tslib/package.json').version,
   };
   packageJson.devDependencies = {
     ...packageJson.devDependencies,
     '@types/node': '*',
-    'ts-node': '^8.3.0',
-    typescript: '^3.5.2',
+    ...copyPkgDep('ts-node'),
+    ...copyPkgDep('typescript'),
   };
   await writeFile('package.json', JSON.stringify(packageJson, null, 2));
 }
