@@ -3,7 +3,7 @@
  * to check missing call logs
  * */
 import { Bar } from 'cli-progress';
-import { iterateBatch } from '../src/lib/batch';
+import { iterateBatchKeys } from '../src/lib/batch';
 import { logService } from './utils';
 import { incMap } from '@beenotung/tslib/map';
 
@@ -24,7 +24,7 @@ let total = 0;
 let lastTime = '';
 let bar = new Bar({});
 bar.start(0, 0);
-for (let { key, estimateTotal } of iterateBatch(logService)) {
+for (let { key, estimateTotal } of iterateBatchKeys(logService)) {
   bar.setTotal(estimateTotal);
   total++;
   lastTime = keyToDate(key);

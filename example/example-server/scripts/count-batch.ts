@@ -1,5 +1,5 @@
 #!/usr/bin/env ts-node
-import { countBatch, iterateBatch } from '../src/lib/batch';
+import { countBatch, iterateBatchKeys } from '../src/lib/batch';
 import { logService } from './utils';
 
 console.log('file count:', logService.getKeysSync().length);
@@ -7,7 +7,7 @@ console.log('call count:', countBatch(logService));
 
 let keys = new Set<string>();
 let key_count = 0;
-for (let { key } of iterateBatch(logService)) {
+for (let { key } of iterateBatchKeys(logService)) {
   key_count++;
   if (keys.has(key)) {
     console.log('duplicated key:', key);
@@ -16,4 +16,4 @@ for (let { key } of iterateBatch(logService)) {
   }
 }
 console.log('key counts:', key_count);
-console.log('unique key count:', keys.size);
+console.log('uniq  keys:', keys.size);

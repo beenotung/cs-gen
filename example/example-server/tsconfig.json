@@ -5,6 +5,7 @@
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
     "target": "es2017",
     "sourceMap": true,
     "outDir": "./dist",
@@ -12,8 +13,6 @@
     "incremental": true
   },
   "exclude": [
-    "node_modules",
-    "dist",
     "scripts",
     "**/*spec.ts",
     "**/*.macro.ts"
