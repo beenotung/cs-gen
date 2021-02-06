@@ -393,6 +393,7 @@ function setPackageJson(args: { injectFormat: boolean; packageJson: Package }) {
   }
   const pkg = args.packageJson;
   pkg.scripts = {
+    ...pkg.scripts,
     format: tslib_package.scripts.format,
     postformat: tslib_package.scripts.postformat,
     ...pkg.scripts,
