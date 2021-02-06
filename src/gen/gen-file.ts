@@ -476,7 +476,7 @@ async function setServerPackage(
     dep['nest-client'] = '^0.6.1';
   }
   if (ws) {
-    dep['typestub-primus'] = '^1.1.3';
+    dep['typestub-primus'] = '^1.3.2';
     dep['primus-emitter'] = '^3.1.1';
   }
   if (web || jsonSizeLimit) {
@@ -513,7 +513,7 @@ async function setClientPackage(
   const devDep: Record<string, string> = {};
   dep['nest-client'] = '^0.6.1';
   if (ws) {
-    dep['typestub-primus'] = '^1.1.3';
+    dep['typestub-primus'] = '^1.3.2';
   }
   addPackages(pkg, 'dependencies', dep);
   addPackages(pkg, 'devDependencies', devDep);
