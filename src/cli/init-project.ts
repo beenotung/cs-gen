@@ -1,7 +1,7 @@
 import { hasFile, readFile, writeFile } from '@beenotung/tslib/fs';
 import * as path from 'path';
 import { objectToQuoteString } from '../gen/helpers/quote-string';
-import { Package } from '../gen/template/helpers';
+import { Package } from '../gen/template/package';
 import { CancelSubscribe } from '../helpers/gen-project-helpers';
 import { getIO } from './helpers';
 

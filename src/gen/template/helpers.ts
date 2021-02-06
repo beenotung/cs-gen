@@ -2,12 +2,6 @@ import { exec } from '@beenotung/tslib/child_process';
 import { writeFile, writeFile as _writeFile } from '@beenotung/tslib/fs';
 import path from 'path';
 
-export interface Package {
-  scripts: { [name: string]: string };
-  dependencies: { [name: string]: string };
-  devDependencies: { [name: string]: string };
-}
-
 export function getSrcDirname(args: { projectDirname: string }): string {
   const { projectDirname } = args;
   return path.join(projectDirname, 'src');

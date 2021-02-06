@@ -27,7 +27,8 @@ import {
   genServiceCode,
   genStatusCode,
 } from './gen-code';
-import { getModuleDirname, getSrcDirname, Package } from './template/helpers';
+import { getModuleDirname, getSrcDirname } from './template/helpers';
+import { Package } from './template/package';
 import { updateRootPackageFile } from './template/package';
 import { genFormatScriptFile } from './template/scripts/format';
 import { genServerHelperFile } from './template/server/core/helpers';
