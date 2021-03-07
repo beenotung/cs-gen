@@ -44,10 +44,12 @@
   "dependencies": {
     "@beenotung/tslib": "^16.34.1",
     "async-mkdirp": "^1.2.7",
+    "better-sqlite3": "^7.1.2",
     "cli-progress": "^3.6.0",
     "gen-ts-type": "^1.7.1",
     "graceful-fs": "^4.2.3",
     "hasbin": "^1.2.3",
+    "integer": "^4.0.0",
     "mkdirp-sync": "^0.0.3",
     "readline": "^1.3.0",
     "reflect-metadata": "^0.1.13",
@@ -58,8 +60,10 @@
   },
   "devDependencies": {
     "@nestjs/common": "^7.0.0",
+    "@types/better-sqlite3": "^5.4.1",
     "@types/cli-progress": "^3.4.1",
     "@types/graceful-fs": "^4.1.3",
+    "@types/integer": "^1.0.1",
     "@types/node": "^8.10.59",
     "@types/rethinkdb": "^2.3.14",
     "@types/rimraf": "^3.0.0",
