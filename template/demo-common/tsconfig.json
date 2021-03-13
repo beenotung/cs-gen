@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "module": "commonjs",
+        "target": "ES6",
+        "outDir": "dist",
+        "esModuleInterop": true,
+        "incremental": true
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/*.macro.ts"
+    ]
+}

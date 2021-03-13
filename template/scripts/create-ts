@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+set -o pipefail
+if [ $# == 1 ]; then
+  name="$1"
+else
+  read -p "package name: " name
+fi
+mkdir -p "$name/src"
+cp template/tsconfig.json "$name/"
+cd "$name"
+npm init --yes
+pnpm i -D typescript prettier
+cd -
+node template/config-prettier.js "$name"

@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+set -o pipefail
+nest new --skip-git --skip-install
