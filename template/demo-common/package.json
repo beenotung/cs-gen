@@ -7,8 +7,15 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "Beeno Tung",
+    "email": "aabbcc1241@yahoo.com.hk",
+    "url": "https://beeno-tung.surge.sh"
+  },
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "@beenotung/tslib": "^16.43.0"
+  },
   "devDependencies": {
     "prettier": "^2.2.1",
     "tsc-macro": "^0.1.3",
