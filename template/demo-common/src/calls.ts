@@ -22,7 +22,13 @@ export type SubscribeUsers = {
   Replay: false
 }
 
-export type Call = CreateUser | CheckUsername | SubscribeUsers
+export type Command = CreateUser
+
+export type Query = CheckUsername
+
+export type Subscribe = SubscribeUsers
+
+export type Call = Command | Query | Subscribe
 
 export let calls = [
   {
@@ -47,3 +53,5 @@ export let calls = [
     "Replay": false
   }
 ]
+
+export type CallMeta = (typeof calls)[number]

@@ -1,4 +1,5 @@
 import { EOL } from 'os';
+import { binArrayBy } from '@beenotung/tslib/array';
 
 type Call = {
   CallType: string;
@@ -52,9 +53,17 @@ function genCode() {
   Replay: ${JSON.stringify(call.Replay)}
 }`);
   });
-  let names = calls.map(call => call.Type).join(' | ');
+  let callsByCallType = binArrayBy(calls, call => call.CallType);
+  callsByCallType.forEach((calls, CallType) => {
+    let names =
+      calls.length === 0 ? 'never' : calls.map(call => call.Type).join(' | ');
+    lines.push(`export type ${CallType} = ${names}`);
+  });
+  let names = Array.from(callsByCallType.keys()).join(' | ');
   lines.push(`export type Call = ${names}`);
   lines.push(`export let calls = ${JSON.stringify(calls, null, 2)}`);
+  lines.push(`export type CallMeta = (typeof calls)[number]`);
   return lines.join(EOL + EOL).trim() + EOL;
 }
+
 genCode();
