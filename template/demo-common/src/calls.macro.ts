@@ -1,20 +1,16 @@
-import { EOL } from 'os';
-import { binArrayBy } from '@beenotung/tslib/array';
+import {
+  CallMeta,
+  genCallTypes,
+  linesToCode,
+  ResultType,
+} from '../../template/gen-code';
 
-type Call = {
-  CallType: string;
-  Type: string;
-  In: string;
-  Out: string;
-  Replay: boolean;
-};
-
-let calls: Call[] = [
+let calls: CallMeta[] = [
   {
     CallType: 'Command',
     Type: 'CreateUser',
     In: `{ username: string }`,
-    Out: Result(['username already used']),
+    Out: ResultType(['username already used']),
     Replay: true,
   },
   {
@@ -33,37 +29,8 @@ let calls: Call[] = [
   },
 ];
 
-function Result(Reasons: string[]) {
-  let type = `{ Success: true }`;
-  if (Reasons.length > 0) {
-    let Reason = Reasons.map(s => JSON.stringify(s)).join(' | ');
-    type += ` | { Success: false, Reason: ${Reason} }`;
-  }
-  return type;
-}
-
 function genCode() {
-  let lines: string[] = [];
-  calls.forEach(call => {
-    lines.push(`export type ${call.Type} = {
-  CallType: ${JSON.stringify(call.CallType)}
-  Type: ${JSON.stringify(call.Type)}
-  In: ${call.In}
-  Out: ${call.Out}
-  Replay: ${JSON.stringify(call.Replay)}
-}`);
-  });
-  let callsByCallType = binArrayBy(calls, call => call.CallType);
-  callsByCallType.forEach((calls, CallType) => {
-    let names =
-      calls.length === 0 ? 'never' : calls.map(call => call.Type).join(' | ');
-    lines.push(`export type ${CallType} = ${names}`);
-  });
-  let names = Array.from(callsByCallType.keys()).join(' | ');
-  lines.push(`export type Call = ${names}`);
-  lines.push(`export let calls = ${JSON.stringify(calls, null, 2)}`);
-  lines.push(`export type CallMeta = (typeof calls)[number]`);
-  return lines.join(EOL + EOL).trim() + EOL;
+  return linesToCode(genCallTypes(calls));
 }
 
 genCode();
