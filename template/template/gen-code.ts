@@ -2,13 +2,16 @@ import { EOL } from 'os'
 import { binArrayBy } from '@beenotung/tslib/array'
 import { andType, orType } from 'gen-ts-type'
 
+type Type = string
+
 export type CallMeta = {
   CallType: string
   Type: string
-  In: string
-  Out: string
-  Feed?: string
+  In: Type
+  Out: Type
+  Feed?: Type // default is no feed
   Replay: boolean
+  Async?: boolean // default is sync
 }
 
 export function ResultType(Reasons: string[] = [], Data: string = '{}') {
@@ -23,13 +26,21 @@ export function ResultType(Reasons: string[] = [], Data: string = '{}') {
 export function genCallTypes(calls: CallMeta[]) {
   let lines: string[] = []
   calls.forEach(call => {
-    lines.push(`export type ${call.Type} = {
+    call.Async = call.Async || false
+    let code = `export type ${call.Type} = {
   CallType: ${JSON.stringify(call.CallType)}
   Type: ${JSON.stringify(call.Type)}
   In: ${call.In}
-  Out: ${call.Out}
+  Out: ${call.Out}`
+    if (call.Feed) {
+      code += `
+  Feed: ${call.Feed || 'undefined'}`
+    }
+    code += `
   Replay: ${JSON.stringify(call.Replay)}
-}`)
+  Async: ${call.Async}
+}`
+    lines.push(code)
   })
   let callsByCallType = binArrayBy(calls, call => call.CallType)
   callsByCallType.forEach((calls, CallType) => {

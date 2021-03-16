@@ -4,6 +4,7 @@ export type CreateUser = {
   In: { username: string }
   Out: { Success: true } | { Success: false; Reason: 'username already used' }
   Replay: true
+  Async: false
 }
 
 export type CheckUsername = {
@@ -12,6 +13,7 @@ export type CheckUsername = {
   In: { username: string }
   Out: { Success: true } & { used: boolean }
   Replay: false
+  Async: false
 }
 
 export type SubscribeUsers = {
@@ -19,7 +21,9 @@ export type SubscribeUsers = {
   Type: 'SubscribeUsers'
   In: {}
   Out: { Success: true } & { feed_id: string }
+  Feed: { username: string }
   Replay: false
+  Async: false
 }
 
 export type CancelSubscribe = {
@@ -28,6 +32,7 @@ export type CancelSubscribe = {
   In: { feed_id: string }
   Out: { Success: true }
   Replay: false
+  Async: false
 }
 
 export type Command = CreateUser | CancelSubscribe
@@ -46,6 +51,7 @@ export let calls = [
     Out:
       '{ Success: true } | { Success: false, Reason: "username already used" }',
     Replay: true,
+    Async: false,
   },
   {
     CallType: 'Query',
@@ -53,6 +59,7 @@ export let calls = [
     In: '{ username: string }',
     Out: '{ Success: true } & { used: boolean }',
     Replay: false,
+    Async: false,
   },
   {
     CallType: 'Subscribe',
@@ -61,6 +68,7 @@ export let calls = [
     Out: '{ Success: true } & { feed_id: string }',
     Feed: '{ username: string }',
     Replay: false,
+    Async: false,
   },
   {
     CallType: 'Command',
@@ -68,6 +76,7 @@ export let calls = [
     In: '{ feed_id: string }',
     Out: '{ Success: true }',
     Replay: false,
+    Async: false,
   },
 ]
 
