@@ -29,7 +29,7 @@ let calls: CallMeta[] = [
   },
 ];
 
-function genCode() {
+function genCode(): string {
   return linesToCode(genCallTypes(calls));
 }
 
