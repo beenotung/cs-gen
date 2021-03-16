@@ -1,26 +1,30 @@
 import {
-  Call,
+  SubscribeUsers,
   CheckUsername,
   CreateUser,
-  Query,
-} from '../../../demo-common/src/calls'
-type Model = {}
-let init: Model = {}
-type Msg = Call
+  CancelSubscribe,
+} from './calls'
 
 export class LogicalProcessor {
-  CreateUser(In: CreateUser['In']): CreateUser['Out'] {
+  usernames = new Set<string>()
+
+  CreateUser({ username }: CreateUser['In']): CreateUser['Out'] {
+    if (this.usernames.has(username)) {
+      return { Success: false, Reason: 'username already used' }
+    }
+    this.usernames.add(username)
     return { Success: true }
   }
-  CheckUsername(In: CheckUsername['In']): CheckUsername['Out'] {
-    return { used: true }
-  }
-}
 
-export function process(msg: Msg): [Model, Query['Out']] {
-  switch (msg.Type) {
-    case 'CreateUser':
-    default:
-      return model
+  CheckUsername({ username }: CheckUsername['In']): CheckUsername['Out'] {
+    return { Success: true, used: this.usernames.has(username) }
+  }
+
+  SubscribeUsers(In: SubscribeUsers['In']): SubscribeUsers['Out'] {
+    return { Success: true, feed_id: 'TODO' }
+  }
+
+  CancelSubscribe(In: CancelSubscribe['In']): CancelSubscribe['Out'] {
+    return { Success: true }
   }
 }

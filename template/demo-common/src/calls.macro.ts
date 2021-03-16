@@ -3,7 +3,9 @@ import {
   genCallTypes,
   linesToCode,
   ResultType,
-} from '../../template/gen-code';
+} from '../../template/gen-code'
+
+let FeedId = `{ feed_id: string }`
 
 let calls: CallMeta[] = [
   {
@@ -17,20 +19,28 @@ let calls: CallMeta[] = [
     CallType: 'Query',
     Type: 'CheckUsername',
     In: `{ username: string }`,
-    Out: `{ used: boolean }`,
+    Out: ResultType([], `{ used: boolean }`),
     Replay: false,
   },
   {
     CallType: 'Subscribe',
     Type: 'SubscribeUsers',
     In: `{}`,
-    Out: `{ username: string }`,
+    Out: ResultType([], FeedId),
+    Feed: `{ username: string }`,
     Replay: false,
   },
-];
+  {
+    CallType: 'Command',
+    Type: 'CancelSubscribe',
+    In: FeedId,
+    Out: ResultType(),
+    Replay: false,
+  },
+]
 
 function genCode(): string {
-  return linesToCode(genCallTypes(calls));
+  return linesToCode(genCallTypes(calls))
 }
 
-genCode();
+genCode()

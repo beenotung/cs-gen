@@ -1,29 +1,30 @@
-import { calls } from '../../../demo-common/src/calls';
+import { calls } from '../domain/calls'
 
 function genCode() {
-  let Types = calls.map(call=>call.Type)
+  let Types = calls.map(call => call.Type)
   let code = `
-import { Call${Types.map(Type=>`, ${Type}`).join('')} } from '../../../demo-common/src/calls'
+import { Call, ${Types.join(', ')} } from '../domain/calls'
 import { LogicalProcessor } from '../domain/logical-processor'
 import { Result } from '../lib/result'
 
-export class CoreSerivce {
+export class CoreService {
 
   constructor(public logicalProcessor: LogicalProcessor) {}
-  ${calls.map(call=>`
-  Call(call: Omit<${call.Type}, 'Out'>): Result<${call.Type}['Out']>`).join('')}
-  {
-    switch (call.Type) {${calls.map(
-      (call) => `
-      case '${call.Type}':
-        return this.logicalProcessor.${call.Type}(call.In)`,
-    ).join('')}
+
+  Call(call: Omit<Call, 'Out'>): Result<Call['Out']> {
+    switch (call.Type) {`
+  for (let Type of Types) {
+    code += `
+      case '${Type}':
+        return this.logicalProcessor.${Type}(call.In as ${Type}['In'])`
+  }
+  code += `
       default:
         throw new TypeError('unknown type')
     }
   }
 }
-`;
-  return code.trim() + '\n';
+`
+  return code.trim() + '\n'
 }
-genCode();
+genCode()

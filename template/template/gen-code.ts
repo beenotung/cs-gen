@@ -7,6 +7,7 @@ export type CallMeta = {
   Type: string
   In: string
   Out: string
+  Feed?: string
   Replay: boolean
 }
 

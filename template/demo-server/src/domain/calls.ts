@@ -10,7 +10,7 @@ export type CheckUsername = {
   CallType: 'Query'
   Type: 'CheckUsername'
   In: { username: string } & { Timestamp: number }
-  Out: { used: boolean }
+  Out: { Success: true } & { used: boolean }
   Replay: false
 }
 
@@ -18,11 +18,19 @@ export type SubscribeUsers = {
   CallType: 'Subscribe'
   Type: 'SubscribeUsers'
   In: { Timestamp: number }
-  Out: { username: string }
+  Out: { Success: true } & { feed_id: string }
   Replay: false
 }
 
-export type Command = CreateUser
+export type CancelSubscribe = {
+  CallType: 'Command'
+  Type: 'CancelSubscribe'
+  In: { feed_id: string } & { Timestamp: number }
+  Out: { Success: true }
+  Replay: false
+}
+
+export type Command = CreateUser | CancelSubscribe
 
 export type Query = CheckUsername
 
@@ -43,14 +51,22 @@ export let calls = [
     CallType: 'Query',
     Type: 'CheckUsername',
     In: '{ username: string } & { Timestamp: number }',
-    Out: '{ used: boolean }',
+    Out: '{ Success: true } & { used: boolean }',
     Replay: false,
   },
   {
     CallType: 'Subscribe',
     Type: 'SubscribeUsers',
     In: '{ Timestamp: number }',
-    Out: '{ username: string }',
+    Out: '{ Success: true } & { feed_id: string }',
+    Feed: '{ username: string }',
+    Replay: false,
+  },
+  {
+    CallType: 'Command',
+    Type: 'CancelSubscribe',
+    In: '{ feed_id: string } & { Timestamp: number }',
+    Out: '{ Success: true }',
     Replay: false,
   },
 ]
