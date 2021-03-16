@@ -1,4 +1,4 @@
-export type Result<T> = T | Promise<T>;
+export type Result<T> = T | Promise<T>
 
 export function then<T, R>(
   result: Result<T>,
@@ -9,7 +9,7 @@ export function then<T, R>(
     typeof result === 'object' &&
     typeof (result as Promise<T>).then === 'function'
   ) {
-    return (result as Promise<T>).then(fn);
+    return (result as Promise<T>).then(fn)
   }
-  return fn(result as T);
+  return fn(result as T)
 }

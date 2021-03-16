@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "format": "prettier --write **/*.ts"
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",

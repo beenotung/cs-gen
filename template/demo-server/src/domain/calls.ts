@@ -1,7 +1,7 @@
 export type CreateUser = {
   CallType: 'Command'
   Type: 'CreateUser'
-  In: { username: string }
+  In: { username: string } & { Timestamp: number }
   Out: { Success: true } | { Success: false; Reason: 'username already used' }
   Replay: true
 }
@@ -9,7 +9,7 @@ export type CreateUser = {
 export type CheckUsername = {
   CallType: 'Query'
   Type: 'CheckUsername'
-  In: { username: string }
+  In: { username: string } & { Timestamp: number }
   Out: { used: boolean }
   Replay: false
 }
@@ -17,7 +17,7 @@ export type CheckUsername = {
 export type SubscribeUsers = {
   CallType: 'Subscribe'
   Type: 'SubscribeUsers'
-  In: {}
+  In: { Timestamp: number }
   Out: { username: string }
   Replay: false
 }
@@ -34,7 +34,7 @@ export let calls = [
   {
     CallType: 'Command',
     Type: 'CreateUser',
-    In: '{ username: string }',
+    In: '{ username: string } & { Timestamp: number }',
     Out:
       '{ Success: true } | { Success: false, Reason: "username already used" }',
     Replay: true,
@@ -42,14 +42,14 @@ export let calls = [
   {
     CallType: 'Query',
     Type: 'CheckUsername',
-    In: '{ username: string }',
+    In: '{ username: string } & { Timestamp: number }',
     Out: '{ used: boolean }',
     Replay: false,
   },
   {
     CallType: 'Subscribe',
     Type: 'SubscribeUsers',
-    In: '{}',
+    In: '{ Timestamp: number }',
     Out: '{ username: string }',
     Replay: false,
   },
