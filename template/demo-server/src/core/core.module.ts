@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common'
-import { CoreService } from './core.service'
 import { CoreController } from './core.controller'
+import { CoreService } from './core.service'
+import { LogicalProcessor } from '../domain/logical-processor'
 
 @Module({
-  providers: [CoreService],
   controllers: [CoreController],
+  providers: [CoreService, LogicalProcessor],
 })
 export class CoreModule {}
