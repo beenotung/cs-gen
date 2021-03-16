@@ -1,3 +1,4 @@
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
 import {
   Call,
   CreateUser,
@@ -8,6 +9,7 @@ import {
 import { LogicalProcessor } from '../domain/logical-processor'
 import { Result } from '../lib/result'
 
+@Injectable()
 export class CoreService {
   constructor(public logicalProcessor: LogicalProcessor) {}
 
@@ -28,7 +30,7 @@ export class CoreService {
           call.In as CancelSubscribe['In'],
         )
       default:
-        throw new TypeError('unknown type')
+        throw new HttpException('unknown type', HttpStatus.NOT_IMPLEMENTED)
     }
   }
 }

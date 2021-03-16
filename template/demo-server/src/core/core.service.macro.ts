@@ -3,10 +3,12 @@ import { calls } from '../domain/calls'
 function genCode() {
   let Types = calls.map(call => call.Type)
   let code = `
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
 import { Call, ${Types.join(', ')} } from '../domain/calls'
 import { LogicalProcessor } from '../domain/logical-processor'
 import { Result } from '../lib/result'
 
+@Injectable()
 export class CoreService {
 
   constructor(public logicalProcessor: LogicalProcessor) {}
@@ -20,7 +22,7 @@ export class CoreService {
   }
   code += `
       default:
-        throw new TypeError('unknown type')
+        throw new HttpException('unknown type', HttpStatus.NOT_IMPLEMENTED)
     }
   }
 }

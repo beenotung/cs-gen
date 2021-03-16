@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import {
   SubscribeUsers,
   CheckUsername,
@@ -5,6 +6,7 @@ import {
   CancelSubscribe,
 } from './calls'
 
+@Injectable()
 export class LogicalProcessor {
   usernames = new Set<string>()
 
