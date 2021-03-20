@@ -10,9 +10,5 @@ let serverCalls = calls.map(call => {
 })
 
 let lines = genCallTypes(serverCalls)
-lines.push(
-  `
-export let apiConfig = ${JSON.stringify(apiConfig)}
-`.trim(),
-)
+lines.push(`export let apiConfig = ${JSON.stringify(apiConfig)}`)
 linesToCode(lines)

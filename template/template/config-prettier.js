@@ -1,26 +1,31 @@
 #!/usr/bin/env node
-let dir = process.argv[2];
-let fs = require('fs');
-let path = require('path');
-let pkgFile = path.join(dir, 'package.json');
-let ignoreFile = path.join(dir, '.prettierignore');
+let fs = require('fs')
+let path = require('path')
+let os = require('os')
 
-let pkg = JSON.parse(fs.readFileSync(pkgFile).toString());
-let scripts = pkg.scripts || (pkg.scripts = {});
-if (!('format' in scripts)) {
-  scripts.format = 'prettier --write "src/**/*.ts"';
-}
-fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2));
+let targetDir = process.argv[2]
+let targetPkgFile = path.resolve(path.join(targetDir, 'package.json'))
+let targetPkg = require(targetPkgFile)
+let targetIgnoreFile = path.join(targetDir, '.prettierignore')
 
-let lines = [];
-if (fs.existsSync(ignoreFile)) {
-  lines = fs
-    .readFileSync(ignoreFile)
-    .toString()
-    .split('\n');
+let rootDir = path.join(__dirname, '..')
+let rootPkg = require('../package')
+let rootIgnoreFile = path.join(rootDir, '.prettierignore')
+let rootIgnoreLines = fs.readFileSync(rootIgnoreFile).toString().split(os.EOL)
+
+let scripts = targetPkg.scripts || (targetPkg.scripts = {})
+if (!scripts.format) {
+  scripts.format = rootPkg.scripts.format
 }
-console.log({lines,i:lines.includes('*.macro.ts')});
-if (!lines.includes('*.macro.ts')) {
-  lines.push('*.macro.ts');
+fs.writeFileSync(targetPkgFile, JSON.stringify(targetPkg, null, 2))
+
+let targetIgnoreLines = []
+if (fs.existsSync(targetIgnoreFile)) {
+  targetIgnoreLines = fs.readFileSync(targetIgnoreFile).toString().split(os.EOL)
 }
-fs.writeFileSync(ignoreFile, lines.join('\n'));
+rootIgnoreLines.forEach(line => {
+  if (!targetIgnoreLines.includes(line)) {
+    targetIgnoreLines.push(line)
+  }
+})
+fs.writeFileSync(targetIgnoreFile, targetIgnoreLines.join(os.EOL))

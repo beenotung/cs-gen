@@ -10,6 +10,6 @@ mkdir -p "$name/src"
 cp template/tsconfig.json "$name/"
 cd "$name"
 npm init --yes
-pnpm i -D typescript prettier
+pnpm i -D typescript prettier format-json-cli
 cd -
 node template/config-prettier.js "$name"
