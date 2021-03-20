@@ -1,5 +1,5 @@
 import { linesToCode, genCallTypes } from '../../../template/gen-code'
-import { calls } from '../../../demo-config/src/calls'
+import { apiConfig, calls } from '../../../demo-config/src/calls'
 import { andType } from 'gen-ts-type'
 
 let serverCalls = calls.map(call => {
@@ -9,4 +9,10 @@ let serverCalls = calls.map(call => {
   }
 })
 
-linesToCode(genCallTypes(serverCalls))
+let lines = genCallTypes(serverCalls)
+lines.push(
+  `
+export let apiConfig = ${JSON.stringify(apiConfig)}
+`.trim(),
+)
+linesToCode(lines)

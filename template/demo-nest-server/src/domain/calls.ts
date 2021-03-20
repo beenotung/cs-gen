@@ -81,3 +81,5 @@ export let calls = [
 ]
 
 export type CallMeta = typeof calls[number]
+
+export let apiConfig = { port: 3000 }
