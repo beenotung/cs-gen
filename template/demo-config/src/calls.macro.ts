@@ -40,7 +40,15 @@ let calls: CallMeta[] = [
 ]
 
 function genCode(): string {
-  return linesToCode(genCallTypes(calls))
+  let lines = genCallTypes(calls)
+  lines.push(
+    `
+export let apiConfig = {
+  port: 3000
+}
+`.trim(),
+  )
+  return linesToCode(lines)
 }
 
 genCode()
