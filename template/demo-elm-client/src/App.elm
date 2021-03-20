@@ -8,6 +8,7 @@ import Http exposing (Error)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Url
+import Calls exposing (CheckUsernameOut)
 
 
 main : Program () Model Msg
@@ -37,7 +38,7 @@ type Msg
     = Todo
     | SetUsername String
     | Call
-    | SetUsed (Result Error Used)
+    | SetUsed (Result Error CheckUsernameOut)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -105,10 +106,6 @@ onUrlChange url =
     Todo
 
 
-type alias Used =
-    { success : Bool, used : Bool }
-
-
 call =
     Http.post
         { url = "http://localhost:3000/core/Call"
@@ -124,7 +121,7 @@ call =
                     ]
         , expect =
             Http.expectJson SetUsed <|
-                Decode.map2 Used
+                Decode.map2 CheckUsernameOut
                     (Decode.field "Success" Decode.bool)
                     (Decode.field "used" Decode.bool)
         }
