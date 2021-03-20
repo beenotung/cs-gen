@@ -23,6 +23,13 @@ let calls: CallMeta[] = [
     Replay: false,
   },
   {
+    CallType: 'Query',
+    Type: 'GetAllUsernames',
+    In: `{}`,
+    Out: ResultType([], `{ usernames: string[] }`),
+    Replay: false,
+  },
+  {
     CallType: 'Subscribe',
     Type: 'SubscribeUsers',
     In: `{}`,

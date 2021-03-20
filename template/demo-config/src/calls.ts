@@ -16,6 +16,15 @@ export type CheckUsername = {
   Async: false
 }
 
+export type GetAllUsernames = {
+  CallType: 'Query'
+  Type: 'GetAllUsernames'
+  In: {}
+  Out: { Success: true } & { usernames: string[] }
+  Replay: false
+  Async: false
+}
+
 export type SubscribeUsers = {
   CallType: 'Subscribe'
   Type: 'SubscribeUsers'
@@ -37,7 +46,7 @@ export type CancelSubscribe = {
 
 export type Command = CreateUser | CancelSubscribe
 
-export type Query = CheckUsername
+export type Query = CheckUsername | GetAllUsernames
 
 export type Subscribe = SubscribeUsers
 
@@ -58,6 +67,14 @@ export let calls = [
     Type: 'CheckUsername',
     In: '{ username: string }',
     Out: '{ Success: true } & { used: boolean }',
+    Replay: false,
+    Async: false,
+  },
+  {
+    CallType: 'Query',
+    Type: 'GetAllUsernames',
+    In: '{}',
+    Out: '{ Success: true } & { usernames: string[] }',
     Replay: false,
     Async: false,
   },
