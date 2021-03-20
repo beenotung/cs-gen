@@ -3,6 +3,7 @@ import {
   Call,
   CreateUser,
   CheckUsername,
+  GetAllUsernames,
   SubscribeUsers,
   CancelSubscribe,
 } from '../domain/calls'
@@ -20,6 +21,10 @@ export class CoreService {
       case 'CheckUsername':
         return this.logicalProcessor.CheckUsername(
           call.In as CheckUsername['In'],
+        )
+      case 'GetAllUsernames':
+        return this.logicalProcessor.GetAllUsernames(
+          call.In as GetAllUsernames['In'],
         )
       case 'SubscribeUsers':
         return this.logicalProcessor.SubscribeUsers(

@@ -14,3 +14,12 @@ button {
   margin: 0 0.25em;
   text-transform: capitalize;
 }
+.used {
+  padding-inline-start: 0.5em;
+}
+.used::before {
+  content: '(';
+}
+.used::after {
+  content: ')';
+}

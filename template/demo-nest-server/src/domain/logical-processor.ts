@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { GetAllUsernames } from './calls'
 import {
   SubscribeUsers,
   CheckUsername,
@@ -20,6 +21,10 @@ export class LogicalProcessor {
 
   CheckUsername({ username }: CheckUsername['In']): CheckUsername['Out'] {
     return { Success: true, used: this.usernames.has(username) }
+  }
+
+  GetAllUsernames(In: GetAllUsernames['In']): GetAllUsernames['Out'] {
+    return { Success: true, usernames: Array.from(this.usernames) }
   }
 
   SubscribeUsers(In: SubscribeUsers['In']): SubscribeUsers['Out'] {
