@@ -26,7 +26,7 @@ let calls: CallMeta[] = [
     CallType: 'Query',
     Type: 'GetAllUsernames',
     In: `{}`,
-    Out: ResultType([], `{ usernames: string[] }`),
+    Out: ResultType([], `{ usernames: Array<string> }`),
     Replay: false,
   },
   {

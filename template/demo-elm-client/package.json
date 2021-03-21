@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "gen": "npm run gen:ts && npm run gen:elm",
+    "gen:ts": "cd src/ts && tsc-macro --ext .ts",
+    "gen:elm": "cd src/elm && tsc-macro --ext .elm",
     "start": "elm reactor",
-    "dev": "elm-live src/App.elm -- --debug",
+    "dev": "elm-live src/elm/App.elm -- --debug",
     "format": "elm-format --yes ."
   },
   "keywords": [],
@@ -13,6 +16,8 @@
   "license": "ISC",
   "devDependencies": {
     "elm-format": "^0.8.5",
-    "elm-live": "^4.0.2"
+    "elm-live": "^4.0.2",
+    "ts-type-check": "^1.1.0",
+    "tsc-macro": "^0.1.3"
   }
 }

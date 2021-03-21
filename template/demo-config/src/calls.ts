@@ -20,7 +20,7 @@ export type GetAllUsernames = {
   CallType: 'Query'
   Type: 'GetAllUsernames'
   In: {}
-  Out: { Success: true } & { usernames: string[] }
+  Out: { Success: true } & { usernames: Array<string> }
   Replay: false
   Async: false
 }
@@ -74,7 +74,7 @@ export let calls = [
     CallType: 'Query',
     Type: 'GetAllUsernames',
     In: '{}',
-    Out: '{ Success: true } & { usernames: string[] }',
+    Out: '{ Success: true } & { usernames: Array<string> }',
     Replay: false,
     Async: false,
   },
