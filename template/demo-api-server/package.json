@@ -1,0 +1,26 @@
+{
+  "name": "demo-api-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/better-sqlite3": "^5.4.1",
+    "@types/integer": "^1.0.1",
+    "@types/node": "^14.14.37",
+    "ts-node": "^9.1.1",
+    "ts-node-dev": "^1.1.6",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "better-sqlite3": "^7.1.4",
+    "better-sqlite3-helper": "^3.1.2",
+    "better-sqlite3-schema": "^0.8.0",
+    "integer": "^4.0.0"
+  }
+}
