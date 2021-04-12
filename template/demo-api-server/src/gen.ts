@@ -7,12 +7,12 @@ type ts_type = string
 
 export function genTsType([name, fields]: ObjectType): string {
   let body = fields.map(genTsField).join('')
-  return `export type ${name} = {${body}}`
+  return `export type ${name} = {${body}\n}`
 }
 
 export function genCreateTableSql([name, fields]: ObjectType): string {
   let body = fields.map(genCreateTableColumn).join(',')
-  return `create table if not exists ${name}(${body});`
+  return `create table if not exists ${name}(${body}\n);`
 }
 
 function genCreateTableColumn([name, type]: ObjectField): string {
