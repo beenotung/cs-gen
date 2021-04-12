@@ -8,16 +8,22 @@ create table if not exists create_user (
 
 create table change_username (
     log_id integer unique references log(id),
-    from text not null,
-    to text not null
+    from_username text not null,
+    to_username text not null
 );
 
 create table check_username_exist (
     log_id integer unique references log(id),
-    username text not null,
+    username text not null
 );
 
 create table console_error (
     log_id integer unique references log(id),
     user_agent integer references str(id)
 );
+
+-- Down
+drop table if exists console_error;
+drop table if exists check_username_exists;
+drop table if exists change_username;
+drop table if exists create_user;
