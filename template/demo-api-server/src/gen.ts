@@ -6,16 +6,21 @@ type sql_type = string
 type ts_type = string
 
 export function genTsType([name, fields]: ObjectType): string {
+  name = toTsTypeNae(name)
   let body = fields.map(genTsField).join('')
   return `export type ${name} = {${body}\n}`
 }
 
 export function genCreateTableSql([name, fields]: ObjectType): string {
+  name = toSqlTabelName(name)
   let body = fields.map(genCreateTableColumn).join(',')
   return `create table if not exists ${name}(${body}\n);`
 }
 
 function genCreateTableColumn([name, type]: ObjectField): string {
+  if (type === 'text') {
+    type = `integer references str(id)`
+  }
   return `\n  ${name} ${type}`
 }
 
@@ -42,11 +47,11 @@ function getTsType(sql_type: string) {
 }
 
 let sql_to_ts_types: Record<string, string> = {
-  'integer': 'number',
-  'real': 'number',
-  'text': 'string',
-  'blob': 'Buffer',
-  'json': 'any',
+  integer: 'number',
+  real: 'number',
+  text: 'string',
+  blob: 'Buffer',
+  json: 'any',
 }
 
 export function fromSqlData(sql_type: string, value: any) {
@@ -54,4 +59,15 @@ export function fromSqlData(sql_type: string, value: any) {
     return JSON.parse(value)
   }
   return value
+}
+
+export function toTsTypeNae(name: string) {
+  return name
+    .split('_')
+    .map(s => s[0].toUpperCase() + s.substring(1))
+    .join('')
+}
+
+export function toSqlTabelName(name: string) {
+  return name.toLowerCase()
 }
