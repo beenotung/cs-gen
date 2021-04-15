@@ -3,6 +3,7 @@ import { CallMeta } from './types'
 export let callMetas: CallMeta[] = [
   {
     id: 1,
+    call_type: 'command',
     type: 'create_user',
     replay: true,
     in: {
@@ -13,6 +14,7 @@ export let callMetas: CallMeta[] = [
   },
   {
     id: 2,
+    call_type: 'command',
     type: 'change_username',
     replay: true,
     in: {
@@ -23,6 +25,7 @@ export let callMetas: CallMeta[] = [
   },
   {
     id: 3,
+    call_type: 'query',
     type: 'check_username_exist',
     replay: false,
     in: {
@@ -34,6 +37,7 @@ export let callMetas: CallMeta[] = [
   },
   {
     id: 4,
+    call_type: 'query',
     type: 'get_all_username',
     replay: false,
     out: {
@@ -42,6 +46,7 @@ export let callMetas: CallMeta[] = [
   },
   {
     id: 5,
+    call_type: 'command',
     type: 'report_stats',
     replay: false,
     in: {
@@ -59,6 +64,7 @@ export let callMetas: CallMeta[] = [
   },
   {
     id: 6,
+    call_type: 'subscribe',
     type: 'subscribe_users',
     replay: false,
     out: {
@@ -67,6 +73,7 @@ export let callMetas: CallMeta[] = [
   },
   {
     id: 7,
+    call_type: 'command',
     type: 'cancel_subscribe',
     replay: false,
     in: {
