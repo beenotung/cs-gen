@@ -1,9 +1,10 @@
 export type CallMeta = {
   id: number // unique
+  call_type: 'command' | 'query' | 'subscribe'
   type: string
   in?: ObjectType
   out?: ObjectType
-  errors?:string[] // error message failed
+  errors?: string[] // error message failed
   feed?: ObjectType // default is not food
   replay: boolean
   async?: boolean // default is sync
