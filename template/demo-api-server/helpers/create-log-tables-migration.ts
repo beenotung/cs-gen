@@ -1,7 +1,7 @@
 import { EOL } from 'os'
-import { CallMeta } from './types'
+import {CallMeta} from "./types";
 
-export function genNewLogTablesMigration(callMetas: CallMeta[]) {
+export function genNewLogTablesMigration(callMetas:CallMeta[]) {
   let lines: string[] = []
   lines.push('-- Up')
   callMetas.forEach(call => {
