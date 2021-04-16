@@ -1,4 +1,4 @@
-import { CallMeta } from './types'
+import { CallMeta } from '../helpers/types'
 
 export let callMetas: CallMeta[] = [
   {
