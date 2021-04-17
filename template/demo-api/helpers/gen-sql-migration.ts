@@ -77,14 +77,14 @@ export function genNextMigrationFilename(migrationsPath: string): string {
   const lastFilename = readdirSync(migrationsPath).sort().pop()
   if (!lastFilename) {
     console.error(
-      'gen-migration.ts: genNextMigrationFilename(): no existing migration files. Missing 001-create-log-meta.sql ?',
+      'gen-sql-migration.ts: genNextMigrationFilename(): no existing migration files. Missing 001-create-log-meta.sql ?',
     )
     throw new Error('no existing migration files')
   }
   const lastId = parseInt(lastFilename)
   if (!lastId) {
     console.error(
-      'gen-migration.ts: genNextMigrationFilename(): failed to parse id of last migration file.',
+      'gen-sql-migration.ts: genNextMigrationFilename(): failed to parse id of last migration file.',
       { lastFilename },
     )
     throw new Error('failed to parse id of last migration file')

@@ -14,6 +14,20 @@ export type ObjectType = Record<string, FieldType>
 
 export type FieldType = SqlType | [SqlType, TsType]
 
-export type TsType = string
+export type TsType = 'number' | 'string' | 'Buffer' | 'any' | string
 
 export type SqlType = 'integer' | 'real' | 'text' | 'blob'
+
+const sqlTypeToTsType: Record<SqlType, TsType> = {
+  integer: 'number',
+  real: 'number',
+  text: 'string',
+  blob: 'Buffer',
+}
+
+export function toTsFieldType(type: FieldType): TsType {
+  if (Array.isArray(type)) {
+    return type[1]
+  }
+  return sqlTypeToTsType[type] || 'any'
+}
