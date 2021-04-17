@@ -6,7 +6,10 @@ export const callMetas: CallMeta[] = [
     call_type: 'command',
     type: 'create_user',
     replay: true,
-    in: { username: 'text', email: 'text' },
+    in: {
+      username: 'text',
+      email: 'text',
+    },
     errors: ['username has been used already'],
   },
   {
@@ -73,6 +76,7 @@ export const callMetas: CallMeta[] = [
   saveData: boolean
 }`,
       ],
+      'cookieEnabled?': ['integer', 'boolean'],
     },
   },
   {

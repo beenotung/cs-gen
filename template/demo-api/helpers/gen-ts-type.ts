@@ -3,7 +3,7 @@ import { EOL } from 'os'
 import { inspect } from 'util'
 import { binArrayBy } from '@beenotung/tslib/array'
 
-export function genTsTypes(callMetas: CallMeta[]): string {
+export function genTsType(callMetas: CallMeta[]): string {
   const lines: string[] = []
 
   // each log types
