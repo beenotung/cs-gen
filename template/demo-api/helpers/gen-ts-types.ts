@@ -48,7 +48,7 @@ export function genTsTypes(callMetas: CallMeta[]): string {
   return lines.join(EOL)
 }
 
-function toTsTypeName(name: string): string {
+export function toTsTypeName(name: string): string {
   return name
     .split('_')
     .map(str => str[0].toUpperCase() + str.substring(1))
