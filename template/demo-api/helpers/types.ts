@@ -14,7 +14,7 @@ export type ObjectType = Record<string, FieldType>
 
 export type FieldType = SqlType | [SqlType, TsType]
 
-export type TsType = 'number' | 'string' | 'Buffer' | 'any' | string
+export type TsType = 'number' | 'string' | 'Buffer' | 'any' | 'boolean' | string
 
 export type SqlType = 'integer' | 'real' | 'text' | 'blob'
 

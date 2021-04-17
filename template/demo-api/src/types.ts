@@ -80,6 +80,7 @@ export type LogBrowserStats = {
       effectiveType: string
       saveData: boolean
     }
+    cookieEnabled?: boolean
   }
   out: void | null | {}
   feed: void | null | {}

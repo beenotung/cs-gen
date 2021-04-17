@@ -1,3 +1,4 @@
 #!/usr/bin/env ts-node
-import './gen-log-migrations'
-import './gen-ts-types'
+import './gen-sql-migration'
+import './gen-ts-type'
+import './gen-sql-insert'
