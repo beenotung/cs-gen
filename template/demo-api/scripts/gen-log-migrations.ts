@@ -2,7 +2,7 @@
 import {
   genMigrationFile,
   genNextMigrationFilename,
-} from '../helpers/gen-migration'
+} from '../helpers/gen-sql-migration'
 import { callMetas } from '../config/call-meta'
 import { db, migrationsPath } from '../config/db'
 
