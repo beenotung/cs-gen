@@ -38,7 +38,8 @@ create table if not exists log_browser_stats (
     maxTouchPoints integer null,
     platform integer null references str(id),
     vendor integer null references str(id),
-    connection integer null references str(id)
+    connection integer null references str(id),
+    cookieEnabled integer null
 );
 insert into log_meta (id, call_type, type, replay) values (6, 'command', 'log_browser_stats', 0);
 

@@ -10,7 +10,7 @@ create table if not exists log_meta (
 create table if not exists log (
     id integer primary key,
     timestamp integer not null,
-    acc integer not null, -- to distinct the order of same-time logs
+    acc integer not null, -- to distinct the order of same-timestamp logs
     meta_id integer not null references log_meta(id)
 );
 

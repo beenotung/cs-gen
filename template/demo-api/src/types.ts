@@ -8,7 +8,7 @@ export type CreateUser = {
   }
   out: void | null | {}
   feed: void | null | {}
-  errors: ['username has been used already']
+  errors: ['username already used']
 }
 
 export type GetAllUsernames = {
@@ -33,7 +33,7 @@ export type ChangeUsername = {
   }
   out: void | null | {}
   feed: void | null | {}
-  errors: ['username is not used']
+  errors: ['username already used']
 }
 
 export type CheckUsernameExist = {
@@ -44,7 +44,7 @@ export type CheckUsernameExist = {
     username: string
   }
   out: {
-    is_exists: boolean
+    used: boolean
   }
   feed: void | null | {}
   errors: []
