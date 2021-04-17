@@ -30,15 +30,15 @@ insert into log_meta (id, call_type, type, replay) values (5, 'command', 'delete
 
 create table if not exists log_browser_stats (
     log_id integer unique references log(id),
-    userAgent integer not null references str(id),
-    language integer not null references str(id),
-    languages integer not null references str(id),
-    deviceMemory integer not null,
-    hardwareConcurrency integer not null,
-    maxTouchPoints integer not null,
-    platform integer not null references str(id),
-    vendor integer not null references str(id),
-    connection integer not null references str(id)
+    userAgent integer null references str(id),
+    language integer null references str(id),
+    languages integer null references str(id),
+    deviceMemory integer null,
+    hardwareConcurrency integer null,
+    maxTouchPoints integer null,
+    platform integer null references str(id),
+    vendor integer null references str(id),
+    connection integer null references str(id)
 );
 insert into log_meta (id, call_type, type, replay) values (6, 'command', 'log_browser_stats', 0);
 

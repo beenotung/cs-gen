@@ -57,15 +57,15 @@ export const callMetas: CallMeta[] = [
     type: 'log_browser_stats',
     replay: false,
     in: {
-      userAgent: 'text',
-      language: 'text',
-      languages: ['text', 'string[]'],
-      deviceMemory: 'integer',
-      hardwareConcurrency: 'integer',
-      maxTouchPoints: 'integer',
-      platform: 'text',
-      vendor: 'text',
-      connection: [
+      'userAgent?': 'text',
+      'language?': 'text',
+      'languages?': ['text', 'string[]'],
+      'deviceMemory?': 'integer',
+      'hardwareConcurrency?': 'integer',
+      'maxTouchPoints?': 'integer',
+      'platform?': 'text',
+      'vendor?': 'text',
+      'connection?': [
         'text',
         `{
   downlink: number

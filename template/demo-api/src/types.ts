@@ -67,15 +67,15 @@ export type LogBrowserStats = {
   call_type: 'command'
   type: 'log_browser_stats'
   in: {
-    userAgent: string
-    language: string
-    languages: string[]
-    deviceMemory: number
-    hardwareConcurrency: number
-    maxTouchPoints: number
-    platform: string
-    vendor: string
-    connection: {
+    userAgent?: string
+    language?: string
+    languages?: string[]
+    deviceMemory?: number
+    hardwareConcurrency?: number
+    maxTouchPoints?: number
+    platform?: string
+    vendor?: string
+    connection?: {
       downlink: number
       effectiveType: string
       saveData: boolean

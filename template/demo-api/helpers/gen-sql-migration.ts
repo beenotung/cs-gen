@@ -25,10 +25,15 @@ function genMigrationFileContent(callMetas: CallMeta[]): string {
         if (Array.isArray(type)) {
           type = type[0]
         }
+        let nullable = 'not null'
+        if (name.endsWith('?')) {
+          name = name.substring(0, name.length - 1)
+          nullable = 'null'
+        }
         if (type === 'text') {
-          cols.push(`${EOL}    ${name} integer not null references str(id)`)
+          cols.push(`${EOL}    ${name} integer ${nullable} references str(id)`)
         } else {
-          cols.push(`${EOL}    ${name} ${type} not null`)
+          cols.push(`${EOL}    ${name} ${type} ${nullable}`)
         }
       })
       const body = cols.join(',') + EOL
