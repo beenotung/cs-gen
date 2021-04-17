@@ -6,12 +6,12 @@ type sql_type = string
 type ts_type = string
 
 export function genTsType([name, fields]: ObjectType): string {
-  let body = fields.map(genTsField).join('')
+  const body = fields.map(genTsField).join('')
   return `export type ${name} = {${body}}`
 }
 
 export function genCreateTableSql([name, fields]: ObjectType): string {
-  let body = fields.map(genCreateTableColumn).join(',')
+  const body = fields.map(genCreateTableColumn).join(',')
   return `create table if not exists ${name}(${body});`
 }
 
@@ -41,12 +41,12 @@ function getTsType(sql_type: string) {
   return sql_to_ts_types[sql_type] || 'any'
 }
 
-let sql_to_ts_types: Record<string, string> = {
-  'integer': 'number',
-  'real': 'number',
-  'text': 'string',
-  'blob': 'Buffer',
-  'json': 'any',
+const sql_to_ts_types: Record<string, string> = {
+  integer: 'number',
+  real: 'number',
+  text: 'string',
+  blob: 'Buffer',
+  json: 'any',
 }
 
 export function fromSqlData(sql_type: string, value: any) {
