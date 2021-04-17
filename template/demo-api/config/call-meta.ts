@@ -1,6 +1,6 @@
 import { CallMeta } from '../helpers/types'
 
-export let callMetas: CallMeta[] = [
+export const callMetas: CallMeta[] = [
   {
     id: 1,
     call_type: 'command',

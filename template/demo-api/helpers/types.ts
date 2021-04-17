@@ -20,7 +20,7 @@ export type Reasons = string[]
 
 export type sql_type = 'integer' | 'real' | 'text' | 'blob'
 
-export let sql_to_ts = {
+export const sql_to_ts = {
   integer: 'number',
   real: 'number',
   text: 'string',
