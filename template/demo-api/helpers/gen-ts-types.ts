@@ -1,7 +1,6 @@
 import { CallMeta, ObjectType, toTsFieldType } from './types'
 import { EOL } from 'os'
 import { inspect } from 'util'
-import { capitalize } from '@beenotung/tslib/string'
 import { binArrayBy } from '@beenotung/tslib/array'
 
 export function genTsTypes(callMetas: CallMeta[]): string {
@@ -50,7 +49,10 @@ export function genTsTypes(callMetas: CallMeta[]): string {
 }
 
 function toTsTypeName(name: string): string {
-  return name.split('_').map(capitalize).join('')
+  return name
+    .split('_')
+    .map(str => str[0].toUpperCase() + str.substring(1))
+    .join('')
 }
 
 function toTsObjectType(type: ObjectType | undefined): string {
