@@ -1,33 +1,28 @@
 export type CallMeta = {
-  id: number // should be unique
+  id: number // unique
   call_type: 'command' | 'query' | 'subscribe'
   type: string
-  replay: boolean
   in?: ObjectType
   out?: ObjectType
-  errors?: string[]
-  feed?: ObjectType // default is not feed
+  errors?: string[] // error message failed
+  feed?: ObjectType // default is not food
+  replay: boolean
   async?: boolean // default is sync
 }
 
 export type ObjectType = Record<string, FieldType>
 
-export type FieldType = SqlType | [SqlType, TsType]
+export type FieldType = sql_type | [sql_type, ts_type]
 
-export type TsType = 'number' | 'string' | 'Buffer' | 'any' | 'boolean' | string
+export type ts_type = Reasons | string
 
-export type SqlType = 'integer' | 'real' | 'text' | 'blob'
+export type Reasons = string[]
 
-const sqlTypeToTsType: Record<SqlType, TsType> = {
+export type sql_type = 'integer' | 'real' | 'text' | 'blob'
+
+export let sql_to_ts = {
   integer: 'number',
   real: 'number',
   text: 'string',
   blob: 'Buffer',
-}
-
-export function toTsFieldType(type: FieldType): TsType {
-  if (Array.isArray(type)) {
-    return type[1]
-  }
-  return sqlTypeToTsType[type] || 'any'
 }

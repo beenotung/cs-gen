@@ -1,16 +1,17 @@
-import DB from 'better-sqlite3-helper'
-import { join } from 'path'
+import DB from "better-sqlite3-helper";
+import {join} from 'path'
+import {existsSync, mkdirSync} from 'fs'
 
-const dataDir = 'data'
+if (!existsSync('data')) {
+  mkdirSync('data')
+}
 
-export const migrationsPath = 'migrations'
-
-export const db = DB({
-  path: join(dataDir, 'log.db'),
+export let db = DB({
+  path: join('data', 'log.db'),
   fileMustExist: false,
   readonly: false,
   migrate: {
-    migrationsPath,
+    migrationsPath: 'migrations',
     table: 'migration',
     force: false,
   },
