@@ -1,6 +1,6 @@
 import { CallMeta } from '../helpers/types'
 
-export const callMetas: CallMeta[] = [
+export let callMetas: CallMeta[] = [
   {
     id: 1,
     call_type: 'command',
@@ -10,19 +10,10 @@ export const callMetas: CallMeta[] = [
       username: 'text',
       email: 'text',
     },
-    errors: ['username has been used already'],
+    errors: ['username already used'],
   },
   {
     id: 2,
-    call_type: 'query',
-    type: 'get_all_usernames',
-    replay: false,
-    out: {
-      usernames: ['text', 'string[]'],
-    },
-  },
-  {
-    id: 3,
     call_type: 'command',
     type: 'change_username',
     replay: true,
@@ -30,10 +21,10 @@ export const callMetas: CallMeta[] = [
       from_username: 'text',
       to_username: 'text',
     },
-    errors: ['username is not used'],
+    errors: ['username already used'],
   },
   {
-    id: 4,
+    id: 3,
     call_type: 'query',
     type: 'check_username_exist',
     replay: false,
@@ -41,66 +32,47 @@ export const callMetas: CallMeta[] = [
       username: 'text',
     },
     out: {
-      is_exists: ['integer', 'boolean'],
+      used: ['integer', 'boolean'],
+    },
+  },
+  {
+    id: 4,
+    call_type: 'query',
+    type: 'get_all_username',
+    replay: false,
+    out: {
+      usernames: ['text', 'string[]'],
     },
   },
   {
     id: 5,
     call_type: 'command',
-    type: 'delete_username',
-    replay: true,
+    type: 'report_stats',
+    replay: false,
     in: {
-      username: 'text',
+      appCodeName: 'text', // e.g. Mozilla
+      appName: 'text', // e.g. Netscape
+      appVersion: 'text', // e.g. 5.0 (Windows)
+      language: 'text', // e.g. en-US
+      languages: ['text', 'string[]'], // e.g. ['en-US', 'en']
+      oscpu: 'text', // e.g. Windows NT 10.0; Win64; x64
+      platform: 'text', // e.g. Win32
+      product: 'text', // e.g. Gecko
+      userAgent: 'text', // e.g. Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0
+      vendor: 'text', // e.g. Google Inc.
     },
-    errors: ['username is not used'],
   },
   {
     id: 6,
-    call_type: 'command',
-    type: 'log_browser_stats',
-    replay: false,
-    in: {
-      'userAgent?': 'text',
-      'language?': 'text',
-      'languages?': ['text', 'string[]'],
-      'deviceMemory?': 'integer',
-      'hardwareConcurrency?': 'integer',
-      'maxTouchPoints?': 'integer',
-      'platform?': 'text',
-      'vendor?': 'text',
-      'connection?': [
-        'text',
-        `{
-  downlink: number
-  effectiveType: string
-  saveData: boolean
-}`,
-      ],
-      'cookieEnabled?': ['integer', 'boolean'],
-    },
-  },
-  {
-    id: 7,
     call_type: 'subscribe',
-    type: 'subscribe_username',
+    type: 'subscribe_users',
     replay: false,
     out: {
       feed_id: 'text',
     },
-    feed: {
-      new_username: 'text',
-      del_username: 'text',
-      change_username: [
-        'text',
-        `{
-  from_username: string
-  to_username: string
-}`,
-      ],
-    },
   },
   {
-    id: 8,
+    id: 7,
     call_type: 'command',
     type: 'cancel_subscribe',
     replay: false,
@@ -109,3 +81,4 @@ export const callMetas: CallMeta[] = [
     },
   },
 ]
+// callMetas.forEach(call => (call.out['ok'] = 'integer'))
