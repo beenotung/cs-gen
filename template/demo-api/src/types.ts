@@ -6,21 +6,21 @@ export type CreateUser = {
     username: string
     email: string
   }
-  out: void | null | {}
-  feed: void | null | {}
-  errors: ['username already used']
+  out: void
+  feed: void
+  error: 'username already used'
 }
 
 export type GetAllUsernames = {
   id: 2
   call_type: 'query'
   type: 'get_all_usernames'
-  in: void | null | {}
+  in: void
   out: {
     usernames: string[]
   }
-  feed: void | null | {}
-  errors: []
+  feed: void
+  error: never
 }
 
 export type ChangeUsername = {
@@ -31,9 +31,9 @@ export type ChangeUsername = {
     from_username: string
     to_username: string
   }
-  out: void | null | {}
-  feed: void | null | {}
-  errors: ['username already used']
+  out: void
+  feed: void
+  error: 'original username is not used' | 'new username already used'
 }
 
 export type CheckUsernameExist = {
@@ -46,8 +46,8 @@ export type CheckUsernameExist = {
   out: {
     used: boolean
   }
-  feed: void | null | {}
-  errors: []
+  feed: void
+  error: never
 }
 
 export type DeleteUsername = {
@@ -57,9 +57,9 @@ export type DeleteUsername = {
   in: {
     username: string
   }
-  out: void | null | {}
-  feed: void | null | {}
-  errors: ['username is not used']
+  out: void
+  feed: void
+  error: 'username is not used'
 }
 
 export type LogBrowserStats = {
@@ -82,16 +82,16 @@ export type LogBrowserStats = {
     }
     cookieEnabled?: boolean
   }
-  out: void | null | {}
-  feed: void | null | {}
-  errors: []
+  out: void
+  feed: void
+  error: never
 }
 
 export type SubscribeUsername = {
   id: 7
   call_type: 'subscribe'
   type: 'subscribe_username'
-  in: void | null | {}
+  in: void
   out: {
     feed_id: string
   }
@@ -103,7 +103,7 @@ export type SubscribeUsername = {
       to_username: string
     }
   }
-  errors: []
+  error: never
 }
 
 export type CancelSubscribe = {
@@ -113,9 +113,9 @@ export type CancelSubscribe = {
   in: {
     feed_id: string
   }
-  out: void | null | {}
-  feed: void | null | {}
-  errors: []
+  out: void
+  feed: void
+  error: never
 }
 
 export type Command =
@@ -125,9 +125,12 @@ export type Command =
   | LogBrowserStats
   | CancelSubscribe
 
-export type Query = GetAllUsernames | CheckUsernameExist
+export type Query =
+  | GetAllUsernames
+  | CheckUsernameExist
 
-export type Subscribe = SubscribeUsername
+export type Subscribe =
+  | SubscribeUsername
 
 export type Call = Command | Query | Subscribe
 
@@ -140,3 +143,17 @@ export type CallIn =
   | Pick<LogBrowserStats, 'id' | 'in'>
   | Pick<SubscribeUsername, 'id' | 'in'>
   | Pick<CancelSubscribe, 'id' | 'in'>
+
+type Result<T extends Call> =
+  | { error: T['error'] }
+  | { error?: undefined, out: T['out'] }
+
+export type CallOut =
+  | Result<CreateUser>
+  | Result<GetAllUsernames>
+  | Result<ChangeUsername>
+  | Result<CheckUsernameExist>
+  | Result<DeleteUsername>
+  | Result<LogBrowserStats>
+  | Result<SubscribeUsername>
+  | Result<CancelSubscribe>
