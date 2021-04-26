@@ -125,12 +125,9 @@ export type Command =
   | LogBrowserStats
   | CancelSubscribe
 
-export type Query =
-  | GetAllUsernames
-  | CheckUsernameExist
+export type Query = GetAllUsernames | CheckUsernameExist
 
-export type Subscribe =
-  | SubscribeUsername
+export type Subscribe = SubscribeUsername
 
 export type Call = Command | Query | Subscribe
 
@@ -144,9 +141,9 @@ export type CallIn =
   | Pick<SubscribeUsername, 'id' | 'in'>
   | Pick<CancelSubscribe, 'id' | 'in'>
 
-type Result<T extends Call> =
+export type Result<T extends Call> =
   | { error: T['error'] }
-  | { error?: undefined, out: T['out'] }
+  | { error?: undefined; out: T['out'] }
 
 export type CallOut =
   | Result<CreateUser>
@@ -157,3 +154,5 @@ export type CallOut =
   | Result<LogBrowserStats>
   | Result<SubscribeUsername>
   | Result<CancelSubscribe>
+
+export const ok = { out: void 0 }
