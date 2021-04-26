@@ -36,8 +36,7 @@ export function genTsType(callMetas: CallMeta[]): string {
   })
 
   // aggregated type
-  const callTypes = Array.from(callsByType.keys()).map(toTsTypeName)
-.join(` | `)
+  const callTypes = Array.from(callsByType.keys()).map(toTsTypeName).join(` | `)
   lines.push(`export type Call = ${callTypes}`)
   lines.push('')
 
@@ -55,7 +54,7 @@ export function genTsType(callMetas: CallMeta[]): string {
   // CallOut
   lines.push(
     `
-type Result<T extends Call> =
+export type Result<T extends Call> =
   | { error: T['error'] }
   | { error?: undefined, out: T['out'] }
 `.trim(),
@@ -66,6 +65,11 @@ type Result<T extends Call> =
     'CallOut',
     callTypeNames.map(type => `Result<${type}>`),
   )
+  lines.push('')
+
+  // Successful value of command
+  lines.push('export const ok = { out: void 0 }')
+  lines.push('')
 
   return lines.join(EOL)
 }
