@@ -30,7 +30,7 @@ export const callMetas: CallMeta[] = [
       from_username: 'text',
       to_username: 'text',
     },
-    errors: ['username already used'],
+    errors: ['original username is not used', 'new username already used'],
   },
   {
     id: 4,

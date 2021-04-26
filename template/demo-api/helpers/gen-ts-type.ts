@@ -9,6 +9,9 @@ export function genTsType(callMetas: CallMeta[]): string {
   // each log types
   callMetas.forEach(call => {
     const name = toTsTypeName(call.type)
+    const errorType = !call.errors
+      ? 'never'
+      : call.errors.map(s => inspect(s)).join(' | ')
     lines.push(`export type ${name} = {
   id: ${call.id}
   call_type: ${quoteString(call.call_type)}
@@ -16,7 +19,7 @@ export function genTsType(callMetas: CallMeta[]): string {
   in: ${toTsObjectType(call.in)}
   out: ${toTsObjectType(call.out)}
   feed: ${toTsObjectType(call.feed)}
-  errors: ${inspect(call.errors || [])}
+  error: ${errorType}
 }`)
     lines.push('')
   })
@@ -24,26 +27,45 @@ export function genTsType(callMetas: CallMeta[]): string {
   // group by call types
   const callsByType = binArrayBy(callMetas, call => call.call_type)
   callsByType.forEach((calls, callType) => {
-    const name = toTsTypeName(callType)
-    const body = calls
-      .map(call => toTsTypeName(call.type))
-      .map(name => `${EOL}  | ${name}`)
-      .join('')
-    lines.push(`export type ${name} = ${body}`)
+    defUnionType(
+      lines,
+      toTsTypeName(callType),
+      calls.map(call => toTsTypeName(call.type)),
+    )
     lines.push('')
   })
 
   // aggregated type
-  const callTypes = Array.from(callsByType.keys()).map(toTsTypeName).join(` | `)
+  const callTypes = Array.from(callsByType.keys()).map(toTsTypeName)
+.join(` | `)
   lines.push(`export type Call = ${callTypes}`)
   lines.push('')
 
   // helper types
-  const callInTypes = callMetas
-    .map(call => toTsTypeName(call.type))
-    .map(name => `${EOL}  | Pick<${name}, 'id' | 'in'>`)
-    .join('')
-  lines.push(`export type CallIn = ${callInTypes}`)
+  const callTypeNames = callMetas.map(call => toTsTypeName(call.type))
+
+  // CallIn
+  defUnionType(
+    lines,
+    'CallIn',
+    callTypeNames.map(type => `Pick<${type}, 'id' | 'in'>`),
+  )
+  lines.push('')
+
+  // CallOut
+  lines.push(
+    `
+type Result<T extends Call> =
+  | { error: T['error'] }
+  | { error?: undefined, out: T['out'] }
+`.trim(),
+  )
+  lines.push('')
+  defUnionType(
+    lines,
+    'CallOut',
+    callTypeNames.map(type => `Result<${type}>`),
+  )
 
   return lines.join(EOL)
 }
@@ -57,7 +79,7 @@ export function toTsTypeName(name: string): string {
 
 function toTsObjectType(type: ObjectType | undefined): string {
   if (!type) {
-    return 'void | null | {}'
+    return 'void'
   }
   const cols: string[] = []
   Object.entries(type).forEach(([name, type]) => {
@@ -78,4 +100,9 @@ function indentCustomTsFieldType(type: string) {
 
 function quoteString(str: string): string {
   return inspect(str)
+}
+
+function defUnionType(lines: string[], name: string, types: string[]) {
+  lines.push(`export type ${name} =`)
+  types.forEach(type => lines.push(`  | ${type}`))
 }
