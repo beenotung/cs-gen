@@ -1,16 +1,17 @@
 import { EOL } from 'os'
 import { CallMeta } from './types'
 import { BetterSqlite3Helper } from 'better-sqlite3-helper'
-import { readdirSync, writeFileSync } from 'fs'
+import { readdirSync } from 'fs'
 import { join } from 'path'
 import { inspect } from 'util'
+import { saveCode } from './fs'
 
 // use single-quote to wrap the string
 function quoteString(str: string): string {
   return inspect(str)
 }
 
-function genMigrationFileContent(callMetas: CallMeta[]): string {
+function genMigrationCode(callMetas: CallMeta[]): string {
   const ups: string[] = []
   const downs: string[] = []
 
@@ -108,13 +109,9 @@ export function genMigrationFile(
   filename: string,
 ): void {
   callMetas = filterNewCallMetas(callMetas, db)
+  console.debug('number of new log type to migrate:', callMetas.length)
   if (callMetas.length === 0) {
-    console.debug('no new types of log to migrate')
     return
   }
-  const content = genMigrationFileContent(callMetas)
-  writeFileSync(filename, content + EOL)
-  const unit =
-    callMetas.length === 1 ? '1 new type' : callMetas.length + ' new types'
-  console.debug(`saved ${unit} of log into migration file:`, filename)
+  saveCode(genMigrationCode(callMetas), filename)
 }
