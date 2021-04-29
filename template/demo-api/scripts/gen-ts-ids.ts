@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
-import { genTsType } from '../helpers/gen-ts-type'
 import { callMetas } from '../config/call-meta'
+import { genCallIds } from '../helpers/gen-ts-ids'
 import { saveCode } from '../helpers/fs'
 
-saveCode(genTsType(callMetas), 'src', 'types.ts')
+saveCode(genCallIds(callMetas), 'src', 'ids.ts')
