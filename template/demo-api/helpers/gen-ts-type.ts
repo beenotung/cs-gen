@@ -67,6 +67,12 @@ export type Result<T extends Call> =
   )
   lines.push('')
 
+  // ids
+  lines.push(`export const ids = {`)
+  callMetas.forEach(({ id, type }) => lines.push(`  ${type}: ${id} as const,`))
+  lines.push(`}`)
+  lines.push('')
+
   // Successful value of command
   lines.push('export const ok = { out: void 0 }')
   lines.push('')
