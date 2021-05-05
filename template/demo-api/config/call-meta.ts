@@ -109,4 +109,3 @@ export const callMetas: CallMeta[] = [
     },
   },
 ]
-// callMetas.forEach(call => (call.out['ok'] = 'integer'))
