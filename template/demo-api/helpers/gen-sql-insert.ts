@@ -2,7 +2,7 @@ import { writeFileSync } from 'fs'
 import { EOL } from 'os'
 import { CallMeta, SqlType, toTsFieldType } from './types'
 import { toTsTypeName } from './gen-ts-type'
-import { partitionArrayBy } from '@beenotung/tslib'
+import { partitionArrayBy } from '@beenotung/tslib/array'
 
 // using Intellij Idea format
 export function genInsertFileContent(callMetas: CallMeta[]): string {
