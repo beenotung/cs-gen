@@ -28,7 +28,7 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
-    "@beenotung/tslib": "^17.2.0",
+    "@beenotung/tslib": "^17.3.0",
     "better-sqlite3": "^7.1.4",
     "better-sqlite3-helper": "^3.1.2",
     "better-sqlite3-schema": "^0.8.0",

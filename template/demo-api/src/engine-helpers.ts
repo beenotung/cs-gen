@@ -1,6 +1,6 @@
 import { CallIn, CallOut } from './types'
 import { storeLog } from './insert-logs'
-import { logicalProcessor } from './instances'
+import { applyCall } from './apply-call'
 
 export interface Context {
   timestamp: number
@@ -24,14 +24,4 @@ function storeCall(call: CallIn, timestamp: number) {
     acc = 0
   }
   storeLog(timestamp, acc, call)
-}
-
-// TODO generate this dispatcher
-function applyCall(call: CallIn, context: Context): CallOut {
-  switch (call.id) {
-    case 1:
-      return logicalProcessor.createUser(call.in, context)
-    default:
-      return { error: 'unknown call type' } as any
-  }
 }
