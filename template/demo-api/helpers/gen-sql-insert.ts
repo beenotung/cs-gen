@@ -1,11 +1,10 @@
-import { writeFileSync } from 'fs'
 import { EOL } from 'os'
 import { CallMeta, SqlType, toTsFieldType } from './types'
 import { toTsTypeName } from './gen-ts-type'
 import { partitionArrayBy } from '@beenotung/tslib/array'
 
 // using Intellij Idea format
-export function genInsertFileContent(callMetas: CallMeta[]): string {
+export function genSqlInserts(callMetas: CallMeta[]): string {
   const [emptyCalls, nonEmptyCalls] = partitionArrayBy(
     callMetas,
     call => !call.in,
@@ -108,13 +107,4 @@ export function insert${name}(
   lines.push(`}`)
 
   return lines.join(EOL)
-}
-
-export function genInsertFile(
-  callMetas: CallMeta[],
-  file: string,
-  dbExpr: string, // new DB or import db
-): void {
-  const content = dbExpr + EOL + genInsertFileContent(callMetas) + EOL
-  writeFileSync(file, content)
 }
