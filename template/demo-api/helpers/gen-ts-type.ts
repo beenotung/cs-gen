@@ -2,6 +2,7 @@ import { CallMeta, ObjectType, toTsFieldType } from './types'
 import { EOL } from 'os'
 import { inspect } from 'util'
 import { binArrayBy } from '@beenotung/tslib/array'
+import { ucfirst, lcfirst } from '@beenotung/tslib/string'
 
 export function genTsType(callMetas: CallMeta[]): string {
   const lines: string[] = []
@@ -81,10 +82,12 @@ export type Result<T extends Call> =
 }
 
 export function toTsTypeName(name: string): string {
-  return name
-    .split('_')
-    .map(str => str[0].toUpperCase() + str.substring(1))
-    .join('')
+  return name.split('_').map(ucfirst).join('')
+}
+
+export function toTsMethodName(name: string): string {
+  name = toTsTypeName(name)
+  return lcfirst(name)
 }
 
 function toTsObjectType(type: ObjectType | undefined): string {
