@@ -9,9 +9,14 @@
       }
     },
     {
-      "files": ["*-interface.*", "logic-processor*"],
+      "files": [
+        "*-interface.*",
+        "logic-processor*",
+        "*.macro.ts",
+        "insert-logs.ts"
+      ],
       "options": {
-        "printWidth": 120
+        "printWidth": 160
       }
     }
   ],
