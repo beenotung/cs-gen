@@ -28,7 +28,7 @@
     "no-invalid-this": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
-      { "argsIgnorePattern": "^_" }
+      { "argsIgnorePattern": "^_", "args": "none" }
     ],
     "prefer-spread": "off",
     "prefer-rest-params": "off",

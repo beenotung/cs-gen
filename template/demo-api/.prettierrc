@@ -7,6 +7,12 @@
       "options": {
         "singleQuote": false
       }
+    },
+    {
+      "files": ["*-interface.*", "logic-processor*"],
+      "options": {
+        "printWidth": 120
+      }
     }
   ],
   "semi": false,
