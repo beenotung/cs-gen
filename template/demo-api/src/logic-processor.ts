@@ -20,4 +20,18 @@ export class LogicalProcessor implements Partial<ILogicalProcessor> {
     this.users.set(username, user)
     return ok
   }
+
+  changeUsername(input: t.ChangeUsername['in']): Result<t.ChangeUsername> {
+    if (this.users.has(input.to_username)) {
+      return { error: 'new username already used' }
+    }
+    const user = this.users.get(input.from_username)
+    if (!user) {
+      return { error: 'original username is not used' }
+    }
+    this.users.delete(user.profile.username)
+    user.profile.username = input.to_username
+    this.users.set(user.profile.username, user)
+    return ok
+  }
 }

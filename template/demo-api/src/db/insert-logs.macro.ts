@@ -1,28 +1,28 @@
-import { callMetas } from '../config/call-meta'
-import { EOL } from 'os'
-import { toTsTypeName } from '../helpers/gen-ts-type'
-import { FieldType, toSqlType, toTsFieldType } from '../helpers/types'
+import { callMetas } from '../../config/call-meta'
+import { toTsTypeName } from '../../helpers/gen-ts-type'
+import { FieldType, toSqlType, toTsFieldType } from '../../helpers/types'
+import { formatCode } from '../../helpers/format'
 
-function toSqlValueCode(type: FieldType, field: string) {
-  const sqlType = toSqlType(type)
+function toSqlValueCode(type: FieldType, field: string): string {
   const tsType = toTsFieldType(type)
   if (tsType === 'boolean') {
     return `${field} === null || ${field} === undefined ? null : ${field} ? 1 : 0`
   }
-  if (sqlType === 'text') {
-    if (tsType === 'string') {
-      return `getStrId(${field})`
-    }
-    return `getJsonId(${field})`
+  const sqlType = toSqlType(type)
+  if (sqlType !== 'text') {
+    return field
   }
-  return field
+  if (tsType === 'string') {
+    return `getStrId(${field})`
+  }
+  return `getJsonId(${field})`
 }
 
 let code = `
-import { db } from '../config/db'
-import { getStrId, getJsonId } from './db-queries'
+import { db } from '../../config/db'
+import { getStrId, getJsonId } from './str-helpers'
 import type { IntLike } from 'integer'
-import type * as t from './types'
+import type * as t from '../types'
 `
 callMetas.forEach(call => {
   if (!call.in) {
@@ -30,7 +30,7 @@ callMetas.forEach(call => {
   }
   const { type } = call
   const Type = toTsTypeName(type)
-  const input = call.in || {}
+  const input = call.in
 
   const cols = Object.keys(input).map(name => name.replace(/\?$/, ''))
 
@@ -77,4 +77,4 @@ export function insert${Type}(log_id: IntLike, callIn: t.${Type}['in']) {
 `
 })
 
-code.trim() + EOL
+formatCode(code)

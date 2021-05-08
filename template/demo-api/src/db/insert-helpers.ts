@@ -1,7 +1,8 @@
-import { CallIn, Call } from './types'
-import { toTsTypeName } from '../helpers/gen-ts-type'
-import { callMetas } from '../config/call-meta'
-import { insertLog } from './db-queries'
+import { db } from '../../config/db'
+import type { IntLike } from 'integer'
+import { CallIn, Call } from '../types'
+import { toTsTypeName } from '../../helpers/gen-ts-type'
+import { callMetas } from '../../config/call-meta'
 import * as i from './insert-logs'
 
 type InsertFns = typeof i
@@ -12,8 +13,22 @@ callMetas.forEach(call => {
   insertFnNameById[id] = ('insert' + toTsTypeName(call.type)) as keyof InsertFns
 })
 
-export function dispatchInsert(timestamp: number, acc: number, call: CallIn) {
-  const log_id = insertLog(timestamp, acc, call.id)
+const insert_log = db.prepare(`
+  insert into log
+  ( timestamp
+  , acc
+  , meta_id)
+  values ( :timestamp
+         , :acc
+         , :meta_id);`)
+
+export function insertLog(
+  timestamp: number,
+  acc: number,
+  call: CallIn,
+): IntLike {
+  const log_id = insert_log.run({ timestamp, acc, meta_id: call.id })
+    .lastInsertRowid
   if (!call.id) {
     // skip insert body for empty input
     return log_id
