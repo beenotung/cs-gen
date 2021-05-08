@@ -1,7 +1,8 @@
 import { CallIn, CallOut } from './types'
 import { dispatchCall } from './dispatch-call'
 import { logicalProcessor } from './instances'
-import { dispatchInsert } from './dispatch-insert'
+import { insertLog } from './db/insert-helpers'
+import { iterateLogs } from './db/select-helpers'
 
 export interface Context {
   timestamp: number
@@ -18,7 +19,13 @@ export function storeAndCall(call: CallIn): CallOut {
     lastTimestamp = timestamp
     acc = 0
   }
-  dispatchInsert(timestamp,acc,call)
+  insertLog(timestamp, acc, call)
   const context: Context = { timestamp }
   return dispatchCall(logicalProcessor, call, context)
+}
+
+export function replayLogs() {
+  iterateLogs((call, context) => {
+    dispatchCall(logicalProcessor, call, context)
+  })
 }

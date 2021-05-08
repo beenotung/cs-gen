@@ -1,7 +1,7 @@
-import { db } from '../config/db'
-import { getStrId, getJsonId } from './db-queries'
+import { db } from '../../config/db'
+import { getStrId, getJsonId } from './str-helpers'
 import type { IntLike } from 'integer'
-import type * as t from './types'
+import type * as t from '../types'
 
 const insert_create_user = db.prepare(`
   insert into create_user
