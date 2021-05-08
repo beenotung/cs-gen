@@ -1,5 +1,5 @@
 import { storeAndCall } from '../src/engine-helpers'
-import { ids } from '../src/ids'
+import { ids } from '../src/types'
 
 storeAndCall({
   id: ids.change_username,
