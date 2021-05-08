@@ -25,6 +25,10 @@ const sqlTypeToTsType: Record<SqlType, TsType> = {
   blob: 'Buffer',
 }
 
+export function toSqlType(type: FieldType): SqlType {
+  return Array.isArray(type) ? type[0] : type
+}
+
 export function toTsFieldType(type: FieldType): TsType {
   if (Array.isArray(type)) {
     return type[1]

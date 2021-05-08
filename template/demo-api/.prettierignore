@@ -2,6 +2,6 @@ dist/
 pnpm-lock.yaml
 src/assets/*
 src/components.d.ts
-src/polyfill-array.ts
+src/types.ts
 coverage/
 .nyc_output/

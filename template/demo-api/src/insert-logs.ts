@@ -1,15 +1,7 @@
 import { db } from '../config/db'
-import { getStrId, getJsonId, insertLog } from './db-queries'
+import { getStrId, getJsonId } from './db-queries'
 import type { IntLike } from 'integer'
-import type {
-  CallIn,
-  CreateUser,
-  ChangeUsername,
-  CheckUsernameExist,
-  DeleteUsername,
-  LogBrowserStats,
-  CancelSubscribe,
-} from './types'
+import type * as t from './types'
 
 const insert_create_user = db.prepare(`
   insert into create_user
@@ -20,7 +12,7 @@ const insert_create_user = db.prepare(`
          , :username
          , :email);`)
 
-export function insertCreateUser(log_id: IntLike, callIn: CreateUser['in']) {
+export function insertCreateUser(log_id: IntLike, callIn: t.CreateUser['in']) {
   return insert_create_user.run({
     log_id,
     username: getStrId(callIn.username),
@@ -37,10 +29,7 @@ const insert_change_username = db.prepare(`
          , :from_username
          , :to_username);`)
 
-export function insertChangeUsername(
-  log_id: IntLike,
-  callIn: ChangeUsername['in'],
-) {
+export function insertChangeUsername(log_id: IntLike, callIn: t.ChangeUsername['in']) {
   return insert_change_username.run({
     log_id,
     from_username: getStrId(callIn.from_username),
@@ -55,10 +44,7 @@ const insert_check_username_exist = db.prepare(`
   values ( :log_id
          , :username);`)
 
-export function insertCheckUsernameExist(
-  log_id: IntLike,
-  callIn: CheckUsernameExist['in'],
-) {
+export function insertCheckUsernameExist(log_id: IntLike, callIn: t.CheckUsernameExist['in']) {
   return insert_check_username_exist.run({
     log_id,
     username: getStrId(callIn.username),
@@ -72,10 +58,7 @@ const insert_delete_username = db.prepare(`
   values ( :log_id
          , :username);`)
 
-export function insertDeleteUsername(
-  log_id: IntLike,
-  callIn: DeleteUsername['in'],
-) {
+export function insertDeleteUsername(log_id: IntLike, callIn: t.DeleteUsername['in']) {
   return insert_delete_username.run({
     log_id,
     username: getStrId(callIn.username),
@@ -107,10 +90,7 @@ const insert_log_browser_stats = db.prepare(`
          , :connection
          , :cookieEnabled);`)
 
-export function insertLogBrowserStats(
-  log_id: IntLike,
-  callIn: LogBrowserStats['in'],
-) {
+export function insertLogBrowserStats(log_id: IntLike, callIn: t.LogBrowserStats['in']) {
   return insert_log_browser_stats.run({
     log_id,
     userAgent: getStrId(callIn.userAgent),
@@ -122,12 +102,7 @@ export function insertLogBrowserStats(
     platform: getStrId(callIn.platform),
     vendor: getStrId(callIn.vendor),
     connection: getJsonId(callIn.connection),
-    cookieEnabled:
-      callIn.cookieEnabled === null || callIn.cookieEnabled === undefined
-        ? null
-        : callIn.cookieEnabled
-        ? 1
-        : 0,
+    cookieEnabled: callIn.cookieEnabled === null || callIn.cookieEnabled === undefined ? null : callIn.cookieEnabled ? 1 : 0,
   })
 }
 
@@ -138,42 +113,9 @@ const insert_cancel_subscribe = db.prepare(`
   values ( :log_id
          , :feed_id);`)
 
-export function insertCancelSubscribe(
-  log_id: IntLike,
-  callIn: CancelSubscribe['in'],
-) {
+export function insertCancelSubscribe(log_id: IntLike, callIn: t.CancelSubscribe['in']) {
   return insert_cancel_subscribe.run({
     log_id,
     feed_id: getStrId(callIn.feed_id),
   })
-}
-
-export function storeLog(timestamp: number, acc: number, call: CallIn) {
-  const log_id = insertLog(timestamp, acc, call.id)
-  switch (call.id) {
-    case 1:
-      insertCreateUser(log_id, call.in)
-      break
-    case 3:
-      insertChangeUsername(log_id, call.in)
-      break
-    case 4:
-      insertCheckUsernameExist(log_id, call.in)
-      break
-    case 5:
-      insertDeleteUsername(log_id, call.in)
-      break
-    case 6:
-      insertLogBrowserStats(log_id, call.in)
-      break
-    case 8:
-      insertCancelSubscribe(log_id, call.in)
-      break
-    case 2:
-    case 7:
-      // skip insert body for empty input
-      break
-    default:
-      throw new Error('unknown meta_id: ' + (call as any).id)
-  }
 }
