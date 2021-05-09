@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "test": "tsc --noEmit",
     "format": "run-s format:*",
     "format:eslint": "eslint --fix --ext .ts .",
     "format:prettier": "prettier --write .",
