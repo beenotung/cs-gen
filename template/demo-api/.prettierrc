@@ -13,6 +13,7 @@
         "*-interface.*",
         "logic-processor*",
         "*.macro.ts",
+        "select-logs.ts",
         "insert-logs.ts"
       ],
       "options": {

@@ -38,9 +38,7 @@ const select_check_username_exist = db.prepare(`
   limit 1
 `)
 
-export function selectCheckUsernameExist(
-  log_id: IntLike,
-): t.CheckUsernameExist['in'] {
+export function selectCheckUsernameExist(log_id: IntLike): t.CheckUsernameExist['in'] {
   const row = select_check_username_exist.get(log_id)
   row.username = getStrVal(row.username)
   return row
@@ -66,9 +64,7 @@ const select_log_browser_stats = db.prepare(`
   limit 1
 `)
 
-export function selectLogBrowserStats(
-  log_id: IntLike,
-): t.LogBrowserStats['in'] {
+export function selectLogBrowserStats(log_id: IntLike): t.LogBrowserStats['in'] {
   const row = select_log_browser_stats.get(log_id)
   row.userAgent = getStrVal(row.userAgent)
   row.language = getStrVal(row.language)
@@ -76,10 +72,7 @@ export function selectLogBrowserStats(
   row.platform = getStrVal(row.platform)
   row.vendor = getStrVal(row.vendor)
   row.connection = getJsonVal(row.connection)
-  row.cookieEnabled =
-    row.cookieEnabled === null || row.cookieEnabled === undefined
-      ? null
-      : !!row.cookieEnabled
+  row.cookieEnabled = row.cookieEnabled === null || row.cookieEnabled === undefined ? null : !!row.cookieEnabled
   return row
 }
 
@@ -90,9 +83,7 @@ const select_cancel_subscribe = db.prepare(`
   limit 1
 `)
 
-export function selectCancelSubscribe(
-  log_id: IntLike,
-): t.CancelSubscribe['in'] {
+export function selectCancelSubscribe(log_id: IntLike): t.CancelSubscribe['in'] {
   const row = select_cancel_subscribe.get(log_id)
   row.feed_id = getStrVal(row.feed_id)
   return row
