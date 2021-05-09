@@ -1,4 +1,4 @@
-import { CallMeta } from '../helpers/types'
+import { CallMeta } from '../macro-helpers/types'
 
 export const callMetas: CallMeta[] = [
   {

@@ -1,8 +1,8 @@
 import { Context } from './engine-helpers'
-import { Call, CallIn, CallOut } from './types'
+import { Call, CallIn, CallOut } from '../types'
 import { ILogicalProcessor } from './logic-processor-interface'
-import { toTsMethodName } from '../helpers/gen-ts-type'
-import { callMetas } from '../config/call-meta'
+import { toTsMethodName } from '../../macro-helpers/gen-ts-type'
+import { callMetas } from '../../config/call-meta'
 
 const methodNameById = {} as Record<Call['id'], keyof ILogicalProcessor>
 

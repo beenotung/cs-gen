@@ -1,4 +1,4 @@
-import { db } from '../../config/db'
+import { db } from './config'
 import type { IntLike } from 'integer'
 
 const select_str_id = db.prepare(`

@@ -1,11 +1,11 @@
 import { EOL } from 'os'
-import { callMetas } from '../config/call-meta'
-import { toTsMethodName, toTsTypeName } from '../helpers/gen-ts-type'
+import { callMetas } from '../../config/call-meta'
+import { toTsMethodName, toTsTypeName } from '../../macro-helpers/gen-ts-type'
 
 let code = `
 import type { Context } from './engine-helpers'
-import type { Result } from './types'
-import type * as t from './types'
+import type { Result } from '../types'
+import type * as t from '../types'
 
 export interface ILogicalProcessor {`
 callMetas.forEach(call => {

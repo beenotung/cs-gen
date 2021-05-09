@@ -2,8 +2,8 @@
 import {
   genMigrationFile,
   genNextMigrationFilename,
-} from '../helpers/gen-sql-migration'
+} from '../macro-helpers/gen-sql-migration'
 import { callMetas } from '../config/call-meta'
-import { db, migrationsPath } from '../config/db'
+import { db, migrationsPath } from '../domain/db/config'
 
 genMigrationFile(callMetas, db, genNextMigrationFilename(migrationsPath))

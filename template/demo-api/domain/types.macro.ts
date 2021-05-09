@@ -1,9 +1,9 @@
-import { toTsLiteral, toTsTypeName, unionTypes } from '../helpers/gen-ts-type'
+import { toTsLiteral, toTsTypeName, unionTypes } from '../macro-helpers/gen-ts-type'
 import { callMetas } from '../config/call-meta'
-import { ObjectType, toTsFieldType } from '../helpers/types'
+import { ObjectType, toTsFieldType } from '../macro-helpers/types'
 import { EOL } from 'os'
 import { binArrayBy } from '@beenotung/tslib/array'
-import { formatCode } from '../helpers/format'
+import { formatCode } from '../macro-helpers/format'
 
 function objectType(type: ObjectType | undefined) {
   if (!type) {

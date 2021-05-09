@@ -1,7 +1,7 @@
-import { db } from '../../config/db'
+import { db } from './config'
 import type { IntLike } from 'integer'
 import { CallIn, Call } from '../types'
-import { toTsTypeName } from '../../helpers/gen-ts-type'
+import { toTsTypeName } from '../../macro-helpers/gen-ts-type'
 import { callMetas } from '../../config/call-meta'
 import * as i from './insert-logs'
 

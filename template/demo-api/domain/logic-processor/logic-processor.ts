@@ -1,7 +1,7 @@
 import { ILogicalProcessor } from './logic-processor-interface'
-import { ok } from './types'
-import type { Result } from './types'
-import type * as t from './types'
+import { ok } from '../types'
+import type { Result } from '../types'
+import type * as t from '../types'
 import type { Context } from './engine-helpers'
 
 class User {
