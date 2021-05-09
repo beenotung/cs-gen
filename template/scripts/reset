@@ -1,6 +1,0 @@
-#!/bin/bash
-set -e
-set -o pipefail
-rm -rf \
-  demo-server \
-  demo-client \
