@@ -1,9 +1,9 @@
-import { db } from '../../config/db'
+import { db } from './config'
 import { Call, CallIn } from '../types'
-import { Context } from '../engine-helpers'
+import { Context } from '../logic-processor/engine-helpers'
 import { callMetas } from '../../config/call-meta'
 import * as s from './select-logs'
-import { toTsTypeName } from '../../helpers/gen-ts-type'
+import { toTsTypeName } from '../../macro-helpers/gen-ts-type'
 
 type SelectFns = typeof s
 const selectFnNameById = {} as Record<Call['id'], keyof SelectFns>

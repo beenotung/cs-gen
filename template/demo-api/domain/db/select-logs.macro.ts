@@ -1,7 +1,7 @@
 import { callMetas } from '../../config/call-meta'
-import { toTsTypeName } from '../../helpers/gen-ts-type'
-import { FieldType, toSqlType, toTsFieldType } from '../../helpers/types'
-import { formatCode } from '../../helpers/format'
+import { toTsTypeName } from '../../macro-helpers/gen-ts-type'
+import { FieldType, toSqlType, toTsFieldType } from '../../macro-helpers/types'
+import { formatCode } from '../../macro-helpers/format'
 
 function toTsValueCode(type: FieldType, field: string): string {
   const tsType = toTsFieldType(type)
@@ -22,7 +22,7 @@ function toTsValueCode(type: FieldType, field: string): string {
 }
 
 let code = `
-import { db } from '../../config/db'
+import { db } from './config'
 import { getStrVal, getJsonVal } from './str-helpers'
 import type { IntLike } from 'integer'
 import type * as t from '../types'

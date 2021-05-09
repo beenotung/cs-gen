@@ -1,10 +1,10 @@
 import './test-db'
-import { insertLog } from '../src/db/insert-helpers'
-import { ids } from '../src/types'
-import { replayLogs } from '../src/engine-helpers'
+import { insertLog } from '../domain/db/insert-helpers'
+import { ids } from '../domain/types'
+import { replayLogs } from '../domain/logic-processor/engine-helpers'
 import { expect } from 'chai'
-import { logicalProcessor } from '../src/instances'
-import { db } from '../config/db'
+import { logicalProcessor } from '../domain/logic-processor/instance'
+import { db } from '../domain/db/config'
 import { callMetas } from '../config/call-meta'
 
 function clearLogs() {

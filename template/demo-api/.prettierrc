@@ -10,8 +10,8 @@
     },
     {
       "files": [
-        "*-interface.*",
-        "logic-processor*",
+        "*-interface*.ts",
+        "logic-processor*.ts",
         "*.macro.ts",
         "select-logs.ts",
         "insert-logs.ts"

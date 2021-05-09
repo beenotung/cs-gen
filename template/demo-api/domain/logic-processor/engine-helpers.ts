@@ -1,8 +1,8 @@
-import { CallIn, CallOut } from './types'
+import { CallIn, CallOut } from '../types'
 import { dispatchCall } from './dispatch-call'
-import { logicalProcessor } from './instances'
-import { insertLog } from './db/insert-helpers'
-import { iterateLogs } from './db/select-helpers'
+import { logicalProcessor } from './instance'
+import { insertLog } from '../db/insert-helpers'
+import { iterateLogs } from '../db/select-helpers'
 
 export interface Context {
   timestamp: number

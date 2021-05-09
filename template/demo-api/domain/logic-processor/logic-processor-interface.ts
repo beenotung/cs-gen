@@ -1,6 +1,6 @@
 import type { Context } from './engine-helpers'
-import type { Result } from './types'
-import type * as t from './types'
+import type { Result } from '../types'
+import type * as t from '../types'
 
 export interface ILogicalProcessor {
   createUser(input: t.CreateUser['in'], context: Context): Result<t.CreateUser>

@@ -1,4 +1,4 @@
-import { db } from '../../config/db'
+import { db } from './config'
 import { getStrVal, getJsonVal } from './str-helpers'
 import type { IntLike } from 'integer'
 import type * as t from '../types'
