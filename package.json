@@ -20,7 +20,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "postformat": "tslint -p . --fix",
     "prebuild": "npm run clean && tsc-macro",
-    "build": "ctsc",
+    "build": "tsc",
     "pretest": "npm run format && npm run build",
     "rawtest": "ts-node test/index.ts",
     "prepublishOnly": "npm run rawtest && npm run build"
@@ -64,7 +64,6 @@
     "@types/rethinkdb": "^2.3.14",
     "@types/rimraf": "^3.0.0",
     "@types/semver": "^7.3.4",
-    "ctsc": "^1.1.0",
     "husky": "^2.7.0",
     "prettier": "^1.19.1",
     "ts-node": "^8.6.2",
