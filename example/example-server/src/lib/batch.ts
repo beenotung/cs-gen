@@ -24,12 +24,12 @@ const MinItemSize =
   calcBatchItemSize(SampleKey, JSON.stringify(SampleCall).length) + 32
 
 const BatchSuffix = 'Batch'
-const BatchSuffixPattern = LogService.keySeparator + BatchSuffix
+export const BatchSuffixPattern = LogService.keySeparator + BatchSuffix
 
 const KeysSuffix = 'Keys'
 
 const BatchKeysSuffix = BatchSuffix + KeysSuffix
-const BatchKeysSuffixPattern = LogService.keySeparator + BatchKeysSuffix
+export const BatchKeysSuffixPattern = LogService.keySeparator + BatchKeysSuffix
 
 function createBar(name: string) {
   return new Bar({
@@ -271,19 +271,9 @@ export function countBatch(log: LogService): number {
       return // skip empty batch
     }
     const keys: string[] = []
-    iterateBatch(keys, batch)
+    walkInBatch(batch, key => keys.push(key))
     log.storeObjectSync(keys, batchKeysKey)
     acc += keys.length
-  }
-
-  function iterateBatch(keys: string[], batch: batch<any>) {
-    for (const [key, content] of batch) {
-      if (key.endsWith(BatchSuffixPattern)) {
-        iterateBatch(keys, content)
-        continue
-      }
-      keys.push(key)
-    }
   }
 
   for (const key of keys) {
@@ -328,9 +318,13 @@ export function deduplicateBatch(log: LogService) {
   console.log('deleted', deleted, 'deduplicated keys')
 }
 
+export function getBatchKeysSync(log: LogService) {
+  return log.getKeysSync().filter(key => key.endsWith(BatchSuffixPattern))
+}
+
 export function expandBatch<T>(log: LogService) {
   console.log('expandBatch')
-  const keys = log.getKeysSync().filter(key => key.endsWith(BatchSuffixPattern))
+  const keys = getBatchKeysSync(log)
 
   let totalSize = 0
   let bar = createBar('scan-files-size')
@@ -341,16 +335,6 @@ export function expandBatch<T>(log: LogService) {
   }
   bar.stop()
 
-  function expand(batch: batch<T>) {
-    for (const [key, content] of batch) {
-      if (key.endsWith(BatchSuffixPattern)) {
-        expand(content as batch<T>)
-      } else {
-        log.storeObjectSync(content, key)
-      }
-    }
-  }
-
   bar = createBar('expand-batch')
   bar.start(totalSize, 0)
   for (const key of keys) {
@@ -360,7 +344,7 @@ export function expandBatch<T>(log: LogService) {
     }
     const batch = parseLogObject<batch<T>>(bin.toString())
     if (batch) {
-      expand(batch)
+      walkInBatch(batch, (key, content) => log.storeObjectSync(content, key))
     }
     bar.increment(bin.length)
     log.removeObjectSync(key)
@@ -372,17 +356,22 @@ function flattenBatch<T>(batch: batch<T>) {
   const newBatch: batch<T> = []
   const newBatchKeys: string[] = []
 
-  function walk(batch: batch<T>) {
-    for (const [key, content] of batch) {
-      if (key.endsWith(BatchSuffixPattern)) {
-        walk(content as batch<T>)
-        continue
-      }
-      newBatch.push([key, content])
-      newBatchKeys.push(key)
-    }
-  }
-
-  walk(batch)
+  walkInBatch(batch, (key, content) => {
+    newBatch.push([key, content])
+    newBatchKeys.push(key)
+  })
   return { newBatch, newBatchKeys }
+}
+
+export function walkInBatch<T>(
+  batch: batch<T>,
+  each: (key: string, content: T) => void,
+) {
+  batch.forEach(([key, content]) => {
+    if (key.endsWith(BatchSuffixPattern)) {
+      walkInBatch(content as batch<T>, each)
+    } else {
+      each(key, content as T)
+    }
+  })
 }
