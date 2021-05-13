@@ -1,4 +1,0 @@
-#!/bin/bash
-set -e
-set -o pipefail
-rethinkdb --http-port 8081
