@@ -198,3 +198,7 @@ The myapp-client, myapp-server, and myapp-admin projects will be created / updat
 - Expose as koa middleware
 - Explain it's good at supporting testing snapshot of data with different versions of build,
   ref: [wiki](https://en.m.wikipedia.org/wiki/Software_release_life_cycle)
+
+## License
+This is free and open-source software (FOSS) with
+[BSD-2-Clause License](./LICENSE)
