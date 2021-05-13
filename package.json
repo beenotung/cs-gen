@@ -2,7 +2,12 @@
   "name": "cs-gen",
   "version": "0.1.0",
   "description": "Code generator for rapid development using Command Sourcing design pattern.",
-  "keywords": [],
+  "keywords": [
+    "command sourcing",
+    "code generation",
+    "template",
+    "cqrs-exp"
+  ],
   "author": {
     "name": "Beeno Tung",
     "email": "aabbcc1241@yahoo.com.hk",
