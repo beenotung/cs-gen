@@ -48,13 +48,7 @@ async function initPackageJson(name: string) {
   packageJson.dependencies = {
     ...packageJson.dependencies,
     '@beenotung/tslib': '^' + require('@beenotung/tslib/package.json').version,
-    'cqrs-exp': path.join(
-      process.env.HOME!,
-      'workspace',
-      'gitlab.com',
-      'beenotung',
-      'cqrs-exp',
-    ),
+    'cs-gen': '^' + require('../../package.json').version,
     ...copyPkgDep('gen-ts-type'),
     tslib: '^' + require('tslib/package.json').version,
   };
@@ -117,7 +111,7 @@ async function initGenProject(args: {
   const { baseProjectName, appId, serverOrigin } = args;
   const code =
     `
-import { flattenCallMetas, genProject } from 'cqrs-exp';
+import { flattenCallMetas, genProject } from 'cs-gen';
 import { catchMain } from '@beenotung/tslib/node';
 import { ArrayType } from 'gen-ts-type';
 import {
@@ -132,7 +126,7 @@ import {
   authConfig,
   authCommand,
   authQuery,
-} from 'cqrs-exp/dist/helpers/gen-project-helpers';
+} from 'cs-gen/dist/helpers/gen-project-helpers';
 import {
   Admin,
   Internal,
@@ -140,7 +134,7 @@ import {
   UserNotFound,
   NoPermission,
   Duplicated,
-} from 'cqrs-exp/dist/helpers/constants';
+} from 'cs-gen/dist/helpers/constants';
 
 const app_id = ${JSON.stringify(appId)};
 def({ app_id });

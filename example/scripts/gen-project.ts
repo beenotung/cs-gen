@@ -1,4 +1,4 @@
-import { flattenCallMetas, genProject } from 'cqrs-exp'
+import { flattenCallMetas, genProject } from 'cs-gen'
 import { catchMain } from '@beenotung/tslib/node'
 import { ArrayType } from 'gen-ts-type'
 import {
@@ -13,7 +13,7 @@ import {
   authConfig,
   authCommand,
   authQuery,
-} from 'cqrs-exp/dist/helpers/gen-project-helpers'
+} from 'cs-gen/dist/helpers/gen-project-helpers'
 import {
   Admin,
   Internal,
@@ -21,7 +21,7 @@ import {
   UserNotFound,
   NoPermission,
   Duplicated,
-} from 'cqrs-exp/dist/helpers/constants'
+} from 'cs-gen/dist/helpers/constants'
 
 const app_id = 'com.example.example'
 def({ app_id })

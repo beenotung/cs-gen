@@ -1,7 +1,7 @@
 {
-  "name": "cqrs-exp",
+  "name": "cs-gen",
   "version": "0.1.0",
-  "description": "",
+  "description": "Code generator for rapid development using Command Sourcing design pattern.",
   "keywords": [],
   "author": {
     "name": "Beeno Tung",
@@ -12,7 +12,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "cqrs-exp": "cqrs-exp"
+    "cs-gen": "cs-gen"
   },
   "scripts": {
     "test": "npm run rawtest",
@@ -35,12 +35,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/beenotung/cqrs-exp.git"
+    "url": "git+https://github.com/beenotung/cs-gen.git"
   },
   "bugs": {
-    "url": "https://gitlab.com/beenotung/cqrs-exp/issues"
+    "url": "https://github.com/beenotung/cs-gen/issues"
   },
-  "homepage": "https://gitlab.com/beenotung/cqrs-exp#readme",
+  "homepage": "https://github.com/beenotung/cs-gen#readme",
   "dependencies": {
     "@beenotung/tslib": "^16.34.1",
     "async-mkdirp": "^1.2.7",
