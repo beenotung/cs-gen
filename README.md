@@ -47,6 +47,13 @@ reference: [1% rule (Internet culture)](https://en.wikipedia.org/wiki/1%25_rule_
 - Auto setup package dependencies and formatting (tsconfig, tslint, prettier, npm scripts, e.t.c.)
 
 ## Installation
+
+### Option: Install with npm
+```bash
+npm i -g cs-gen
+```
+
+### Option: Install with git
 ```bash
 > git clone https://github.com/beenotung/cs-gen
 > cd cs-gen
