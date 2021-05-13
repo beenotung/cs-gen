@@ -51,6 +51,7 @@ reference: [1% rule (Internet culture)](https://en.wikipedia.org/wiki/1%25_rule_
 > git clone https://github.com/beenotung/cs-gen
 > cd cs-gen
 > pnpm i || npm i
+> npm run build
 > npm i -g .
 ```
 The `cs-gen` command will be installed for cli
