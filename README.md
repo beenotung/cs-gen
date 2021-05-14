@@ -1,15 +1,19 @@
-# cqrs-exp
+# cs-gen
 
-Code generator for rapid development using CQRS (Command Query Responsibility Segregation) design pattern.
+> Code generator for rapid development using Command Sourcing design pattern.
+
+Inspired from CQRS (Command Query Responsibility Segregation) and ES (Event Sourcing) but simplified to allow less boilerplate.
+
+Think it like the reducer in redux, but compatible to OOP (Object-oriented programming).
 
 **This is not a framework**, instead it's a code generation tool to reduce the burden of boilerplate for common tasks in the development of web server and backend system with Typescript.
 
 Any required library are injected to the target project, hence the resulting project does not have runtime dependency on this package.
 
-This toolkit has been used in production by 30+ projects and micro-services for over 1 year.
+This toolkit has been used in production by 30+ projects and micro-services since 2019.
 The rough edges are getting polished and patched overtime hence it is considered to be "production-ready" for small to middle scale of application.
 
-__Under active development.__
+It has gone through 2 years of __active development__.
 
 ## System Architecture
 
@@ -43,20 +47,28 @@ reference: [1% rule (Internet culture)](https://en.wikipedia.org/wiki/1%25_rule_
 - Auto setup package dependencies and formatting (tsconfig, tslint, prettier, npm scripts, e.t.c.)
 
 ## Installation
+
+### Option: Install with npm
 ```bash
-> git clone https://gitlab.com/beenotung/cqrs-exp
-> cd cqrs-exp
+npm i -g cs-gen
+```
+
+### Option: Install with git
+```bash
+> git clone https://github.com/beenotung/cs-gen
+> cd cs-gen
 > pnpm i || npm i
+> npm run build
 > npm i -g .
 ```
-The `cqrs-exp` command will be installed for cli
+The `cs-gen` command will be installed for cli
 
 ## Usage
 
 ### Show Available Commands
 ```bash
-> cqrs-exp help
-cqrs-exp [command]
+> cs-gen help
+cs-gen [command]
 Commands:
   init  : initialize project skeleton, setup package.json and create scripts/gen-project.ts with default settings
   gen   : generate the client-side SDK for *-client and *-admin project, and stub code for *-server project
@@ -67,7 +79,7 @@ Commands:
 ```bash
 > mkdir -p ~/workspace/myapp && cd $_
 
-> cqrs-exp init
+> cs-gen init
 project name [myapp]:
 production server domain [example.com]:
 server origin [https://myapp.example.com]:
@@ -133,8 +145,8 @@ import {
   typeAlias,
   authCommand as _authCommand,
   authQuery as _authQuery,
-} from 'cqrs-exp/dist/helpers/gen-project-helpers';
-import { flattenCallMetas, genProject } from 'cqrs-exp'
+} from 'cs-gen/dist/helpers/gen-project-helpers';
+import { flattenCallMetas, genProject } from 'cs-gen'
 
 const app_id = "com.example.myapp";
 def({ app_id });
@@ -175,13 +187,13 @@ genProject({
 ```
 
 #### Options of genProject
-The complete list of options can be found in `cqrs-exp/dist/gen/gen-file.d.ts` in the node.js module, or [src/gen/gen-file.ts](src/gen/gen-file.ts) in the source code.
+The complete list of options can be found in `cs-gen/dist/gen/gen-file.d.ts` in the node.js module, or [src/gen/gen-file.ts](src/gen/gen-file.ts) in the source code.
 
 Some of them are optional with default value stored in `defaultGenProjectArgs` in the same file.
 
 ### Generate client-side SDK and server side stub code
 ```bash
-> cqrs-exp gen
+> cs-gen gen
 ```
 
 The myapp-client, myapp-server, and myapp-admin projects will be created / updated accordingly.
@@ -194,3 +206,7 @@ The myapp-client, myapp-server, and myapp-admin projects will be created / updat
 - Expose as koa middleware
 - Explain it's good at supporting testing snapshot of data with different versions of build,
   ref: [wiki](https://en.m.wikipedia.org/wiki/Software_release_life_cycle)
+
+## License
+This is free and open-source software (FOSS) with
+[BSD-2-Clause License](./LICENSE)

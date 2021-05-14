@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@beenotung/tslib": "^16.35.0",
-    "cqrs-exp": "file:..",
+    "cs-gen": "file:..",
     "gen-ts-type": "^1.7.1",
     "tslib": "^1.13.0"
   },

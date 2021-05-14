@@ -457,10 +457,8 @@ async function setServerPackage(
   // for generator in batch.ts
   devDep.typescript = '^3.7.2';
 
-  // for quick compilation
-  devDep.ctsc = '^1.1.0';
-  const build = 'ctsc';
-  if (pkg.scripts.build && pkg.scripts.build !== build) {
+  const build = 'tsc';
+  if (pkg.scripts.build && pkg.scripts.build !== build && pkg.scripts.build !== 'ctsc') {
     let backup = pkg.scripts.build;
     if (pkg.scripts.prebuild) {
       backup = 'npm run prebuild && ' + backup;
