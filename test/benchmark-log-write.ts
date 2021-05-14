@@ -70,8 +70,8 @@ let sqliteFile = join(dataDir, 'sqlite.db')
  * PRAGMA synchronous = OFF
  * PRAGMA journal_mode = MEMORY
  *
- * 3100 Write-Per-Second in Export Mode
- * 4430 Write-Per-Second in Safe Mode
+ * 3100 Write-Per-Second in Safe Mode
+ * 4430 Write-Per-Second in Export Mode
  * */
 function writeSqlite(tick: Function) {
   let db = DB({ path: sqliteFile, migrate: false })
