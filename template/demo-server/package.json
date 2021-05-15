@@ -5,6 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "tsc --noEmit",
+    "gen": "run-p gen:*",
+    "gen:macro": "tsc-macro",
+    "gen:sql": "ts-node scripts/gen-all.ts",
     "format": "run-s format:*",
     "format:eslint": "eslint --fix --ext .ts .",
     "format:prettier": "prettier --write .",
