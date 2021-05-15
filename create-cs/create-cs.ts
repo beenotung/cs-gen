@@ -56,7 +56,7 @@ Inside that directory, you can run several commands:
     (TODO) Starts the development server.
   
   npm run build
-    (TODO) Bundles the app into static files for production.
+    Bundles the app into static files for production.
   
   npm run format
     Runs prettier and eslint with best-effort auto-fixing.
