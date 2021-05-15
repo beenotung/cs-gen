@@ -7,9 +7,14 @@
     "command sourcing",
     "typescript",
     "macro",
+    "code generation",
     "cqrs"
   ],
-  "author": "Beeno Tung <aabbcc1241@yahoo.com.hk> (https://beeno-tung.surge.sh)",
+  "author": {
+    "name": "Beeno Tung",
+    "email": "aabbcc1241@yahoo.com.hk",
+    "url": "https://beeno-tung.surge.sh"
+  },
   "license": "BSD-2-Clause",
   "repository": {
     "type": "git",
