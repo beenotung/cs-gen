@@ -1,9 +1,0 @@
-#!/bin/bash
-set -e
-set -o pipefail
-if [ ! -d node_modules ]; then
-  hash pnpm 2>/dev/null || npm i -g pnpm
-  pnpm i
-fi
-npm run build
-npm i -g .

@@ -1,6 +1,0 @@
-#!/bin/bash
-set -e
-set -o pipefail
-npm i -g npm
-npm i -g pnpm
-pnpm i -g @nestjs/cli
