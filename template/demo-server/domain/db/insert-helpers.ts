@@ -27,8 +27,11 @@ export function insertLog(
   acc: number,
   call: CallIn,
 ): IntLike {
-  const log_id = insert_log.run({ timestamp, acc, meta_id: call.id })
-    .lastInsertRowid
+  const log_id = insert_log.run({
+    timestamp,
+    acc,
+    meta_id: call.id,
+  }).lastInsertRowid
   if (!call.id) {
     // skip insert body for empty input
     return log_id

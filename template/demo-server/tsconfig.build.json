@@ -1,6 +1,6 @@
 {
-    "extends": "./tsconfig.json",
-    "exclude": [
-        "**/*.macro.ts"
-    ]
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "**/*.macro.ts"
+  ]
 }
