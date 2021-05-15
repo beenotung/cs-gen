@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "run-s clean gen:macro build:tsc",
+    "clean": "rimraf dist",
+    "build:tsc": "tsc -p tsconfig.build.json",
     "test": "tsc --noEmit",
     "gen": "run-p gen:*",
     "gen:macro": "tsc-macro",
