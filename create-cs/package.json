@@ -33,7 +33,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "degit": "^2.8.4"
+    "degit": "^2.8.4",
+    "npm-init-helper": "^1.2.2"
   },
   "devDependencies": {
     "@types/degit": "^2.8.2",
