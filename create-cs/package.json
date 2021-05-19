@@ -1,6 +1,6 @@
 {
   "name": "create-cs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "npm init script for command sourcing project skeleton with macro code generation",
   "keywords": [
     "cs-gen",
