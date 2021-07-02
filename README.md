@@ -1,4 +1,4 @@
-# cs-gen
+# cs-gen: Command Sourcing Project Generator
 
 > Project template with code generation setup for rapid development using Command Sourcing design pattern.
 
