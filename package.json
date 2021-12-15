@@ -1,6 +1,6 @@
 {
   "name": "cs-gen",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Code generator for rapid development using Command Sourcing design pattern.",
   "keywords": [
     "command sourcing",
