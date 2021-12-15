@@ -2,6 +2,8 @@
 
 > Code generator for rapid development using Command Sourcing design pattern.
 
+[![npm Package Version](https://img.shields.io/npm/v/cs-gen.svg?maxAge=3600)](https://www.npmjs.com/package/cs-gen)
+
 Inspired from CQRS (Command Query Responsibility Segregation) and ES (Event Sourcing) but simplified to allow less boilerplate.
 
 Think it like the reducer in redux, but compatible to OOP (Object-oriented programming).
