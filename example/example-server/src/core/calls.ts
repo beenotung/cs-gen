@@ -71,6 +71,6 @@ export function isInternalCall(Type: Call['Type']): boolean {
   return !!call.Internal
 }
 
-export function shouldReply(Type: Call['Type']): boolean {
+export function shouldReplay(Type: Call['Type']): boolean {
   return !!callMap.get(Type)?.Replay
 }

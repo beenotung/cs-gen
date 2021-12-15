@@ -268,7 +268,7 @@ export function isInternalCall(Type: ${callTypeName}['Type']): boolean {
   return !!call.Internal
 }
 
-export function shouldReply(Type: Call['Type']): boolean {
+export function shouldReplay(Type: Call['Type']): boolean {
   return !!callMap.get(Type)?.Replay;
 }
 `.trim();
@@ -342,7 +342,7 @@ function genInitSyncCode({
         bar.increment(1);
         continue;
       }
-      if (!shouldReply(call.Type)) {
+      if (!shouldReplay(call.Type)) {
         bar.increment(1);
         continue;
       }
@@ -622,7 +622,7 @@ import { ISpark } from 'typestub-primus';` : ''}
 import { ${callTypeName}, CallInput } from ${getTypeFileImportPath(args)};
 import { LogService } from '../${libDirname}/log.service';${asyncLogicProcessor ? `
 import { isPromise, Result } from '../${libDirname}/result';` : ''}
-import { isInternalCall, shouldReply } from './${removeTsExtname(callsFilename)}';
+import { isInternalCall, shouldReplay } from './${removeTsExtname(callsFilename)}';
 import { iterateBatch } from '../lib/batch';${ws ? `
 import { primusPromise } from './helpers';` : ''}${staticControllerReference || asyncLogicProcessor ? `
 import { instance } from './helpers';` : ''}

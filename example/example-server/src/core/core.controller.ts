@@ -15,7 +15,7 @@ import { Call, CallInput } from '../domain/types'
 import { iterateBatch } from '../lib/batch'
 import { LogService } from '../lib/log.service'
 import { isPromise, Result } from '../lib/result'
-import { isInternalCall, shouldReply } from './calls'
+import { isInternalCall, shouldReplay } from './calls'
 import { endRestCall, startRestCall } from './connection'
 import {
   closeConnection,
@@ -108,7 +108,7 @@ export class CoreController {
         bar.increment(1)
         continue
       }
-      if (!shouldReply(call.Type)) {
+      if (!shouldReplay(call.Type)) {
         bar.increment(1)
         continue
       }
